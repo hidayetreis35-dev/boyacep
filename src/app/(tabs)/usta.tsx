@@ -6,6 +6,7 @@ import { View } from 'react-native';
 import { enableRoles, setActiveRole } from '@/features/account/api';
 import { readLocalRoles, writeLocalRoles } from '@/features/account/local-role';
 import { useAccount, useSession } from '@/features/account/session';
+import { SignInGate } from '@/features/account/sign-in-gate';
 import { STATUS_LABEL } from '@/features/projects/mapping';
 import { specialtyLabel, VERIFICATION_LABEL } from '@/features/pros/form';
 import { useMyProProfile } from '@/features/pros/queries';
@@ -216,11 +217,16 @@ export default function UstaScreen() {
     body = <EmptyState icon="cloud-offline" title="Sunucu bağlı değil" message="Usta araçları hesap gerektirir; sunucu bağlantısı kurulunca açılacak." />;
   } else if (!session) {
     body = (
-      <EmptyState
+      <SignInGate
+        feature="cost"
         icon="construct"
         title="Usta araçları"
-        message="Teklif hazırlamak ve paylaşılan projeleri görmek için giriş yap."
-        action={<Button label="Giriş yap" icon="log-in" onPress={() => router.push('/sign-in')} />}
+        message="Boya ustaları için teklif ve iş takibi."
+        benefits={[
+          'Ev sahibinin paylaştığı ölçüleri ve malzeme listesini gör.',
+          'Dakikalar içinde PDF teklif hazırla ve gönder.',
+          'Usta profilinle güven ver.',
+        ]}
       />
     );
   } else if (account.isPending) body = <LoadingState />;

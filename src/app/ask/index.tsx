@@ -3,6 +3,7 @@ import { useState } from 'react';
 import { View } from 'react-native';
 
 import { useSession } from '@/features/account/session';
+import { SignInGate } from '@/features/account/sign-in-gate';
 import { CONSULTATION_STATUS_LABEL, TOPICS, topicLabel, validateQuestion, type QuestionErrors } from '@/features/ask/api';
 import { useAskActions, useMyQuestions } from '@/features/ask/queries';
 import { formatDate } from '@/features/quotes/pdf';
@@ -113,11 +114,12 @@ export default function AskScreen() {
         ) : !db ? (
           <EmptyState icon="cloud-offline" title="Sunucu bağlı değil" message="Ustaya Sor hesap gerektirir; sunucu bağlantısı kurulunca açılacak." />
         ) : !session ? (
-          <EmptyState
+          <SignInGate
+            feature="ask"
             icon="chatbubbles"
             title="Ustaya Sor"
-            message="Soru sormak ve yanıtı görmek için giriş yap."
-            action={<Button label="Giriş yap" icon="log-in" onPress={() => router.push('/sign-in')} />}
+            message="Boya ustalarından yanıt al."
+            benefits={['Sorunu yaz, istersen fotoğraf ekle.', 'Yanıtı bildirim olarak al, sonra yine buradan oku.', 'Beta süresince ücretsiz.']}
           />
         ) : (
           <Questions />

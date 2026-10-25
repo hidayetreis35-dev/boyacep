@@ -1,41 +1,51 @@
 import { router } from 'expo-router';
-import { Pressable, View } from 'react-native';
+import { StyleSheet, View } from 'react-native';
 
 import { useSession } from '@/features/account/session';
 import { categoryLabel, GUIDE_CATEGORIES, useGuides, type GuideListItem } from '@/features/guide/api';
-import { AppText, EmptyState, ErrorState, Icon, LoadingState, Screen } from '@/ui/components';
-import { radius, space, usePalette } from '@/ui/theme';
+import type { GuideCategory } from '@/lib/database.types';
+import { FeatureHeader, IconBubble, SectionTitle } from '@/ui/brand';
+import { AppText, EmptyState, ErrorState, Icon, LoadingState, Screen, type IconName } from '@/ui/components';
+import { PressableScale } from '@/ui/motion';
+import { radius, shadowOf, space, usePalette } from '@/ui/theme';
+
+const CATEGORY_ICON: Record<GuideCategory, IconName> = {
+  preparation: 'clipboard',
+  primer: 'water',
+  filler_sanding: 'construct',
+  ceiling: 'arrow-up-circle',
+  walls: 'square',
+  tools: 'brush',
+  mistakes: 'alert-circle',
+  exterior: 'business',
+  materials: 'cube',
+};
 
 function GuideCard({ guide }: { guide: GuideListItem }) {
   const p = usePalette();
   return (
-    <Pressable
+    <PressableScale
       accessibilityRole="button"
       accessibilityLabel={guide.title}
       onPress={() => router.push({ pathname: '/guide/[slug]', params: { slug: guide.slug } })}
-      style={({ pressed }) => ({
-        flexDirection: 'row',
-        alignItems: 'center',
-        gap: space.md,
-        padding: space.lg,
-        borderRadius: radius.lg,
-        borderWidth: 1,
-        borderColor: p.border,
-        backgroundColor: pressed ? p.surfaceMuted : p.surface,
-      })}>
+      style={[styles.card, { backgroundColor: p.surface, borderColor: p.border }, shadowOf(p)]}>
+      <IconBubble icon={CATEGORY_ICON[guide.category] ?? 'book'} feature="guide" size={44} />
       <View style={{ flex: 1, gap: 2 }}>
         <AppText variant="bodyStrong">{guide.title}</AppText>
         {guide.summary ? (
-          <AppText variant="small" tone="muted">
+          <AppText variant="small" tone="muted" numberOfLines={2}>
             {guide.summary}
           </AppText>
         ) : null}
-        <AppText variant="caption" tone="muted">
-          {guide.reading_minutes} dk okuma
-        </AppText>
+        <View style={{ flexDirection: 'row', alignItems: 'center', gap: 4, marginTop: 2 }}>
+          <Icon name="time-outline" size={14} color={p.textMuted} />
+          <AppText variant="caption" tone="muted">
+            {guide.reading_minutes} dk okuma
+          </AppText>
+        </View>
       </View>
       <Icon name="chevron-forward" color={p.textMuted} />
-    </Pressable>
+    </PressableScale>
   );
 }
 
@@ -60,14 +70,13 @@ export default function GuideIndexScreen() {
 
   return (
     <Screen edges={['bottom']}>
+      <FeatureHeader feature="guide" icon="book" title="Boya Rehberi" subtitle="Ustaların bildiklerini adım adım öğren." />
       {GUIDE_CATEGORIES.map(({ value }) => {
         const items = guides.data.filter((g) => g.category === value);
         if (items.length === 0) return null;
         return (
           <View key={value} style={{ gap: space.sm }}>
-            <AppText variant="heading" accessibilityRole="header">
-              {categoryLabel(value)}
-            </AppText>
+            <SectionTitle title={categoryLabel(value)} />
             {items.map((g) => (
               <GuideCard key={g.id} guide={g} />
             ))}
@@ -77,3 +86,7 @@ export default function GuideIndexScreen() {
     </Screen>
   );
 }
+
+const styles = StyleSheet.create({
+  card: { flexDirection: 'row', alignItems: 'center', gap: space.md, padding: space.lg, borderRadius: radius.lg, borderWidth: StyleSheet.hairlineWidth },
+});

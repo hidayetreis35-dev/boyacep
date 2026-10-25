@@ -17,7 +17,7 @@ export default function SoonScreen() {
             ? `Bu özellik henüz hazır değil. Geliştirme planında ${action.phase}. aşamada eklenecek.`
             : 'Aradığın sayfa bulunamadı.'
         }
-        action={<Button label="Boya Hesapla'yı dene" icon="calculator" onPress={() => router.replace('/calculate')} />}
+        action={<Button label="Ne Kadar Boya?’yı dene" icon="calculator" onPress={() => router.replace('/calculate')} />}
       />
     </Screen>
   );

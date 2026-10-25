@@ -63,7 +63,7 @@ export function ProjectPhotos({ projectId }: { projectId: string }) {
       ) : photos.isError ? (
         <ErrorState message="Fotoğraflar yüklenemedi." onRetry={() => photos.refetch()} />
       ) : photos.data.length === 0 ? (
-        <EmptyState icon="images" title="Henüz fotoğraf yok" message="Duvarların fotoğrafını ekle; Rengini Dene ile üzerinde renk dene." />
+        <EmptyState icon="images" title="Henüz fotoğraf yok" message="Duvarların fotoğrafını ekle; Renk Stüdyosu ile üzerinde renk dene." />
       ) : (
         <View style={{ flexDirection: 'row', flexWrap: 'wrap', justifyContent: 'space-between', rowGap: space.md }}>
           {photos.data.map((photo) => (

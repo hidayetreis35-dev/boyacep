@@ -50,7 +50,7 @@ function GuestProfile({ hasBackend }: { hasBackend: boolean }) {
         <AppText tone="muted">
           {hasBackend
             ? 'Projelerini kaydetmek ve her cihazdan görmek için giriş yap.'
-            : 'Hesap sistemi henüz bağlı değil. Boya Hesapla hesapsız çalışıyor.'}
+            : 'Hesap sistemi henüz bağlı değil. Ne Kadar Boya? hesapsız çalışıyor.'}
         </AppText>
         {hasBackend ? <Button label="Giriş yap / Hesap aç" icon="log-in" onPress={() => router.push('/sign-in')} /> : null}
       </Card>

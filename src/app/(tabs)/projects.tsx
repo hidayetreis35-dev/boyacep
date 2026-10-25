@@ -1,12 +1,14 @@
 import { router } from 'expo-router';
 import { useState } from 'react';
-import { Pressable, View } from 'react-native';
+import { StyleSheet, View } from 'react-native';
 
 import { useSession } from '@/features/account/session';
+import { SignInGate } from '@/features/account/sign-in-gate';
 import { useMyPlan } from '@/features/plans/queries';
 import { FREE_PROJECT_LIMIT } from '@/features/projects/limits';
 import { STATUS_LABEL } from '@/features/projects/mapping';
 import { useCreateProject, useProjects } from '@/features/projects/queries';
+import { formatDate } from '@/features/quotes/pdf';
 import type { ProjectRow } from '@/lib/database.types';
 import {
   AppText,
@@ -21,31 +23,31 @@ import {
   Screen,
   TextField,
 } from '@/ui/components';
-import { radius, space, usePalette } from '@/ui/theme';
+import { IconBubble } from '@/ui/brand';
+import { PressableScale } from '@/ui/motion';
+import { radius, shadowOf, space, usePalette } from '@/ui/theme';
 
 function ProjectCard({ project }: { project: ProjectRow }) {
   const p = usePalette();
+  const done = project.status === 'completed';
   return (
-    <Pressable
+    <PressableScale
       accessibilityRole="button"
       accessibilityLabel={project.title}
       onPress={() => router.push({ pathname: '/projects/[id]', params: { id: project.id } })}
-      style={({ pressed }) => ({
-        flexDirection: 'row',
-        alignItems: 'center',
-        gap: space.md,
-        padding: space.lg,
-        borderRadius: radius.lg,
-        borderWidth: 1,
-        borderColor: p.border,
-        backgroundColor: pressed ? p.surfaceMuted : p.surface,
-      })}>
-      <View style={{ flex: 1, gap: space.xs }}>
+      style={[styles.card, { backgroundColor: p.surface, borderColor: p.border }, shadowOf(p)]}>
+      <IconBubble icon={done ? 'checkmark-done' : 'home'} feature="projects" />
+      <View style={{ flex: 1, gap: 4 }}>
         <AppText variant="bodyStrong">{project.title}</AppText>
-        <Badge label={STATUS_LABEL[project.status]} tone={project.status === 'completed' ? 'success' : 'primary'} />
+        <View style={{ flexDirection: 'row', alignItems: 'center', gap: space.sm, flexWrap: 'wrap' }}>
+          <Badge label={STATUS_LABEL[project.status]} tone={done ? 'success' : 'primary'} />
+          <AppText variant="caption" tone="muted">
+            {formatDate(project.updated_at)}
+          </AppText>
+        </View>
       </View>
       <Icon name="chevron-forward" color={p.textMuted} />
-    </Pressable>
+    </PressableScale>
   );
 }
 
@@ -68,7 +70,7 @@ function NewProject({ count }: { count: number }) {
       </>
     );
   }
-  if (!open) return <Button label="Yeni proje" icon="add" onPress={() => setOpen(true)} />;
+  if (!open) return <Button label="Yeni proje" icon="add" variant="cta" size="lg" onPress={() => setOpen(true)} />;
 
   const submit = () => {
     if (!title.trim()) return;
@@ -135,29 +137,40 @@ export default function ProjectsScreen() {
   const { db, session, loading } = useSession();
   return (
     <Screen>
-      <AppText variant="title">Projelerim</AppText>
+      <View style={{ gap: 2 }}>
+        <AppText variant="title">Projelerim</AppText>
+        <AppText tone="muted">Odaların, renklerin ve bütçen tek yerde.</AppText>
+      </View>
       {loading ? (
         <LoadingState />
       ) : session ? (
         <ProjectList />
       ) : (
-        <EmptyState
-          icon="folder-open"
-          title="Projelerini kaydet"
-          message={
-            db
-              ? 'Odalarını, ölçülerini ve hesaplarını kaydetmek için giriş yap.'
-              : 'Proje kaydetme, hesap sistemi bağlanınca açılacak. Şimdilik Boya Hesapla ile hesap yapabilirsin.'
-          }
-          action={
-            db ? (
-              <Button label="Giriş yap" icon="log-in" onPress={() => router.push('/sign-in')} />
-            ) : (
-              <Button label="Boya Hesapla" icon="calculator" variant="secondary" onPress={() => router.push('/calculate')} />
-            )
-          }
-        />
+        db ? (
+          <SignInGate
+            feature="projects"
+            icon="albums"
+            title="Projelerini kaydet"
+            message="Evinin boya işini tek yerde topla."
+            benefits={[
+              'Odalarını ve ölçülerini bir kez gir, hesap hep hazır olsun.',
+              'Seçtiğin renkleri, fotoğrafları ve bütçeni sakla.',
+              'Projeni bir ustayla paylaş, teklif al.',
+            ]}
+          />
+        ) : (
+          <EmptyState
+            icon="folder-open"
+            title="Projelerini kaydet"
+            message="Proje kaydetme, hesap sistemi bağlanınca açılacak. Şimdilik Ne Kadar Boya? ile hesap yapabilirsin."
+            action={<Button label="Ne Kadar Boya?" icon="calculator" variant="secondary" onPress={() => router.push('/calculate')} />}
+          />
+        )
       )}
     </Screen>
   );
 }
+
+const styles = StyleSheet.create({
+  card: { flexDirection: 'row', alignItems: 'center', gap: space.md, padding: space.lg, borderRadius: radius.lg, borderWidth: StyleSheet.hairlineWidth },
+});

@@ -7,7 +7,7 @@ const SECTIONS: { title: string; items: string[] }[] = [
   {
     title: 'Hesap açmadan',
     items: [
-      'Boya Hesapla, Maliyet Hesapla, Duvarını İncele ve Rengini Dene hesapsız çalışır.',
+      'Ne Kadar Boya?, Maliyet Hesapla, Duvarını İncele ve Renk Stüdyosu hesapsız çalışır.',
       'Bu ekranlarda girdiğin ölçüler ve seçtiğin fotoğraflar telefonunda kalır, sunucuya gönderilmez.',
     ],
   },
