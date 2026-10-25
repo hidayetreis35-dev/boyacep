@@ -148,6 +148,10 @@ function AccountProfile() {
         />
       ) : null}
 
+      {roles.includes('admin') ? (
+        <Button label="Yönetim paneli" icon="settings" variant="secondary" onPress={() => router.push('/admin')} />
+      ) : null}
+
       {error ? (
         <Notice tone="danger" icon="alert-circle">
           {error}

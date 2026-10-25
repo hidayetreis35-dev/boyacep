@@ -140,6 +140,34 @@ export type ProjectCostRow = {
   updated_at: string;
 };
 
+export type GuideCategory =
+  | 'preparation'
+  | 'primer'
+  | 'filler_sanding'
+  | 'ceiling'
+  | 'walls'
+  | 'tools'
+  | 'mistakes'
+  | 'exterior'
+  | 'materials';
+
+export type GuideArticleRow = {
+  id: string;
+  slug: string;
+  category: GuideCategory;
+  title: string;
+  summary: string;
+  body: string;
+  reading_minutes: number;
+  status: 'draft' | 'published';
+  published_at: string | null;
+  sort_order: number;
+  created_at: string;
+  updated_at: string;
+};
+
+export type AdminStats = { users: number; projects: number; rooms: number; published_guides: number; pros: number };
+
 type Generated = 'id' | 'created_at' | 'updated_at';
 
 export type Database = {
@@ -167,6 +195,10 @@ export type Database = {
         Omit<ProjectMaterialRow, Generated | 'catalog_id' | 'store_name' | 'note' | 'from_calculation' | 'sort_order' | 'unit_price' | 'price_source'> &
           Partial<Pick<ProjectMaterialRow, 'catalog_id' | 'store_name' | 'note' | 'from_calculation' | 'sort_order' | 'unit_price' | 'price_source'>>
       >;
+      guide_articles: Table<
+        GuideArticleRow,
+        Pick<GuideArticleRow, 'slug' | 'category' | 'title'> & Partial<Omit<GuideArticleRow, Generated | 'slug' | 'category' | 'title'>>
+      >;
       project_costs: Table<
         ProjectCostRow,
         Omit<ProjectCostRow, Generated | 'note' | 'price_source'> & Partial<Pick<ProjectCostRow, 'note' | 'price_source'>>
@@ -176,6 +208,7 @@ export type Database = {
     Functions: {
       has_role: { Args: { check_role: AppRole }; Returns: boolean };
       is_admin: { Args: Record<string, never>; Returns: boolean };
+      admin_stats: { Args: Record<string, never>; Returns: AdminStats[] };
     };
     Enums: { app_role: AppRole; project_status: ProjectStatus };
     CompositeTypes: Record<string, never>;

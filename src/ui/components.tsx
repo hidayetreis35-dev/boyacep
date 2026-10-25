@@ -175,12 +175,13 @@ export function TextField({
   hint,
   testID,
   placeholder,
+  multiline,
   ...inputProps
 }: FieldProps &
   Pick<
     TextInputProps,
     'keyboardType' | 'inputMode' | 'autoCapitalize' | 'autoComplete' | 'autoCorrect' | 'maxLength' | 'onSubmitEditing' | 'textContentType' | 'autoFocus'
-  >) {
+  > & { multiline?: boolean }) {
   const p = usePalette();
   const [focused, setFocused] = useState(false);
   return (
@@ -203,7 +204,15 @@ export function TextField({
           onBlur={() => setFocused(false)}
           placeholder={placeholder}
           placeholderTextColor={p.textMuted}
-          style={[styles.input, type.bodyStrong as TextStyle, { color: p.text }, webNoOutline]}
+          multiline={multiline}
+          textAlignVertical={multiline ? 'top' : undefined}
+          style={[
+            styles.input,
+            multiline ? (type.body as TextStyle) : (type.bodyStrong as TextStyle),
+            multiline && styles.multiline,
+            { color: p.text },
+            webNoOutline,
+          ]}
           {...inputProps}
         />
         {unit ? (
@@ -433,6 +442,7 @@ const styles = StyleSheet.create({
     gap: space.sm,
   },
   input: { flex: 1, minWidth: 0, paddingVertical: space.sm },
+  multiline: { minHeight: 240, paddingVertical: space.md },
   chips: { flexDirection: 'row', flexWrap: 'wrap', gap: space.sm },
   chip: {
     minHeight: MIN_TOUCH - 4,
