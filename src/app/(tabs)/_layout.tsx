@@ -1,20 +1,19 @@
-import Ionicons from '@expo/vector-icons/Ionicons';
 import { Redirect } from 'expo-router';
 import { Tabs } from 'expo-router/js-tabs';
-import { useEffect, useState, type ComponentProps } from 'react';
+import { useEffect, useState } from 'react';
 
 import { readLocalRoles } from '@/features/account/local-role';
-
+import { AppTabBar, type TabIcon } from '@/ui/tab-bar';
 import { usePalette } from '@/ui/theme';
 
-type IconName = ComponentProps<typeof Ionicons>['name'];
-
-const TABS: { name: string; title: string; icon: IconName }[] = [
-  { name: 'index', title: 'Ana Sayfa', icon: 'home' },
-  { name: 'projects', title: 'Projelerim', icon: 'folder-open' },
-  { name: 'usta', title: 'Usta', icon: 'construct' },
-  { name: 'profile', title: 'Profil', icon: 'person-circle' },
+const TABS: { name: string; title: string; icon: TabIcon }[] = [
+  { name: 'index', title: 'Ana Sayfa', icon: { active: 'home', inactive: 'home-outline' } },
+  { name: 'projects', title: 'Projelerim', icon: { active: 'albums', inactive: 'albums-outline' } },
+  { name: 'usta', title: 'Usta', icon: { active: 'construct', inactive: 'construct-outline' } },
+  { name: 'profile', title: 'Profil', icon: { active: 'person-circle', inactive: 'person-circle-outline' } },
 ];
+
+const ICONS = Object.fromEntries(TABS.map((t) => [t.name, t.icon]));
 
 export default function TabLayout() {
   const p = usePalette();
@@ -27,21 +26,10 @@ export default function TabLayout() {
   if (firstLaunch) return <Redirect href="/welcome" />;
   return (
     <Tabs
-      screenOptions={{
-        headerShown: false,
-        tabBarActiveTintColor: p.primary,
-        tabBarInactiveTintColor: p.textMuted,
-        tabBarStyle: { backgroundColor: p.surface, borderTopColor: p.border },
-      }}>
+      tabBar={(props) => <AppTabBar {...props} icons={ICONS} />}
+      screenOptions={{ headerShown: false, animation: 'shift', sceneStyle: { backgroundColor: p.background } }}>
       {TABS.map((t) => (
-        <Tabs.Screen
-          key={t.name}
-          name={t.name}
-          options={{
-            title: t.title,
-            tabBarIcon: ({ color, size }) => <Ionicons name={t.icon} color={color as string} size={size} />,
-          }}
-        />
+        <Tabs.Screen key={t.name} name={t.name} options={{ title: t.title }} />
       ))}
     </Tabs>
   );

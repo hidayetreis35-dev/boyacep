@@ -28,7 +28,8 @@ import {
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 
-import { MAX_CONTENT_WIDTH, MIN_TOUCH, radius, space, type, usePalette, type Palette, type TypeVariant } from './theme';
+import { PressableScale } from './motion';
+import { MAX_CONTENT_WIDTH, MIN_TOUCH, fonts, radius, shadowOf, space, type, usePalette, type Palette, type TypeVariant } from './theme';
 
 export type IconName = ComponentProps<typeof Ionicons>['name'];
 
@@ -69,6 +70,12 @@ export function Icon({ name, size = 22, color }: { name: IconName; size?: number
 /** Scrollable page with safe area, background and a centred max width. */
 type ScrollToView = (view: HostInstance | null) => void;
 const ScrollContext = createContext<ScrollToView>(() => {});
+const ScrollTopContext = createContext<() => void>(() => {});
+
+/** Scrolls the surrounding Screen back to the top, e.g. when a wizard moves to the next step. */
+export function useScrollToTop(): () => void {
+  return useContext(ScrollTopContext);
+}
 
 /** Scrolls the surrounding Screen so `view` sits at the top, e.g. to reveal results. */
 export function useScrollToView(): ScrollToView {
@@ -85,6 +92,7 @@ export function Screen({ children, edges = ['top'] }: { children: ReactNode; edg
     if (!view || !inner) return;
     view.measureLayout(inner, (_x, y) => scrollRef.current?.scrollTo({ y: Math.max(0, y), animated: true }));
   }, []);
+  const scrollToTop = useCallback(() => scrollRef.current?.scrollTo({ y: 0, animated: true }), []);
 
   return (
     <SafeAreaView edges={edges} style={{ flex: 1, backgroundColor: p.background }}>
@@ -94,7 +102,9 @@ export function Screen({ children, edges = ['top'] }: { children: ReactNode; edg
         keyboardShouldPersistTaps="handled"
         style={{ backgroundColor: p.background }}>
         <View ref={innerRef} style={styles.screenInner}>
-          <ScrollContext.Provider value={scrollToView}>{children}</ScrollContext.Provider>
+          <ScrollTopContext.Provider value={scrollToTop}>
+            <ScrollContext.Provider value={scrollToView}>{children}</ScrollContext.Provider>
+          </ScrollTopContext.Provider>
         </View>
       </ScrollView>
     </SafeAreaView>
@@ -113,7 +123,7 @@ export function FieldRow({ children }: { children: ReactNode }) {
 export function Card({ children, style }: { children: ReactNode; style?: StyleProp<ViewStyle> }) {
   const p = usePalette();
   return (
-    <View style={[styles.card, { backgroundColor: p.surface, borderColor: p.border }, style]}>{children}</View>
+    <View style={[styles.card, { backgroundColor: p.surface, borderColor: p.border }, shadowOf(p), style]}>{children}</View>
   );
 }
 
@@ -124,34 +134,40 @@ export function Button({
   icon,
   disabled,
   loading,
+  size = 'md',
 }: {
   label: string;
   onPress: () => void;
-  variant?: 'primary' | 'secondary' | 'ghost';
+  /** cta: the one main action on a screen (orange). */
+  variant?: 'primary' | 'cta' | 'secondary' | 'ghost';
   icon?: IconName;
   disabled?: boolean;
   loading?: boolean;
+  size?: 'md' | 'lg';
 }) {
   const p = usePalette();
-  const fg = variant === 'primary' ? p.onPrimary : p.primary;
+  const fg = variant === 'primary' ? p.onPrimary : variant === 'cta' ? p.onCta : p.primary;
   return (
-    <Pressable
+    <PressableScale
       accessibilityRole="button"
+      accessibilityLabel={label}
       accessibilityState={{ disabled: !!disabled, busy: !!loading }}
       disabled={disabled || loading}
       onPress={onPress}
       style={({ pressed }) => [
         styles.button,
+        size === 'lg' && styles.buttonLg,
         variant === 'primary' && { backgroundColor: pressed ? p.primaryPressed : p.primary },
+        variant === 'cta' && [{ backgroundColor: pressed ? p.ctaPressed : p.cta }, shadowOf(p)],
         variant === 'secondary' && { backgroundColor: pressed ? p.surfaceMuted : p.primarySoft },
         variant === 'ghost' && { backgroundColor: pressed ? p.surfaceMuted : 'transparent' },
-        (disabled || loading) && { opacity: 0.5 },
+        (disabled || loading) && { opacity: 0.45 },
       ]}>
       {loading ? <ActivityIndicator color={fg} /> : icon ? <Icon name={icon} size={20} color={fg} /> : null}
-      <AppText variant="bodyStrong" style={{ color: fg }}>
+      <AppText variant="bodyStrong" style={{ color: fg, fontFamily: fonts.bold }}>
         {label}
       </AppText>
-    </Pressable>
+    </PressableScale>
   );
 }
 
@@ -186,14 +202,16 @@ export function TextField({
   const [focused, setFocused] = useState(false);
   return (
     <View style={styles.field}>
-      <AppText variant="small" tone="muted">
+      <AppText variant="small" style={{ fontFamily: fonts.semibold }}>
         {label}
       </AppText>
       <View
         style={[
           styles.inputRow,
-          { backgroundColor: p.surface, borderColor: error ? p.danger : focused ? p.primary : p.border },
-          focused && { borderWidth: 2 },
+          {
+            backgroundColor: focused ? p.surface : p.surfaceMuted,
+            borderColor: error ? p.danger : focused ? p.primary : 'transparent',
+          },
         ]}>
         <TextInput
           accessibilityLabel={label}
@@ -216,7 +234,7 @@ export function TextField({
           {...inputProps}
         />
         {unit ? (
-          <AppText variant="small" tone="muted">
+          <AppText variant="bodyStrong" tone="muted">
             {unit}
           </AppText>
         ) : null}
@@ -254,7 +272,7 @@ export function ChoiceChips<T extends string>({
   return (
     <View style={styles.field}>
       {label ? (
-        <AppText variant="small" tone="muted">
+        <AppText variant="small" style={{ fontFamily: fonts.semibold }}>
           {label}
         </AppText>
       ) : null}
@@ -270,11 +288,11 @@ export function ChoiceChips<T extends string>({
               style={[
                 styles.chip,
                 {
-                  backgroundColor: selected ? p.primary : p.surface,
-                  borderColor: selected ? p.primary : p.border,
+                  backgroundColor: selected ? p.primary : p.surfaceMuted,
+                  borderColor: selected ? p.primary : 'transparent',
                 },
               ]}>
-              <AppText variant="small" style={{ color: selected ? p.onPrimary : p.text, fontWeight: '600' }}>
+              <AppText variant="small" style={{ color: selected ? p.onPrimary : p.text, fontFamily: fonts.semibold }}>
                 {o.label}
               </AppText>
             </Pressable>
@@ -292,8 +310,8 @@ export function Toggle({ label, value, onChange }: { label: string; value: boole
       accessibilityRole="checkbox"
       accessibilityState={{ checked: value }}
       onPress={() => onChange(!value)}
-      style={[styles.toggle, { borderColor: value ? p.primary : p.border, backgroundColor: value ? p.primarySoft : p.surface }]}>
-      <Icon name={value ? 'checkbox' : 'square-outline'} color={value ? p.primary : p.textMuted} />
+      style={[styles.toggle, { borderColor: value ? p.primary : 'transparent', backgroundColor: value ? p.primarySoft : p.surfaceMuted }]}>
+      <Icon name={value ? 'checkmark-circle' : 'ellipse-outline'} color={value ? p.primary : p.textMuted} />
       <AppText variant="bodyStrong">{label}</AppText>
     </Pressable>
   );
@@ -319,7 +337,7 @@ export function Stepper({
       accessibilityLabel={a11y}
       disabled={next < min || next > max}
       onPress={() => onChange(next)}
-      style={[styles.stepBtn, { borderColor: p.border, opacity: next < min || next > max ? 0.4 : 1 }]}>
+      style={[styles.stepBtn, { backgroundColor: p.primarySoft, opacity: next < min || next > max ? 0.35 : 1 }]}>
       <Icon name={icon} color={p.primary} />
     </Pressable>
   );
@@ -350,10 +368,18 @@ export function Badge({ label, tone = 'muted' }: { label: string; tone?: 'muted'
   );
 }
 
-export function Notice({ tone = 'accent', icon = 'information-circle', children }: { tone?: 'accent' | 'danger'; icon?: IconName; children: ReactNode }) {
+export function Notice({
+  tone = 'info',
+  icon = 'information-circle',
+  children,
+}: {
+  tone?: 'info' | 'accent' | 'danger' | 'success';
+  icon?: IconName;
+  children: ReactNode;
+}) {
   const p = usePalette();
-  const bg = tone === 'danger' ? p.dangerSoft : p.accentSoft;
-  const fg = tone === 'danger' ? p.danger : p.accent;
+  const bg = { info: p.primarySoft, accent: p.accentSoft, danger: p.dangerSoft, success: p.successSoft }[tone];
+  const fg = { info: p.primary, accent: p.accent, danger: p.danger, success: p.success }[tone];
   return (
     <View style={[styles.notice, { backgroundColor: bg }]} accessibilityRole={tone === 'danger' ? 'alert' : undefined}>
       <Icon name={icon} color={fg} size={20} />
@@ -368,8 +394,8 @@ export function EmptyState({ icon, title, message, action }: { icon: IconName; t
   const p = usePalette();
   return (
     <View style={styles.empty}>
-      <View style={[styles.emptyIcon, { backgroundColor: p.primarySoft }]}>
-        <Icon name={icon} size={32} color={p.primary} />
+      <View style={[styles.emptyIcon, { backgroundColor: p.accentSoft }]}>
+        <Icon name={icon} size={34} color={p.cta} />
       </View>
       <AppText variant="heading" style={{ textAlign: 'center' }}>
         {title}
@@ -420,21 +446,22 @@ const webNoOutline = Platform.OS === 'web' ? ({ outlineStyle: 'none' } as unknow
 const styles = StyleSheet.create({
   screenContent: { flexGrow: 1, alignItems: 'center', paddingBottom: space.xxl },
   screenInner: { width: '100%', maxWidth: MAX_CONTENT_WIDTH, padding: space.lg, gap: space.lg },
-  card: { borderWidth: 1, borderRadius: radius.lg, padding: space.lg, gap: space.md },
+  card: { borderWidth: StyleSheet.hairlineWidth, borderRadius: radius.lg, padding: space.lg + 2, gap: space.md },
   button: {
-    minHeight: MIN_TOUCH + 4,
-    borderRadius: radius.md,
+    minHeight: MIN_TOUCH + 8,
+    borderRadius: radius.pill,
     paddingHorizontal: space.lg,
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'center',
     gap: space.sm,
   },
-  field: { gap: space.xs },
+  buttonLg: { minHeight: 58, paddingHorizontal: space.xl },
+  field: { gap: 6 },
   fieldRow: { flexDirection: 'row', gap: space.md },
   inputRow: {
-    minHeight: MIN_TOUCH + 4,
-    borderWidth: 1,
+    minHeight: MIN_TOUCH + 8,
+    borderWidth: 2,
     borderRadius: radius.md,
     paddingHorizontal: space.md,
     flexDirection: 'row',
@@ -448,25 +475,25 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     gap: space.md,
     padding: space.md,
-    borderRadius: radius.md,
-    borderWidth: 1,
-    minHeight: MIN_TOUCH + 16,
+    borderRadius: radius.lg,
+    borderWidth: StyleSheet.hairlineWidth,
+    minHeight: MIN_TOUCH + 20,
   },
   chips: { flexDirection: 'row', flexWrap: 'wrap', gap: space.sm },
   chip: {
-    minHeight: MIN_TOUCH - 4,
-    paddingHorizontal: space.md,
+    minHeight: MIN_TOUCH,
+    paddingHorizontal: space.lg,
     borderRadius: radius.pill,
-    borderWidth: 1,
+    borderWidth: 2,
     justifyContent: 'center',
   },
   toggle: {
     flex: 1,
-    minHeight: MIN_TOUCH + 4,
+    minHeight: MIN_TOUCH + 8,
     flexDirection: 'row',
     alignItems: 'center',
     gap: space.sm,
-    borderWidth: 1,
+    borderWidth: 2,
     borderRadius: radius.md,
     paddingHorizontal: space.md,
   },
@@ -474,15 +501,14 @@ const styles = StyleSheet.create({
   stepBtn: {
     width: MIN_TOUCH,
     height: MIN_TOUCH,
-    borderRadius: radius.md,
-    borderWidth: 1,
+    borderRadius: radius.pill,
     alignItems: 'center',
     justifyContent: 'center',
   },
-  badge: { alignSelf: 'flex-start', borderRadius: radius.pill, paddingHorizontal: space.sm, paddingVertical: 2 },
-  notice: { flexDirection: 'row', gap: space.sm, borderRadius: radius.md, padding: space.md, alignItems: 'flex-start' },
+  badge: { alignSelf: 'flex-start', borderRadius: radius.pill, paddingHorizontal: space.sm + 2, paddingVertical: 3 },
+  notice: { flexDirection: 'row', gap: space.sm, borderRadius: radius.md, padding: space.md + 2, alignItems: 'flex-start' },
   empty: { alignItems: 'center', gap: space.md, paddingVertical: space.xxl, paddingHorizontal: space.lg },
-  emptyIcon: { width: 64, height: 64, borderRadius: 32, alignItems: 'center', justifyContent: 'center' },
+  emptyIcon: { width: 76, height: 76, borderRadius: 38, alignItems: 'center', justifyContent: 'center' },
   row: { flexDirection: 'row', alignItems: 'center', gap: space.md, minHeight: 28 },
 });
 
@@ -504,13 +530,14 @@ export function ListItem({
 }) {
   const p = usePalette();
   return (
-    <Pressable
+    <PressableScale
       accessibilityRole="button"
       accessibilityLabel={accessibilityLabel ?? title}
       onPress={onPress}
       style={({ pressed }) => [
         styles.listItem,
         { borderColor: p.border, backgroundColor: pressed ? p.surfaceMuted : p.surface },
+        shadowOf(p),
       ]}>
       <View style={{ flex: 1, gap: 4 }}>
         <AppText variant="bodyStrong">{title}</AppText>
@@ -523,6 +550,6 @@ export function ListItem({
       </View>
       {right}
       <Icon name="chevron-forward" color={p.textMuted} />
-    </Pressable>
+    </PressableScale>
   );
 }

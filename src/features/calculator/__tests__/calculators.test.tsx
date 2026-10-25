@@ -1,57 +1,100 @@
 import { fireEvent, render, screen } from '@testing-library/react-native';
 
-import { QuickCalculator } from '@/features/calculator/quick-calculator';
-import { RoomCalculator } from '@/features/calculator/room-calculator';
+import { PaintWizard } from '@/features/calculator/paint-wizard';
+import { Screen } from '@/ui/components';
 
-describe('RoomCalculator', () => {
-  it('shows field errors when dimensions are missing', async () => {
-    await render(<RoomCalculator />);
-    await fireEvent.press(screen.getByText('Hesapla'));
+jest.mock('@/lib/supabase', () => ({ supabase: null, isBackendConfigured: false }));
+
+async function renderWizard() {
+  await render(
+    <Screen>
+      <PaintWizard />
+    </Screen>,
+  );
+}
+
+const next = () => fireEvent.press(screen.getByRole('button', { name: 'Devam' }));
+
+describe('PaintWizard, one room', () => {
+  it('asks one question at a time and blocks on missing measurements', async () => {
+    await renderWizard();
+    expect(screen.getByText('Adım 1 / 6')).toBeTruthy();
+    expect(screen.getByRole('button', { name: 'Devam' })).toBeDisabled();
+    await fireEvent.press(screen.getByTestId('space-room'));
+    await next();
+    expect(screen.getByText('Adım 2 / 6')).toBeTruthy();
+    await next();
     expect(screen.getByText('Lütfen kırmızı işaretli alanları düzeltin.')).toBeTruthy();
     expect(screen.getByText('Oda uzunluğu 0 ile 50 m arasında olmalı.')).toBeTruthy();
-    expect(screen.queryByTestId('room-results')).toBeNull();
+    expect(screen.getByText('Adım 2 / 6')).toBeTruthy();
   });
 
-  it('calculates a room typed with comma decimals', async () => {
-    await render(<RoomCalculator />);
+  it('walks through every step and shows the same numbers as the engine', async () => {
+    await renderWizard();
+    await fireEvent.press(screen.getByTestId('space-kitchen'));
+    await next();
     await fireEvent.changeText(screen.getByTestId('length'), '4');
     await fireEvent.changeText(screen.getByTestId('width'), '3');
     await fireEvent.changeText(screen.getByTestId('height'), '2,5');
-    await fireEvent.press(screen.getByText('Hesapla'));
+    await next(); // surfaces: walls and ceiling by default
+    await next(); // openings: 1 door, 1 window
+    await next(); // condition: painted
+    await next(); // coats: 2
+    await fireEvent.press(screen.getByRole('button', { name: 'Sonucu göster' }));
     expect(screen.getByTestId('room-results')).toBeTruthy();
+    await fireEvent.press(screen.getByRole('button', { name: 'Hesap detayları' }));
     // Default door 0.9 x 2.1 and window 1.2 x 1.4: 35 - 1.89 - 1.68 = 31.43 m² of wall
     expect(screen.getByText('31,43 m²')).toBeTruthy();
     expect(screen.getByText('İç cephe boyası')).toBeTruthy();
+    expect(screen.getByText(/mutfak-banyo/)).toBeTruthy();
     expect(screen.getAllByText('Tahmini').length).toBeGreaterThan(0);
   });
 
-  it('clears stale results when an input changes', async () => {
-    await render(<RoomCalculator />);
+  it('adds primer for new plaster and lets the user go back to edit', async () => {
+    await renderWizard();
+    await fireEvent.press(screen.getByTestId('space-room'));
+    await next();
     await fireEvent.changeText(screen.getByTestId('length'), '4');
     await fireEvent.changeText(screen.getByTestId('width'), '3');
-    await fireEvent.press(screen.getByText('Hesapla'));
-    expect(screen.getByTestId('room-results')).toBeTruthy();
-    await fireEvent.changeText(screen.getByTestId('width'), '5');
-    expect(screen.queryByTestId('room-results')).toBeNull();
+    await next();
+    await next();
+    await next();
+    await fireEvent.press(screen.getByText('Yeni sıva'));
+    await next();
+    await fireEvent.press(screen.getByRole('button', { name: 'Sonucu göster' }));
+    expect(screen.getAllByText('Astar').length).toBe(2);
+    expect(screen.queryByText('Gerekmiyor')).toBeNull();
+    await fireEvent.press(screen.getByRole('button', { name: 'Düzenle' }));
+    expect(screen.getByText('Adım 6 / 6')).toBeTruthy();
+  });
+
+  it('marks exterior walls as coming soon instead of guessing', async () => {
+    await renderWizard();
+    expect(screen.getByLabelText('Dış cephe, Yakında')).toBeDisabled();
   });
 });
 
-describe('QuickCalculator', () => {
-  it('prompts before any input', async () => {
-    await render(<QuickCalculator />);
-    expect(screen.getByText('Ev tipini seç ve net metrekareyi yaz; sonuç hemen çıkar.')).toBeTruthy();
-  });
-
+describe('PaintWizard, whole home', () => {
   it('estimates a 3+1, 120 m² home', async () => {
-    await render(<QuickCalculator />);
+    await renderWizard();
+    await fireEvent.press(screen.getByTestId('space-home'));
+    await next();
+    expect(screen.getByText('Adım 2 / 4')).toBeTruthy();
     await fireEvent.changeText(screen.getByTestId('floor-area'), '120');
-    expect(screen.getByText('100,3 L')).toBeTruthy();
-    expect(screen.getByText('Al: 6 × 15 L + 1 × 7,5 L + 2 × 2,5 L')).toBeTruthy();
+    await next();
+    await next();
+    await fireEvent.press(screen.getByRole('button', { name: 'Sonucu göster' }));
+    expect(screen.getByTestId('quick-results')).toBeTruthy();
+    expect(screen.getByTestId('total-litres')).toHaveTextContent('100,3');
+    expect(screen.getByText('Duvar: 5 × 15 L · Tavan: 1 × 15 L + 1 × 7,5 L + 2 × 2,5 L')).toBeTruthy();
   });
 
   it('rejects an unrealistic area', async () => {
-    await render(<QuickCalculator />);
+    await renderWizard();
+    await fireEvent.press(screen.getByTestId('space-home'));
+    await next();
     await fireEvent.changeText(screen.getByTestId('floor-area'), '3');
+    await next();
     expect(screen.getByText('Net alan 10 ile 1000 m² arasında olmalı.')).toBeTruthy();
   });
 });

@@ -1,6 +1,13 @@
+import { PlusJakartaSans_400Regular } from '@expo-google-fonts/plus-jakarta-sans/400Regular';
+import { PlusJakartaSans_500Medium } from '@expo-google-fonts/plus-jakarta-sans/500Medium';
+import { PlusJakartaSans_600SemiBold } from '@expo-google-fonts/plus-jakarta-sans/600SemiBold';
+import { PlusJakartaSans_700Bold } from '@expo-google-fonts/plus-jakarta-sans/700Bold';
+import { PlusJakartaSans_800ExtraBold } from '@expo-google-fonts/plus-jakarta-sans/800ExtraBold';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { DarkTheme, DefaultTheme, ThemeProvider, usePathname, type ErrorBoundaryProps } from 'expo-router';
 import { Stack } from 'expo-router/stack';
+import { useFonts } from 'expo-font';
+import * as SplashScreen from 'expo-splash-screen';
 import { StatusBar } from 'expo-status-bar';
 import { useEffect, useState } from 'react';
 import { useColorScheme, View } from 'react-native';
@@ -8,7 +15,9 @@ import { useColorScheme, View } from 'react-native';
 import { SessionProvider } from '@/features/account/session';
 import { reportError } from '@/lib/report-error';
 import { AppText, Button } from '@/ui/components';
-import { palettes, space } from '@/ui/theme';
+import { fonts, palettes, space } from '@/ui/theme';
+
+void SplashScreen.preventAutoHideAsync().catch(() => {});
 
 /** Shown instead of a crashed screen; the crash is reported for signed-in users. */
 export function ErrorBoundary({ error, retry }: ErrorBoundaryProps) {
@@ -35,6 +44,19 @@ export default function RootLayout() {
   const p = palettes[scheme];
   const base = scheme === 'dark' ? DarkTheme : DefaultTheme;
   const [queryClient] = useState(() => new QueryClient({ defaultOptions: { queries: { retry: 1 } } }));
+  // If a font fails to load the system font is used; the app still opens.
+  const [fontsLoaded, fontError] = useFonts({
+    PlusJakartaSans_400Regular,
+    PlusJakartaSans_500Medium,
+    PlusJakartaSans_600SemiBold,
+    PlusJakartaSans_700Bold,
+    PlusJakartaSans_800ExtraBold,
+  });
+  const ready = fontsLoaded || !!fontError;
+  useEffect(() => {
+    if (ready) void SplashScreen.hideAsync().catch(() => {});
+  }, [ready]);
+  if (!ready) return null;
 
   return (
     <QueryClientProvider client={queryClient}>
@@ -45,11 +67,20 @@ export default function RootLayout() {
             colors: { ...base.colors, primary: p.primary, background: p.background, card: p.surface, text: p.text, border: p.border },
           }}>
           <StatusBar style={scheme === 'dark' ? 'light' : 'dark'} />
-          <Stack screenOptions={{ headerBackTitle: 'Geri', headerTintColor: p.primary, headerTitleStyle: { color: p.text } }}>
+          <Stack
+            screenOptions={{
+              headerBackTitle: 'Geri',
+              headerTintColor: p.text,
+              headerTitleStyle: { color: p.text, fontFamily: fonts.bold, fontSize: 17 },
+              headerShadowVisible: false,
+              headerStyle: { backgroundColor: p.background },
+              contentStyle: { backgroundColor: p.background },
+              animation: 'slide_from_right',
+            }}>
             <Stack.Screen name="(tabs)" options={{ headerShown: false }} />
             <Stack.Screen name="welcome" options={{ headerShown: false, gestureEnabled: false }} />
             <Stack.Screen name="sign-in" options={{ title: 'Giriş yap' }} />
-            <Stack.Screen name="calculate" options={{ title: 'Boya Hesapla' }} />
+            <Stack.Screen name="calculate" options={{ title: 'Ne Kadar Boya?' }} />
             <Stack.Screen name="projects/[id]/index" options={{ title: 'Proje' }} />
             <Stack.Screen name="projects/[id]/room" options={{ title: 'Oda' }} />
             <Stack.Screen name="projects/[id]/cost" options={{ title: 'Malzeme ve maliyet' }} />
@@ -59,7 +90,7 @@ export default function RootLayout() {
             <Stack.Screen name="usta/project/[id]" options={{ title: 'Paylaşılan proje' }} />
             <Stack.Screen name="quotes/[id]" options={{ title: 'Teklif' }} />
             <Stack.Screen name="admin/pros" options={{ title: 'Usta doğrulama' }} />
-            <Stack.Screen name="colour" options={{ title: 'Rengini Dene' }} />
+            <Stack.Screen name="colour" options={{ title: 'Renk Stüdyosu' }} />
             <Stack.Screen name="inspect" options={{ title: 'Duvarını İncele' }} />
             <Stack.Screen name="guide/index" options={{ title: 'Boya Rehberi' }} />
             <Stack.Screen name="guide/[slug]" options={{ title: 'Rehber' }} />
