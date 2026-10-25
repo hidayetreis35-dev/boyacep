@@ -67,6 +67,7 @@ describe('Türkiye Boya Fiyatları', () => {
     await fireEvent.changeText(await screen.findByTestId('province-search'), 'izm');
     await fireEvent.press(screen.getByLabelText('İzmir'));
     expect(await savedCity()).toMatchObject({ province: '35' });
+    await fireEvent.press(screen.getByText('İlçe seç (isteğe bağlı)'));
     await fireEvent.press(screen.getByText('Bornova'));
     expect(await savedCity()).toEqual({ province: '35', district: 'Bornova', answered: true });
     expect(screen.getByText('İlçe bazında henüz yeterli veri yok; il geneli gösteriliyor.')).toBeTruthy();

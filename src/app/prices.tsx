@@ -55,6 +55,7 @@ const ALL_DISTRICTS = 'all';
 
 function CityCard({ province, district, openInitially }: { province: ProvinceCode | null; district: string | null; openInitially: boolean }) {
   const [open, setOpen] = useState(openInitially);
+  const [showDistricts, setShowDistricts] = useState(false);
   const districts = province ? (DISTRICTS[province] ?? []) : [];
   return (
     <Card>
@@ -87,16 +88,23 @@ function CityCard({ province, district, openInitially }: { province: ProvinceCod
         </View>
       ) : null}
       {!open && districts.length > 0 ? (
+        <Button
+          label={district ? t('İlçe: {district}', { district }) : t('İlçe seç (isteğe bağlı)')}
+          variant="ghost"
+          icon={showDistricts ? 'chevron-up' : 'chevron-down'}
+          onPress={() => setShowDistricts(!showDistricts)}
+        />
+      ) : null}
+      {!open && showDistricts && districts.length > 0 ? (
         <>
           <ChoiceChips
-            label={t('İlçe (isteğe bağlı)')}
             options={[{ value: ALL_DISTRICTS, label: msg('Tüm ilçeler') }, ...districts.map((d) => ({ value: d, label: d }))]}
             value={district ?? ALL_DISTRICTS}
             onChange={(d) => chooseCity(province, d === ALL_DISTRICTS ? null : d)}
           />
-          {district ? <Notice>{t('İlçe bazında henüz yeterli veri yok; il geneli gösteriliyor.')}</Notice> : null}
         </>
       ) : null}
+      {!open && district ? <Notice>{t('İlçe bazında henüz yeterli veri yok; il geneli gösteriliyor.')}</Notice> : null}
     </Card>
   );
 }
