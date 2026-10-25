@@ -443,6 +443,15 @@ const styles = StyleSheet.create({
   },
   input: { flex: 1, minWidth: 0, paddingVertical: space.sm },
   multiline: { minHeight: 240, paddingVertical: space.md },
+  listItem: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: space.md,
+    padding: space.md,
+    borderRadius: radius.md,
+    borderWidth: 1,
+    minHeight: MIN_TOUCH + 16,
+  },
   chips: { flexDirection: 'row', flexWrap: 'wrap', gap: space.sm },
   chip: {
     minHeight: MIN_TOUCH - 4,
@@ -476,3 +485,44 @@ const styles = StyleSheet.create({
   emptyIcon: { width: 64, height: 64, borderRadius: 32, alignItems: 'center', justifyContent: 'center' },
   row: { flexDirection: 'row', alignItems: 'center', gap: space.md, minHeight: 28 },
 });
+
+/** A tappable row for lists: title, optional details below, chevron on the right. */
+export function ListItem({
+  title,
+  subtitle,
+  children,
+  right,
+  onPress,
+  accessibilityLabel,
+}: {
+  title: string;
+  subtitle?: string;
+  children?: ReactNode;
+  right?: ReactNode;
+  onPress: () => void;
+  accessibilityLabel?: string;
+}) {
+  const p = usePalette();
+  return (
+    <Pressable
+      accessibilityRole="button"
+      accessibilityLabel={accessibilityLabel ?? title}
+      onPress={onPress}
+      style={({ pressed }) => [
+        styles.listItem,
+        { borderColor: p.border, backgroundColor: pressed ? p.surfaceMuted : p.surface },
+      ]}>
+      <View style={{ flex: 1, gap: 4 }}>
+        <AppText variant="bodyStrong">{title}</AppText>
+        {subtitle ? (
+          <AppText variant="small" tone="muted">
+            {subtitle}
+          </AppText>
+        ) : null}
+        {children}
+      </View>
+      {right}
+      <Icon name="chevron-forward" color={p.textMuted} />
+    </Pressable>
+  );
+}

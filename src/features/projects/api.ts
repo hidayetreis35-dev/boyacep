@@ -23,19 +23,21 @@ export async function createProject(db: DbClient, title: string): Promise<Projec
   return check(result);
 }
 
-export async function getProject(db: DbClient, id: string): Promise<{ project: ProjectRow; rooms: RoomWithOpenings[] }> {
-  const project = check(await db.from('projects').select('*').eq('id', id).single());
+/** Rooms with their openings. Works for the owner and for painters the project is shared with. */
+export async function getRooms(db: DbClient, projectId: string): Promise<RoomWithOpenings[]> {
   const rooms = check(
-    await db.from('rooms').select('*').eq('project_id', id).order('sort_order').order('created_at'),
+    await db.from('rooms').select('*').eq('project_id', projectId).order('sort_order').order('created_at'),
   );
   const openings =
     rooms.length === 0
       ? []
       : check(await db.from('room_openings').select('*').in('room_id', rooms.map((r) => r.id)));
-  return {
-    project,
-    rooms: rooms.map((r) => ({ ...r, openings: openings.filter((o) => o.room_id === r.id) })),
-  };
+  return rooms.map((r) => ({ ...r, openings: openings.filter((o) => o.room_id === r.id) }));
+}
+
+export async function getProject(db: DbClient, id: string): Promise<{ project: ProjectRow; rooms: RoomWithOpenings[] }> {
+  const project = check(await db.from('projects').select('*').eq('id', id).single());
+  return { project, rooms: await getRooms(db, id) };
 }
 
 export async function updateProject(

@@ -182,7 +182,97 @@ export type ProjectPhotoRow = {
   created_at: string;
 };
 
-export type AdminStats = { users: number; projects: number; rooms: number; published_guides: number; pros: number };
+export type AdminStats = {
+  users: number;
+  projects: number;
+  rooms: number;
+  published_guides: number;
+  pros: number;
+  pending_pros: number;
+  quotes: number;
+};
+
+export type ProSpecialty = 'interior' | 'exterior' | 'ceiling' | 'decorative' | 'insulation' | 'plaster' | 'repair';
+export type VerificationStatus = 'unverified' | 'pending' | 'verified' | 'rejected';
+
+export type ProProfileRow = {
+  user_id: string;
+  full_name: string;
+  business_name: string | null;
+  phone: string | null;
+  show_phone: boolean;
+  city: string;
+  districts: string;
+  specialties: ProSpecialty[];
+  years_experience: number | null;
+  bio: string;
+  verification_status: VerificationStatus;
+  created_at: string;
+  updated_at: string;
+};
+
+export type ProjectInviteRow = {
+  id: string;
+  project_id: string;
+  code: string;
+  created_by: string;
+  expires_at: string;
+  revoked_at: string | null;
+  created_at: string;
+};
+
+export type ProjectMemberRow = { project_id: string; user_id: string; role: 'pro'; created_at: string };
+
+export type QuoteStatus = 'draft' | 'sent' | 'accepted' | 'rejected' | 'withdrawn';
+
+export type QuoteRow = {
+  id: string;
+  pro_id: string;
+  project_id: string | null;
+  number: number;
+  title: string;
+  customer_name: string;
+  customer_contact: string;
+  notes: string;
+  vat_rate: number;
+  discount: number;
+  currency: string;
+  valid_until: string | null;
+  status: QuoteStatus;
+  sent_at: string | null;
+  responded_at: string | null;
+  created_at: string;
+  updated_at: string;
+};
+
+export type QuoteItemRow = {
+  id: string;
+  quote_id: string;
+  kind: 'labor' | 'material' | 'other';
+  description: string;
+  quantity: number;
+  unit: string;
+  unit_price: number;
+  sort_order: number;
+  created_at: string;
+};
+
+export type SharedProject = {
+  id: string;
+  title: string;
+  status: ProjectStatus;
+  owner_name: string;
+  shared_at: string;
+  updated_at: string;
+};
+
+export type ProjectMember = {
+  user_id: string;
+  full_name: string;
+  business_name: string | null;
+  verification_status: VerificationStatus;
+  joined_at: string;
+};
 
 type Generated = 'id' | 'created_at' | 'updated_at';
 
@@ -221,6 +311,23 @@ export type Database = {
           Partial<Pick<ProjectPhotoRow, 'room_id' | 'wall_outline'>>,
         Partial<Pick<ProjectPhotoRow, 'room_id' | 'wall_outline'>>
       >;
+      pro_profiles: Table<
+        ProProfileRow,
+        Pick<ProProfileRow, 'user_id' | 'full_name' | 'city'> &
+          Partial<Omit<ProProfileRow, 'user_id' | 'full_name' | 'city' | 'created_at' | 'updated_at'>>
+      >;
+      project_members: Table<ProjectMemberRow, never, never>;
+      project_invites: Table<
+        ProjectInviteRow,
+        Pick<ProjectInviteRow, 'project_id'> & Partial<Pick<ProjectInviteRow, 'expires_at'>>,
+        Partial<Pick<ProjectInviteRow, 'revoked_at'>>
+      >;
+      quotes: Table<
+        QuoteRow,
+        Pick<QuoteRow, 'title'> & Partial<Omit<QuoteRow, 'id' | 'pro_id' | 'number' | 'title' | 'created_at' | 'updated_at'>>,
+        Partial<Omit<QuoteRow, 'id' | 'pro_id' | 'number' | 'created_at' | 'updated_at'>>
+      >;
+      quote_items: Table<QuoteItemRow, Omit<QuoteItemRow, 'id' | 'created_at' | 'sort_order'> & Partial<Pick<QuoteItemRow, 'sort_order'>>>;
       project_costs: Table<
         ProjectCostRow,
         Omit<ProjectCostRow, Generated | 'note' | 'price_source'> & Partial<Pick<ProjectCostRow, 'note' | 'price_source'>>
@@ -231,6 +338,10 @@ export type Database = {
       has_role: { Args: { check_role: AppRole }; Returns: boolean };
       is_admin: { Args: Record<string, never>; Returns: boolean };
       admin_stats: { Args: Record<string, never>; Returns: AdminStats[] };
+      redeem_project_invite: { Args: { invite_code: string }; Returns: string };
+      shared_projects: { Args: Record<string, never>; Returns: SharedProject[] };
+      project_member_list: { Args: { project: string }; Returns: ProjectMember[] };
+      respond_to_quote: { Args: { quote: string; accept: boolean }; Returns: undefined };
     };
     Enums: { app_role: AppRole; project_status: ProjectStatus };
     CompositeTypes: Record<string, never>;

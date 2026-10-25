@@ -5,6 +5,7 @@ import { Pressable, View } from 'react-native';
 import { calculateProject, round } from '@/engine';
 import { AssumptionList, packageText } from '@/features/calculator/results';
 import { ProjectPhotos } from '@/features/photos/project-photos';
+import { ReceivedQuotes } from '@/features/quotes/received-quotes';
 import { roomToInput, STATUS_LABEL, STATUS_ORDER, type RoomWithOpenings } from '@/features/projects/mapping';
 import { useDeleteProject, useProject, useSetProjectStatus } from '@/features/projects/queries';
 import { formatNumber } from '@/lib/number';
@@ -181,6 +182,14 @@ export default function ProjectScreen() {
       />
 
       <ProjectPhotos projectId={project.id} />
+
+      <ReceivedQuotes projectId={project.id} />
+      <Button
+        label="Ustayla paylaş"
+        icon="share-social"
+        variant="secondary"
+        onPress={() => router.push({ pathname: '/projects/[id]/share', params: { id: project.id } })}
+      />
 
       <DeleteProject id={project.id} />
     </Screen>
