@@ -1254,6 +1254,7 @@ export const en: Record<string, Translation> = {
   "101–150 m²": "101–150 m²",
   "150 m²’den büyük": "Over 150 m²",
   "Dış cephe boyası": "Exterior paint",
+  "Bu fiyatlar {date} tarihinde toplandı ve güncel olmayabilir.": "These prices were collected on {date} and may be out of date.",
   "Kar beyazı": "Snow white",
   "Saf beyaz": "Pure white",
   "Kırık beyaz": "Off-white",

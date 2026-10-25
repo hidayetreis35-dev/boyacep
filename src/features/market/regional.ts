@@ -1,4 +1,4 @@
-import { materialCost, roundPrice, scaleRange, type PriceSummary, type RangeEstimate } from '@/engine';
+import { ageInDays, ageSummary, materialCost, roundPrice, scaleRange, type PriceSummary, type RangeEstimate } from '@/engine';
 
 import { MATERIAL_PRICES } from './sources';
 import { SNAPSHOT, SNAPSHOT_AS_OF } from './snapshot';
@@ -29,24 +29,42 @@ export interface MarketReference {
   asOf: string;
 }
 
-export function hasProvinceData(code: ProvinceCode, scope: MarketScope, unit: PriceUnit = 'perM2'): boolean {
+export function hasProvinceData(code: ProvinceCode, scope: MarketScope, unit: PriceUnit = 'perM2', on: string = today()): boolean {
   const stats = SNAPSHOT[code]?.[scope][unit];
-  return !!stats && stats.quality !== 'insufficient';
+  return !!stats && ageSummary(stats, on).quality !== 'insufficient';
 }
 
 /** The provinces with any usable numbers, for comparisons. */
-export function provincesWithData(scope: MarketScope, unit: PriceUnit = 'perM2'): ProvinceCode[] {
-  return Object.keys(SNAPSHOT).filter((code) => code !== 'TR' && hasProvinceData(code, scope, unit));
+export function provincesWithData(scope: MarketScope, unit: PriceUnit = 'perM2', on: string = today()): ProvinceCode[] {
+  return Object.keys(SNAPSHOT).filter((code) => code !== 'TR' && hasProvinceData(code, scope, unit, on));
 }
 
-export function marketReference(code: ProvinceCode | null, scope: MarketScope, unit: PriceUnit = 'perM2'): MarketReference {
+/** Today as YYYY-MM-DD. */
+export function today(): string {
+  return new Date(Date.now()).toISOString().slice(0, 10);
+}
+
+/** The snapshot is shipped inside the app; past this age the screens say it may be out of date. */
+export const SNAPSHOT_FRESH_DAYS = 90;
+
+export function snapshotAge(on: string = today()): number {
+  return ageInDays(SNAPSHOT_AS_OF, on);
+}
+
+/**
+ * The reference to show for a province. Quality is re-checked against `on`
+ * (today by default), so an old snapshot falls back instead of showing
+ * numbers its age no longer supports.
+ */
+export function marketReference(code: ProvinceCode | null, scope: MarketScope, unit: PriceUnit = 'perM2', on: string = today()): MarketReference {
   const own = code ? SNAPSHOT[code] : undefined;
-  if (code && own && own[scope][unit].quality !== 'insufficient') {
-    return { code, fallback: null, scope, unit, summary: own[scope][unit], sources: own[scope].sources, asOf: SNAPSHOT_AS_OF };
+  const ownSummary = own ? ageSummary(own[scope][unit], on) : undefined;
+  if (code && own && ownSummary && ownSummary.quality !== 'insufficient') {
+    return { code, fallback: null, scope, unit, summary: ownSummary, sources: own[scope].sources, asOf: SNAPSHOT_AS_OF };
   }
   const tr = SNAPSHOT.TR[scope];
   const fallback: FallbackReason = !code || !provinceByCode(code) ? 'no_city' : own ? 'insufficient' : 'no_data';
-  return { code: 'TR', fallback, scope, unit, summary: tr[unit], sources: tr.sources, asOf: SNAPSHOT_AS_OF };
+  return { code: 'TR', fallback, scope, unit, summary: ageSummary(tr[unit], on), sources: tr.sources, asOf: SNAPSHOT_AS_OF };
 }
 
 /** Typical floor area of each home type, used only to turn a per-m² price into a home total. */
@@ -96,6 +114,10 @@ export function compareSummaries(a: PriceSummary | undefined, b: PriceSummary | 
   return { verdict: 'similar' };
 }
 
-export function compareProvinces(a: ProvinceCode, b: ProvinceCode, scope: MarketScope): Comparison {
-  return compareSummaries(SNAPSHOT[a]?.[scope].perM2, SNAPSHOT[b]?.[scope].perM2);
+export function compareProvinces(a: ProvinceCode, b: ProvinceCode, scope: MarketScope, on: string = today()): Comparison {
+  const summary = (code: ProvinceCode) => {
+    const s = SNAPSHOT[code]?.[scope].perM2;
+    return s && ageSummary(s, on);
+  };
+  return compareSummaries(summary(a), summary(b));
 }

@@ -7,7 +7,7 @@ import { AppText, Button, Icon, Row } from '@/ui/components';
 import { radius, space, usePalette } from '@/ui/theme';
 
 import { useCity } from './city';
-import { FallbackNotice, placeName, QualityBadge } from './components';
+import { FallbackNotice, placeName, QualityBadge, StaleNotice } from './components';
 import { formatLiraRange, formatResearchDate } from './format';
 import { homeTotal, marketReference, paintCost, shownRange } from './regional';
 import { MATERIAL_PRICES, sourceName } from './sources';
@@ -39,6 +39,7 @@ export function RegionalCostCard({ floorArea, litres, kind }: { floorArea: numbe
       </View>
       <AppText variant="heading">{t('Ustayla yaklaşık maliyet · {place}', { place: placeName(reference.code) })}</AppText>
       <FallbackNotice reference={reference} chosen={city.province} />
+      <StaleNotice asOf={reference.asOf} />
       <Row label={t('Usta işçiliği')} value={labour ? formatLiraRange(labour) : t('Yeterli veri yok')} />
       <Row label={t('Boya (mağaza fiyatıyla)')} value={paint ? formatLiraRange(paint) : t('Yeterli veri yok')} />
       {total ? <Row label={t('Toplam (yaklaşık)')} value={formatLiraRange(total)} strong /> : null}

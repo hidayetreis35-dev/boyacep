@@ -9,7 +9,7 @@ import { fonts, radius, space, usePalette } from '@/ui/theme';
 import { chooseCity, skipCity, useCity } from './city';
 import { formatLiraRange, formatResearchDate, QUALITY_HELP, QUALITY_TONE, qualityLabel } from './format';
 import { PILOT_PROVINCES, provinceByCode, searchProvinces, type ProvinceCode } from './provinces';
-import { hasProvinceData, homeTotal, shownRange, type MarketReference } from './regional';
+import { hasProvinceData, homeTotal, shownRange, snapshotAge, SNAPSHOT_FRESH_DAYS, type MarketReference } from './regional';
 import { sourceName } from './sources';
 import type { MarketScope } from './types';
 
@@ -30,6 +30,16 @@ export function placeName(code: ProvinceCode | 'TR'): string {
 
 export function QualityBadge({ reference }: { reference: MarketReference }) {
   return <Badge label={qualityLabel(reference.summary.quality)} tone={QUALITY_TONE[reference.summary.quality]} />;
+}
+
+/** Shown when the price data in the app is older than SNAPSHOT_FRESH_DAYS. */
+export function StaleNotice({ asOf }: { asOf: string }) {
+  if (snapshotAge() <= SNAPSHOT_FRESH_DAYS) return null;
+  return (
+    <Notice tone="danger" icon="time">
+      {t('Bu fiyatlar {date} tarihinde toplandı ve güncel olmayabilir.', { date: formatResearchDate(asOf) })}
+    </Notice>
+  );
 }
 
 /** "Bu şehir için yeterli güncel veri bulunamadı." and similar, or nothing when the province's own data is shown. */
@@ -79,6 +89,7 @@ export function ReferenceCard({
         {`${placeName(reference.code)} · ${t(SCOPE_LABEL[reference.scope])}`}
       </AppText>
       <FallbackNotice reference={reference} chosen={chosen} />
+      <StaleNotice asOf={reference.asOf} />
 
       {range ? (
         <>

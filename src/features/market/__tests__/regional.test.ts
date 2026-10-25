@@ -1,4 +1,4 @@
-import { summarizePrices } from '@/engine';
+import { ageSummary, summarizePrices } from '@/engine';
 import { cleanChoice } from '@/features/market/city';
 import { PILOT_PROVINCES, PROVINCES, searchProvinces } from '@/features/market/provinces';
 import {
@@ -13,6 +13,9 @@ import {
 } from '@/features/market/regional';
 import { SNAPSHOT, SNAPSHOT_AS_OF } from '@/features/market/snapshot';
 import { MARKET_SOURCES, MATERIAL_PRICES } from '@/features/market/sources';
+
+/** Pinned, so the tests do not change as the shipped data ages. */
+const ON = SNAPSHOT_AS_OF;
 
 describe('provinces', () => {
   it('lists all 81 provinces with unique plate codes', () => {
@@ -57,31 +60,31 @@ describe('snapshot', () => {
 
 describe('marketReference', () => {
   it('uses the chosen province when it has data', () => {
-    const r = marketReference('35', 'materials');
+    const r = marketReference('35', 'materials', 'perM2', ON);
     expect(r).toMatchObject({ code: '35', fallback: null });
     expect(r.summary).toBe(SNAPSHOT['35'].materials.perM2);
   });
 
   it('falls back to Türkiye, never to another province', () => {
-    expect(marketReference('02', 'labour')).toMatchObject({ code: 'TR', fallback: 'no_data' }); // Adıyaman: no page
-    expect(marketReference(null, 'labour')).toMatchObject({ code: 'TR', fallback: 'no_city' });
-    expect(marketReference('99', 'labour')).toMatchObject({ code: 'TR', fallback: 'no_city' });
+    expect(marketReference('02', 'labour', 'perM2', ON)).toMatchObject({ code: 'TR', fallback: 'no_data' }); // Adıyaman: no page
+    expect(marketReference(null, 'labour', 'perM2', ON)).toMatchObject({ code: 'TR', fallback: 'no_city' });
+    expect(marketReference('99', 'labour', 'perM2', ON)).toMatchObject({ code: 'TR', fallback: 'no_city' });
     // Manisa single rooms: too few records.
-    expect(marketReference('45', 'labour', 'room')).toMatchObject({ code: 'TR', fallback: 'insufficient' });
+    expect(marketReference('45', 'labour', 'room', ON)).toMatchObject({ code: 'TR', fallback: 'insufficient' });
   });
 
   it('lists only provinces with usable data', () => {
-    const codes = provincesWithData('labour');
+    const codes = provincesWithData('labour', 'perM2', ON);
     expect(codes).toContain('45');
     expect(codes).toContain('35');
     expect(codes).not.toContain('TR');
-    expect(codes.every((c) => hasProvinceData(c, 'labour'))).toBe(true);
+    expect(codes.every((c) => hasProvinceData(c, 'labour', 'perM2', ON))).toBe(true);
   });
 });
 
 describe('totals', () => {
   it('scales a per-m² reference to a home and rounds it', () => {
-    const r = marketReference('TR', 'labour');
+    const r = marketReference('TR', 'labour', 'perM2', ON);
     const total = homeTotal(r, 90)!;
     expect(total.low).toBeGreaterThan(0);
     expect(total.low % 500).toBe(0);
@@ -89,11 +92,11 @@ describe('totals', () => {
   });
 
   it('gives no total for a room reference or missing data', () => {
-    expect(homeTotal(marketReference('TR', 'labour', 'room'), 90)).toBeNull();
+    expect(homeTotal(marketReference('TR', 'labour', 'room', ON), 90)).toBeNull();
   });
 
   it('shows per-m² ranges in whole lira', () => {
-    const range = shownRange(marketReference('35', 'labour'))!;
+    const range = shownRange(marketReference('35', 'labour', 'perM2', ON))!;
     expect(Number.isInteger(range.low) && Number.isInteger(range.high)).toBe(true);
   });
 
@@ -107,9 +110,9 @@ describe('totals', () => {
 describe('compareProvinces', () => {
   it('claims nothing while one side has only limited data', () => {
     expect(SNAPSHOT['45'].labour.perM2.quality).toBe('limited');
-    expect(compareProvinces('45', '35', 'labour')).toEqual({ verdict: 'unknown' });
-    expect(compareProvinces('45', '35', 'materials')).toEqual({ verdict: 'unknown' });
-    expect(compareProvinces('02', '35', 'materials')).toEqual({ verdict: 'unknown' });
+    expect(compareProvinces('45', '35', 'labour', ON)).toEqual({ verdict: 'unknown' });
+    expect(compareProvinces('45', '35', 'materials', ON)).toEqual({ verdict: 'unknown' });
+    expect(compareProvinces('02', '35', 'materials', ON)).toEqual({ verdict: 'unknown' });
   });
 
   it('only claims a difference when the middle halves do not overlap', () => {
@@ -126,6 +129,24 @@ describe('compareProvinces', () => {
     expect(compareSummaries(cheap, close)).toEqual({ verdict: 'similar' });
     // One publisher only: limited, so no claim even with a big gap.
     expect(compareSummaries(summarizePrices(obs(200, 1), '2026-10-25'), cheap)).toEqual({ verdict: 'unknown' });
+  });
+});
+
+describe('ageing data', () => {
+  it('drops the level as the newest record gets older, never raises it', () => {
+    const medium = SNAPSHOT['35'].materials.perM2; // newest 2026-10-11
+    expect(medium.quality).toBe('medium');
+    expect(ageSummary(medium, '2027-01-01')).toBe(medium);
+    expect(ageSummary(medium, '2027-06-01')).toMatchObject({ quality: 'limited', median: null, mean: null, low: medium.low });
+    expect(ageSummary(medium, '2028-01-01')).toMatchObject({ quality: 'insufficient', low: null, high: null, middleHalf: false });
+    const strong = SNAPSHOT.TR.materials.perM2; // newest 2026-10-20
+    expect(ageSummary(strong, '2027-02-01')).toMatchObject({ quality: 'medium', mean: null, median: strong.median });
+  });
+
+  it('falls back to Türkiye when a province ages out, and stops comparing', () => {
+    expect(marketReference('35', 'materials', 'perM2', '2028-01-01')).toMatchObject({ code: 'TR', fallback: 'insufficient' });
+    expect(marketReference('35', 'materials', 'perM2', '2028-01-01').summary.quality).toBe('insufficient');
+    expect(provincesWithData('labour', 'perM2', '2028-01-01')).toEqual([]);
   });
 });
 

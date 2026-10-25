@@ -144,6 +144,29 @@ export function summarizePrices(all: readonly PriceObservation[], asOf: string):
   };
 }
 
+/**
+ * Re-checks a stored summary against a later date. Data only gets older, so
+ * its level can only drop, and the numbers the new level does not allow are
+ * removed: a snapshot shipped in the app never looks fresher than it is.
+ */
+export function ageSummary(summary: PriceSummary, today: string): PriceSummary {
+  if (!summary.newest || summary.quality === 'insufficient') return summary;
+  const age = ageInDays(summary.newest, today);
+  const levels = ['strong', 'medium', 'limited'] as const;
+  const quality = levels.slice(levels.indexOf(summary.quality)).find((l) => age <= QUALITY_RULES[l].newestAge) ?? 'insufficient';
+  if (quality === summary.quality) return summary;
+  const shown = quality !== 'insufficient';
+  return {
+    ...summary,
+    quality,
+    median: quality === 'medium' ? summary.median : null,
+    mean: null,
+    low: shown ? summary.low : null,
+    high: shown ? summary.high : null,
+    middleHalf: shown && summary.middleHalf,
+  };
+}
+
 /** Rounds a price for display, so a statistic never looks more exact than it is. */
 export function roundPrice(value: number): number {
   if (value < 1000) return round(value / 10, 0) * 10;
