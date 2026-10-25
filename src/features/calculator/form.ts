@@ -1,5 +1,6 @@
 import type { RoomInput, SurfaceCondition, SurfaceType, ValidationIssue } from '@/engine';
 import { validateRoom } from '@/engine';
+import { t } from '@/i18n';
 import { parseDecimal } from '@/lib/number';
 
 /** What the room form holds: raw text so the user can type "2,5". */
@@ -84,7 +85,7 @@ export function toRoomInput(form: RoomForm): { ok: true; input: RoomInput } | { 
   const errors: FormErrors = {};
   for (const issue of issues) {
     const field = formField(issue.field);
-    errors[field] ??= issue.message;
+    errors[field] ??= t(issue.message);
   }
   return { ok: false, errors };
 }

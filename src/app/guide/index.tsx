@@ -3,10 +3,10 @@ import { StyleSheet, View } from 'react-native';
 
 import { useSession } from '@/features/account/session';
 import { categoryLabel, GUIDE_CATEGORIES, useGuides, type GuideListItem } from '@/features/guide/api';
-import { t } from '@/i18n';
+import { getLocale, t } from '@/i18n';
 import type { GuideCategory } from '@/lib/database.types';
 import { FeatureHeader, IconBubble, SectionTitle } from '@/ui/brand';
-import { AppText, EmptyState, ErrorState, Icon, LoadingState, Screen, type IconName } from '@/ui/components';
+import { AppText, EmptyState, ErrorState, Icon, LoadingState, Notice, Screen, type IconName } from '@/ui/components';
 import { PressableScale } from '@/ui/motion';
 import { radius, shadowOf, space, usePalette } from '@/ui/theme';
 
@@ -72,6 +72,7 @@ export default function GuideIndexScreen() {
   return (
     <Screen edges={['bottom']}>
       <FeatureHeader feature="guide" icon="book" title={t('Boya Rehberi')} subtitle={t('Ustaların bildiklerini adım adım öğren.')} />
+      {getLocale() === 'tr' ? null : <Notice icon="language">{t('Rehber yazıları şimdilik yalnızca Türkçe.')}</Notice>}
       {GUIDE_CATEGORIES.map(({ value }) => {
         const items = guides.data.filter((g) => g.category === value);
         if (items.length === 0) return null;

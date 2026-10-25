@@ -189,7 +189,7 @@ export function SurveyView({
       </View>
 
       {model.photoCount > 0 ? (
-        <AppText tone="muted">{t('Projede {photoCount} fotoğraf var; projeye katılan ustalar uygulamada görür.', { photoCount: model.photoCount })}</AppText>
+        <AppText tone="muted">{t('Projede {count} fotoğraf var; projeye katılan ustalar uygulamada görür.', { count: model.photoCount })}</AppText>
       ) : null}
 
       <Notice icon="information-circle">

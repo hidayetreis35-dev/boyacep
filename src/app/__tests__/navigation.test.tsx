@@ -21,6 +21,35 @@ describe('first launch', () => {
   });
 });
 
+describe('language', () => {
+  it('opens in the saved language', async () => {
+    await AsyncStorage.setItem('boyacep.locale.v1', 'en');
+    await renderRouter('./src/app', { initialUrl: '/' });
+    expect(await screen.findByText('Welcome to BoyaCep')).toBeTruthy();
+    expect(screen.getByText('Start')).toBeTruthy();
+  });
+
+  it('switches to English from the welcome screen and remembers it', async () => {
+    await renderRouter('./src/app', { initialUrl: '/' });
+    await screen.findByText('BoyaCep’e hoş geldin');
+    await fireEvent.press(screen.getByLabelText('English'));
+    expect(await screen.findByText('Welcome to BoyaCep')).toBeTruthy();
+    expect(screen).toHavePathname('/welcome');
+    expect(await AsyncStorage.getItem('boyacep.locale.v1')).toBe('en');
+  });
+
+  it('switches back to Turkish from the profile', async () => {
+    await AsyncStorage.setItem('boyacep.roles.v1', JSON.stringify(['homeowner']));
+    await AsyncStorage.setItem('boyacep.locale.v1', 'en');
+    await renderRouter('./src/app', { initialUrl: '/profile' });
+    expect(await screen.findByText('Your role')).toBeTruthy();
+    await fireEvent.press(screen.getByLabelText('Türkçe'));
+    expect(await screen.findByText('Rolün')).toBeTruthy();
+    expect(screen).toHavePathname('/profile');
+    expect(await AsyncStorage.getItem('boyacep.locale.v1')).toBe('tr');
+  });
+});
+
 describe('app navigation', () => {
   beforeEach(async () => {
     await AsyncStorage.setItem('boyacep.roles.v1', JSON.stringify(['homeowner']));

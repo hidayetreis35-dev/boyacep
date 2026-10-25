@@ -12,6 +12,7 @@ import {
   updateDisplayName,
   type SelectableRole,
 } from '@/features/account/api';
+import { LanguagePicker } from '@/features/account/language-picker';
 import { readLocalRoles, writeLocalRoles } from '@/features/account/local-role';
 import { PrivacyActions } from '@/features/account/privacy-actions';
 import { RolePicker } from '@/features/account/role-picker';
@@ -175,6 +176,7 @@ export default function ProfileScreen() {
       <AppText variant="title">{t('Profil')}</AppText>
       <View style={{ gap: space.lg }}>
         {loading ? <LoadingState /> : session ? <AccountProfile /> : <GuestProfile hasBackend={!!db} />}
+        <LanguagePicker />
       </View>
     </Screen>
   );

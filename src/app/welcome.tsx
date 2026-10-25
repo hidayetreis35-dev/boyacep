@@ -3,6 +3,7 @@ import { useState } from 'react';
 import { StyleSheet, View } from 'react-native';
 
 import type { SelectableRole } from '@/features/account/api';
+import { LanguagePicker } from '@/features/account/language-picker';
 import { writeLocalRoles } from '@/features/account/local-role';
 import { RolePicker } from '@/features/account/role-picker';
 import { msg, t } from '@/i18n';
@@ -65,6 +66,7 @@ export default function WelcomeScreen() {
         <AppText tone="muted">{t('Sana uygun ekranları gösterebilmemiz için seç. İkisini birden de seçebilirsin; sonra profilinden değiştirebilirsin.')}</AppText>
       </View>
       <RolePicker selected={roles} onToggle={toggle} />
+      <LanguagePicker />
       <Button label={t('Başla')} icon="arrow-forward" variant="cta" size="lg" onPress={start} disabled={roles.length === 0} loading={saving} />
     </Screen>
   );

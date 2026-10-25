@@ -7,7 +7,7 @@ import { SignInGate } from '@/features/account/sign-in-gate';
 import { CONSULTATION_STATUS_LABEL, TOPICS, topicLabel, validateQuestion, type QuestionErrors } from '@/features/ask/api';
 import { useAskActions, useMyQuestions } from '@/features/ask/queries';
 import { formatDate } from '@/features/quotes/pdf';
-import { t } from '@/i18n';
+import { getLocale, t } from '@/i18n';
 import type { ConsultationTopic } from '@/lib/database.types';
 import {
   AppText,
@@ -109,6 +109,7 @@ export default function AskScreen() {
       <Notice icon="people">
         {t('Sorularını BoyaCep ekibindeki boya ustaları yanıtlar; beta süresince ücretsiz. Yapısal çatlak, büyük nem ya da elektrik gibi durumlarda yerinde bir uzmana danış.')}
       </Notice>
+      {getLocale() === 'tr' ? null : <Notice icon="language">{t('Ustalar şimdilik yalnızca Türkiye’de ve Türkçe yanıt veriyor.')}</Notice>}
       <View style={{ gap: space.lg }}>
         {loading ? (
           <LoadingState />

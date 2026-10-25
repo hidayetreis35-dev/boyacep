@@ -106,7 +106,7 @@ export function PaintWizard() {
       if (step === 'home') {
         const r = quickEstimate({ houseType: home.houseType, floorArea: parseDecimal(home.area), includeCeilings: home.ceilings, coats: home.coats });
         if (!r.ok && r.issues.some((i) => i.field === 'floorArea')) {
-          setHomeError(r.issues.find((i) => i.field === 'floorArea')!.message);
+          setHomeError(t(r.issues.find((i) => i.field === 'floorArea')!.message));
           return;
         }
         setHomeError(undefined);
@@ -114,7 +114,7 @@ export function PaintWizard() {
       if (step === 'homeCoats') {
         const r = quickEstimate({ houseType: home.houseType, floorArea: parseDecimal(home.area), includeCeilings: home.ceilings, coats: home.coats });
         if (!r.ok) {
-          setHomeError(r.issues[0]?.message);
+          setHomeError(r.issues[0] ? t(r.issues[0].message) : undefined);
           return go('home');
         }
         setHomeResult(r.value);
@@ -136,7 +136,7 @@ export function PaintWizard() {
       }
       const calc = calculateProject([parsed.input]);
       if (!calc.ok) {
-        setErrors({ form: calc.issues[0]?.message });
+        setErrors({ form: calc.issues[0] ? t(calc.issues[0].message) : undefined });
         return;
       }
       setRoomResult(calc.value);

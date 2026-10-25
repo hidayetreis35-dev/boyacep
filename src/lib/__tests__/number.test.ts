@@ -1,3 +1,4 @@
+import { setCurrentLocale } from '@/i18n';
 import { formatMoney, formatNumber, parseDecimal } from '@/lib/number';
 
 describe('parseDecimal', () => {
@@ -37,5 +38,31 @@ describe('formatMoney', () => {
     [1234567.891, '1.234.567,89 ₺'],
   ])('formats %s as %s', (value, expected) => {
     expect(formatMoney(value)).toBe(expected);
+  });
+});
+
+describe('in English', () => {
+  beforeEach(() => setCurrentLocale('en'));
+  afterEach(() => setCurrentLocale('tr'));
+
+  it.each([
+    [2.5, 1, '2.5'],
+    [1234.5, 1, '1,234.5'],
+    [6, 1, '6'],
+  ])('formats %s with %s decimals as %s', (value, decimals, expected) => {
+    expect(formatNumber(value, decimals)).toBe(expected);
+  });
+
+  it.each([
+    [0, '₺0.00'],
+    [1850.5, '₺1,850.50'],
+    [1234567.891, '₺1,234,567.89'],
+  ])('formats money %s as %s', (value, expected) => {
+    expect(formatMoney(value)).toBe(expected);
+  });
+
+  it('still reads both decimal marks', () => {
+    expect(parseDecimal('2,5')).toBe(2.5);
+    expect(parseDecimal('2.5')).toBe(2.5);
   });
 });
