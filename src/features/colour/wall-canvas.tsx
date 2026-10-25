@@ -2,20 +2,21 @@ import { useState } from 'react';
 import { Image, Pressable, View, type GestureResponderEvent } from 'react-native';
 import Svg, { Circle, Polygon, Polyline } from 'react-native-svg';
 
-import type { WallOutline } from '@/lib/database.types';
+import type { PhotoSurface, WallOutline } from '@/lib/database.types';
 import { radius, usePalette } from '@/ui/theme';
 
 import { isUsableOutline, toNormalised, toSvgPoints } from './outline';
 
 /**
- * The photo with the chosen colour laid over the outlined wall.
- * While drawing, each tap adds a corner of the wall.
+ * The photo with each outlined surface tinted in its colour.
+ * While drawing, each tap adds a corner of the surface being drawn.
  */
 export function WallCanvas({
   uri,
   aspect,
-  outline,
-  colour,
+  surfaces,
+  active,
+  draft,
   opacity,
   showColour,
   drawing,
@@ -24,8 +25,11 @@ export function WallCanvas({
   uri: string;
   /** width / height of the photo */
   aspect: number;
-  outline: WallOutline;
-  colour: string;
+  surfaces: PhotoSurface[];
+  /** Index of the highlighted surface. */
+  active: number;
+  /** Corners of the surface being drawn. */
+  draft: WallOutline;
   opacity: number;
   showColour: boolean;
   drawing: boolean;
@@ -34,8 +38,8 @@ export function WallCanvas({
   const p = usePalette();
   const [width, setWidth] = useState(0);
   const height = width > 0 ? width / aspect : 0;
-  const closed = isUsableOutline(outline);
-  const points = toSvgPoints(outline, width, height);
+  const draftPoints = toSvgPoints(draft, width, height);
+  const draftClosed = isUsableOutline(draft);
 
   const onPress = (e: GestureResponderEvent) => {
     if (!drawing || width === 0) return;
@@ -51,30 +55,39 @@ export function WallCanvas({
     <View
       testID="wall-canvas"
       onLayout={(e) => setWidth(e.nativeEvent.layout.width)}
-      style={{ width: '100%', borderRadius: radius.md, overflow: 'hidden', backgroundColor: p.surfaceMuted }}>
+      style={{ width: '100%', borderRadius: radius.lg, overflow: 'hidden', backgroundColor: p.surfaceMuted }}>
       {width > 0 ? (
         <Pressable
           onPress={onPress}
           disabled={!drawing}
           accessibilityRole={drawing ? 'button' : 'image'}
-          accessibilityLabel={drawing ? 'Fotoğraf: duvarın köşesine dokun' : 'Duvar fotoğrafı ve renk önizlemesi'}
+          accessibilityLabel={drawing ? 'Fotoğraf: yüzeyin köşesine dokun' : 'Oda fotoğrafı ve renk önizlemesi'}
           style={{ width, height }}>
           <Image source={{ uri }} style={{ width, height }} resizeMode="cover" />
           <Svg width={width} height={height} style={{ position: 'absolute', left: 0, top: 0 }} pointerEvents="none">
-            {closed && showColour ? <Polygon points={points} fill={colour} fillOpacity={opacity} /> : null}
-            {drawing && outline.length > 0 ? (
+            {showColour
+              ? surfaces.map((s, i) =>
+                  s.hex && !(drawing && i === active) ? (
+                    <Polygon key={i} points={toSvgPoints(s.points, width, height)} fill={s.hex} fillOpacity={opacity} />
+                  ) : null,
+                )
+              : null}
+            {!drawing && surfaces[active] ? (
+              <Polygon points={toSvgPoints(surfaces[active].points, width, height)} fill="none" stroke="#FFFFFF" strokeWidth={2} strokeDasharray="8 6" />
+            ) : null}
+            {drawing && draft.length > 0 ? (
               <>
-                {outline.length > 1 ? (
+                {draft.length > 1 ? (
                   <Polyline
-                    points={closed ? `${points} ${toSvgPoints([outline[0]], width, height)}` : points}
+                    points={draftClosed ? `${draftPoints} ${toSvgPoints([draft[0]], width, height)}` : draftPoints}
                     fill="none"
                     stroke="#FFFFFF"
                     strokeWidth={2}
                     strokeDasharray="6 4"
                   />
                 ) : null}
-                {outline.map(([x, y], i) => (
-                  <Circle key={i} cx={x * width} cy={y * height} r={7} fill={i === 0 ? p.accent : p.primary} stroke="#FFFFFF" strokeWidth={2} />
+                {draft.map(([x, y], i) => (
+                  <Circle key={i} cx={x * width} cy={y * height} r={8} fill={i === 0 ? p.cta : p.primary} stroke="#FFFFFF" strokeWidth={2} />
                 ))}
               </>
             ) : null}

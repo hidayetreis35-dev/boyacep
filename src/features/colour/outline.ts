@@ -1,4 +1,4 @@
-import type { WallOutline } from '@/lib/database.types';
+import type { PhotoSurface, WallOutline } from '@/lib/database.types';
 
 export const MAX_OUTLINE_POINTS = 24;
 
@@ -43,4 +43,29 @@ export function parseOutline(value: unknown): WallOutline | null {
     points.push([x, y]);
   }
   return points;
+}
+
+export const MAX_SURFACES = 6;
+
+/**
+ * Reads project_photos.wall_outline in either stored shape: a single outline
+ * (older rows) or a list of surfaces. Invalid entries are dropped.
+ */
+export function parseSurfaces(value: unknown): PhotoSurface[] {
+  if (!Array.isArray(value) || value.length === 0) return [];
+  const single = parseOutline(value);
+  if (single) return isUsableOutline(single) ? [{ label: 'Duvar', points: single, hex: null }] : [];
+  const out: PhotoSurface[] = [];
+  for (const item of value.slice(0, MAX_SURFACES)) {
+    if (!item || typeof item !== 'object') continue;
+    const { label, points, hex } = item as Record<string, unknown>;
+    const outline = parseOutline(points);
+    if (!outline || !isUsableOutline(outline)) continue;
+    out.push({
+      label: typeof label === 'string' && label.trim() ? label.trim().slice(0, 40) : 'Yüzey',
+      points: outline,
+      hex: typeof hex === 'string' && /^#[0-9A-F]{6}$/.test(hex) ? hex : null,
+    });
+  }
+  return out;
 }

@@ -1,24 +1,42 @@
 import { fireEvent, render, screen } from '@testing-library/react-native';
+import { useState } from 'react';
 
+import { toPicked, type PickedColour } from '@/features/colour/colour-explorer';
 import { ColourStudio } from '@/features/colour/colour-studio';
+import type { PhotoSurface } from '@/lib/database.types';
 
 const photo = { uri: 'file:///wall.jpg', width: 400, height: 300 };
+
+function Studio({ initialSurfaces, onSave }: { initialSurfaces?: PhotoSurface[]; onSave?: (s: PhotoSurface[]) => void }) {
+  const [colour, setColour] = useState<PickedColour>(toPicked('#A3B49A'));
+  return (
+    <ColourStudio
+      photo={photo}
+      colour={colour}
+      quickColours={['#25324A', '#B35C3E']}
+      onPickColour={setColour}
+      initialSurfaces={initialSurfaces}
+      onSaveSurfaces={onSave}
+    />
+  );
+}
 
 async function layout() {
   await fireEvent(screen.getByTestId('wall-canvas'), 'layout', { nativeEvent: { layout: { width: 400, height: 300 } } });
 }
 
 async function tap(x: number, y: number) {
-  await fireEvent.press(screen.getByLabelText('Fotoğraf: duvarın köşesine dokun'), {
+  await fireEvent.press(screen.getByLabelText('Fotoğraf: yüzeyin köşesine dokun'), {
     nativeEvent: { locationX: x, locationY: y },
   });
 }
 
+const paint = () => screen.getByRole('button', { name: 'Yüzeyi boya' });
+
 describe('ColourStudio', () => {
-  it('needs three corners before the wall can be painted', async () => {
-    await render(<ColourStudio photo={photo} />);
+  it('needs three corners before a surface can be painted', async () => {
+    await render(<Studio />);
     await layout();
-    const paint = () => screen.getByRole('button', { name: 'Duvarı boya' });
     expect(paint()).toBeDisabled();
     await tap(40, 30);
     await tap(360, 30);
@@ -27,36 +45,43 @@ describe('ColourStudio', () => {
     expect(paint()).toBeEnabled();
 
     await fireEvent.press(paint());
-    expect(screen.getByText(/Seçili renk:/)).toBeTruthy();
+    expect(screen.getByText('“Duvar” için renk: Adaçayı')).toBeTruthy();
     await fireEvent.press(screen.getByLabelText('Lacivert'));
-    expect(screen.getByText('Seçili renk: Lacivert')).toBeTruthy();
+    expect(screen.getByText('“Duvar” için renk: Lacivert')).toBeTruthy();
   });
 
-  it('accepts a custom colour code and saves the outline', async () => {
+  it('keeps a separate colour for each surface and saves them', async () => {
     const onSave = jest.fn();
-    await render(
-      <ColourStudio
-        photo={photo}
-        initialOutline={[[0.1, 0.1], [0.9, 0.1], [0.9, 0.9]]}
-        onSaveOutline={onSave}
-      />,
-    );
-    await fireEvent.changeText(screen.getByLabelText('Kendi renk kodun (isteğe bağlı)'), '#12665f');
-    expect(screen.getByText('Seçili renk: #12665F')).toBeTruthy();
-    await fireEvent.changeText(screen.getByLabelText('Kendi renk kodun (isteğe bağlı)'), '#12');
-    expect(screen.getByText('Örnek: #8FB3CF')).toBeTruthy();
+    await render(<Studio initialSurfaces={[{ label: 'Duvar', points: [[0.1, 0.1], [0.9, 0.1], [0.9, 0.9]], hex: '#A3B49A' }]} onSave={onSave} />);
+    await layout();
 
-    await fireEvent.press(screen.getByText('Çizimi projeye kaydet'));
-    expect(onSave).toHaveBeenCalledWith([[0.1, 0.1], [0.9, 0.1], [0.9, 0.9]]);
+    await fireEvent.press(screen.getByLabelText('Yüzey ekle'));
+    await fireEvent.press(screen.getByText('Tavan'));
+    await tap(0, 0);
+    await tap(400, 0);
+    await tap(400, 40);
+    await fireEvent.press(paint());
+    await fireEvent.press(screen.getByLabelText('Terakota'));
+    expect(screen.getByText('“Tavan” için renk: Terakota')).toBeTruthy();
+
+    await fireEvent.press(screen.getByRole('radio', { name: 'Duvar' }));
+    expect(screen.getByText('“Duvar” için renk: Adaçayı')).toBeTruthy();
+
+    await fireEvent.press(screen.getByText('Projeye kaydet'));
+    const saved = onSave.mock.calls[0][0] as PhotoSurface[];
+    expect(saved.map((s) => [s.label, s.hex])).toEqual([
+      ['Duvar', '#A3B49A'],
+      ['Tavan', '#B35C3E'],
+    ]);
   });
 
   it('undoes the last corner', async () => {
-    await render(<ColourStudio photo={photo} />);
+    await render(<Studio />);
     await layout();
     await tap(40, 30);
     await tap(360, 30);
     await tap(360, 270);
     await fireEvent.press(screen.getByText('Geri al'));
-    expect(screen.getByRole('button', { name: 'Duvarı boya' })).toBeDisabled();
+    expect(paint()).toBeDisabled();
   });
 });

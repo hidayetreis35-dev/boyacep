@@ -1,12 +1,14 @@
 import { useState } from 'react';
-import { Pressable, View } from 'react-native';
+import { ScrollView, StyleSheet, View } from 'react-native';
 
-import type { WallOutline } from '@/lib/database.types';
-import { AppText, Button, ChoiceChips, Icon, Notice, TextField } from '@/ui/components';
-import { radius, space, usePalette } from '@/ui/theme';
+import type { PhotoSurface, WallOutline } from '@/lib/database.types';
+import { Segmented } from '@/ui/brand';
+import { AppText, Button, ChoiceChips, Icon, Notice } from '@/ui/components';
+import { PressableScale } from '@/ui/motion';
+import { fonts, radius, space, usePalette } from '@/ui/theme';
 
-import { isUsableOutline, MAX_OUTLINE_POINTS } from './outline';
-import { isLight, normaliseHex, PALETTE } from './palette';
+import { toPicked, type PickedColour } from './colour-explorer';
+import { isUsableOutline, MAX_OUTLINE_POINTS, MAX_SURFACES } from './outline';
 import { WallCanvas } from './wall-canvas';
 
 const STRENGTHS = [
@@ -16,140 +18,211 @@ const STRENGTHS = [
 ] as const;
 type Strength = (typeof STRENGTHS)[number]['value'];
 
-function Swatch({ hex, name, selected, onPress }: { hex: string; name: string; selected: boolean; onPress: () => void }) {
-  const p = usePalette();
-  return (
-    <Pressable
-      accessibilityRole="radio"
-      accessibilityState={{ selected }}
-      accessibilityLabel={name}
-      onPress={onPress}
-      style={{
-        width: 44,
-        height: 44,
-        borderRadius: radius.pill,
-        backgroundColor: hex,
-        borderWidth: selected ? 3 : 1,
-        borderColor: selected ? p.primary : p.border,
-        alignItems: 'center',
-        justifyContent: 'center',
-      }}>
-      {selected ? <Icon name="checkmark" size={20} color={isLight(hex) ? '#1B1F1E' : '#FFFFFF'} /> : null}
-    </Pressable>
-  );
+const SURFACE_KINDS = ['Duvar', 'Tavan', 'Dolap', 'Kapı', 'Diğer'] as const;
+
+function nextLabel(kind: string, surfaces: PhotoSurface[]): string {
+  const same = surfaces.filter((s) => s.label.startsWith(kind)).length;
+  return same === 0 ? kind : `${kind} ${same + 1}`;
 }
 
 /**
- * Outline a wall on a photo and preview colours on it.
- * Works fully on the device; saving the outline is optional and handled by the caller.
+ * Outline one or more surfaces on a room photo and try colours on each.
+ * Works fully on the device; saving is optional and handled by the caller.
  */
 export function ColourStudio({
   photo,
-  initialOutline,
+  colour,
+  quickColours,
+  onPickColour,
+  initialSurfaces,
   onChangePhoto,
-  onSaveOutline,
+  onSaveSurfaces,
   saving,
   saveError,
 }: {
   photo: { uri: string; width: number; height: number };
-  initialOutline?: WallOutline | null;
+  /** The colour picked in the studio; applied to the active surface. */
+  colour: PickedColour;
+  /** Favourites and recent colours for one-tap switching. */
+  quickColours: string[];
+  onPickColour: (c: PickedColour) => void;
+  initialSurfaces?: PhotoSurface[];
   onChangePhoto?: () => void;
-  onSaveOutline?: (outline: WallOutline | null) => void;
+  onSaveSurfaces?: (surfaces: PhotoSurface[]) => void;
   saving?: boolean;
   saveError?: string | null;
 }) {
-  const [outline, setOutline] = useState<WallOutline>(initialOutline ?? []);
-  const [drawing, setDrawing] = useState(!isUsableOutline(initialOutline));
-  const [colour, setColour] = useState(PALETTE[3].colours[1].hex);
+  const p = usePalette();
+  const [surfaces, setSurfaces] = useState<PhotoSurface[]>(initialSurfaces ?? []);
+  const [active, setActive] = useState(0);
+  const [drawing, setDrawing] = useState<string | null>(initialSurfaces?.length ? null : 'Duvar');
+  const [draft, setDraft] = useState<WallOutline>([]);
   const [strength, setStrength] = useState<Strength>('medium');
-  const [showColour, setShowColour] = useState(true);
-  const [customHex, setCustomHex] = useState('');
-  const pointCount = outline.length;
-  const usable = isUsableOutline(outline);
-  const customError = customHex.trim() && !normaliseHex(customHex) ? 'Örnek: #8FB3CF' : undefined;
-  const colourName = PALETTE.flatMap((g) => g.colours).find((c) => c.hex === colour)?.name ?? colour;
+  const [view, setView] = useState<'after' | 'before'>('after');
+  const [choosingKind, setChoosingKind] = useState(false);
+  const usable = isUsableOutline(draft);
+  const editingExisting = drawing !== null && active < surfaces.length && surfaces[active].label === drawing;
 
-  const addPoint = (point: [number, number]) =>
-    setOutline((o) => (o.length >= MAX_OUTLINE_POINTS ? o : [...o, point]));
+  const startDrawing = (label: string, index: number) => {
+    setActive(index);
+    setDraft([]);
+    setDrawing(label);
+    setChoosingKind(false);
+  };
+
+  const finishDrawing = () => {
+    if (!drawing || !usable) return;
+    const surface: PhotoSurface = { label: drawing, points: draft, hex: editingExisting ? surfaces[active].hex ?? colour.hex : colour.hex };
+    setSurfaces((list) => (editingExisting ? list.map((s, i) => (i === active ? surface : s)) : [...list, surface]));
+    if (!editingExisting) setActive(surfaces.length);
+    setDraft([]);
+    setDrawing(null);
+    setView('after');
+  };
+
+  const applyColour = (c: PickedColour) => {
+    onPickColour(c);
+    setSurfaces((list) => list.map((s, i) => (i === active ? { ...s, hex: c.hex } : s)));
+  };
+
+  const removeActive = () => {
+    setSurfaces((list) => list.filter((_, i) => i !== active));
+    setActive(0);
+  };
+
+  const strip = Array.from(new Set([colour.hex, ...quickColours])).slice(0, 12);
 
   return (
     <View style={{ gap: space.lg }}>
       {drawing ? (
         <Notice icon="hand-left">
-          Boyamak istediğin duvarın köşelerine sırayla dokun. En az 3 nokta gerekir. Kapı, pencere ve dolapların dışından geç.
+          “{drawing}” için köşelere sırayla dokun. En az 3 nokta gerekir. Kapı, pencere ve eşyaların dışından geç.
         </Notice>
       ) : null}
 
       <WallCanvas
         uri={photo.uri}
         aspect={photo.width / photo.height}
-        outline={outline}
-        colour={colour}
+        surfaces={surfaces}
+        active={active}
+        draft={draft}
         opacity={STRENGTHS.find((s) => s.value === strength)!.opacity}
-        showColour={showColour && !drawing}
-        drawing={drawing}
-        onAddPoint={addPoint}
+        showColour={view === 'after'}
+        drawing={!!drawing}
+        onAddPoint={(pt) => setDraft((d) => (d.length >= MAX_OUTLINE_POINTS ? d : [...d, pt]))}
       />
 
       {drawing ? (
         <View style={{ flexDirection: 'row', gap: space.sm, flexWrap: 'wrap' }}>
-          <Button label="Geri al" icon="arrow-undo" variant="secondary" disabled={outline.length === 0} onPress={() => setOutline((o) => o.slice(0, -1))} />
-          <Button label="Temizle" icon="close" variant="ghost" disabled={outline.length === 0} onPress={() => setOutline([])} />
-          <Button label="Duvarı boya" icon="color-fill" disabled={!usable} onPress={() => setDrawing(false)} />
+          <Button label="Geri al" icon="arrow-undo" variant="secondary" disabled={draft.length === 0} onPress={() => setDraft((d) => d.slice(0, -1))} />
+          <Button label="Temizle" icon="close" variant="ghost" disabled={draft.length === 0} onPress={() => setDraft([])} />
+          <Button label="Yüzeyi boya" icon="color-fill" variant="cta" disabled={!usable} onPress={finishDrawing} />
+          {surfaces.length > 0 ? <Button
+              label="Vazgeç"
+              variant="ghost"
+              onPress={() => {
+                setDrawing(null);
+                setDraft([]);
+                setActive((a) => Math.min(a, surfaces.length - 1));
+              }}
+            /> : null}
         </View>
       ) : (
         <>
-          <ChoiceChips
+          <Segmented
             options={[
-              { value: 'after', label: 'Yeni renk' },
-              { value: 'before', label: 'Şu anki hali' },
+              { value: 'after', label: 'Sonra', icon: 'color-fill' },
+              { value: 'before', label: 'Önce', icon: 'image' },
             ]}
-            value={showColour ? 'after' : 'before'}
-            onChange={(v) => setShowColour(v === 'after')}
+            value={view}
+            onChange={setView}
           />
-          <AppText variant="bodyStrong">Seçili renk: {colourName}</AppText>
-          <View accessibilityRole="radiogroup" style={{ flexDirection: 'row', flexWrap: 'wrap', gap: space.sm }}>
-            {PALETTE.flatMap((group) => group.colours).map((c) => (
-              <Swatch key={c.hex} hex={c.hex} name={c.name} selected={colour === c.hex} onPress={() => setColour(c.hex)} />
-            ))}
+
+          <View style={{ gap: space.sm }}>
+            <AppText variant="small" style={{ fontFamily: fonts.semibold }}>
+              Yüzeyler
+            </AppText>
+            <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={{ gap: space.sm }}>
+              {surfaces.map((s, i) => (
+                <PressableScale
+                  key={`${s.label}-${i}`}
+                  accessibilityRole="radio"
+                  accessibilityState={{ selected: i === active }}
+                  accessibilityLabel={s.label}
+                  onPress={() => setActive(i)}
+                  style={[styles.surfaceChip, { backgroundColor: i === active ? p.primary : p.surface, borderColor: i === active ? p.primary : p.border }]}>
+                  <View style={[styles.dot, { backgroundColor: s.hex ?? 'transparent', borderColor: p.border }]} />
+                  <AppText variant="small" style={{ color: i === active ? p.onPrimary : p.text, fontFamily: fonts.semibold }}>
+                    {s.label}
+                  </AppText>
+                </PressableScale>
+              ))}
+              {surfaces.length < MAX_SURFACES ? (
+                <PressableScale
+                  accessibilityRole="button"
+                  accessibilityLabel="Yüzey ekle"
+                  onPress={() => setChoosingKind((v) => !v)}
+                  style={[styles.surfaceChip, { backgroundColor: p.accentSoft, borderColor: 'transparent' }]}>
+                  <Icon name="add" size={18} color={p.accent} />
+                  <AppText variant="small" style={{ color: p.accent, fontFamily: fonts.semibold }}>
+                    Yüzey ekle
+                  </AppText>
+                </PressableScale>
+              ) : null}
+            </ScrollView>
+            {choosingKind ? (
+              <View style={{ flexDirection: 'row', flexWrap: 'wrap', gap: space.sm }}>
+                {SURFACE_KINDS.map((k) => (
+                  <Button key={k} label={k} variant="secondary" onPress={() => startDrawing(nextLabel(k, surfaces), surfaces.length)} />
+                ))}
+              </View>
+            ) : null}
           </View>
-          <TextField
-            label="Kendi renk kodun (isteğe bağlı)"
-            value={customHex}
-            placeholder="#8FB3CF"
-            autoCapitalize="none"
-            autoCorrect={false}
-            maxLength={7}
-            error={customError}
-            hint="Boya kataloğundaki HEX kodunu yazabilirsin."
-            onChangeText={(text) => {
-              setCustomHex(text);
-              const hex = normaliseHex(text);
-              if (hex) setColour(hex);
-            }}
-          />
-          <ChoiceChips
-            label="Renk yoğunluğu"
-            options={STRENGTHS.map(({ value, label }) => ({ value, label }))}
-            value={strength}
-            onChange={setStrength}
-          />
+
+          {surfaces[active] ? (
+            <View style={{ gap: space.sm }}>
+              <AppText variant="small" style={{ fontFamily: fonts.semibold }}>
+                “{surfaces[active].label}” için renk: {surfaces[active].hex ? toPicked(surfaces[active].hex!).name : 'yok'}
+              </AppText>
+              <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={{ gap: space.sm }} accessibilityRole="radiogroup">
+                {strip.map((hex) => {
+                  const c = toPicked(hex);
+                  const selected = surfaces[active].hex === hex;
+                  return (
+                    <PressableScale
+                      key={hex}
+                      accessibilityRole="radio"
+                      accessibilityState={{ selected }}
+                      accessibilityLabel={c.name}
+                      onPress={() => applyColour(c)}
+                      style={[styles.quick, { backgroundColor: hex, borderColor: selected ? p.text : p.border, borderWidth: selected ? 3 : StyleSheet.hairlineWidth }]}
+                    />
+                  );
+                })}
+              </ScrollView>
+              <AppText variant="caption" tone="muted">
+                Üstteki renk kataloğundan seçtiğin renk ve favorilerin burada görünür.
+              </AppText>
+            </View>
+          ) : null}
+
+          <ChoiceChips label="Renk yoğunluğu" options={STRENGTHS.map(({ value, label }) => ({ value, label }))} value={strength} onChange={setStrength} />
+
           <View style={{ flexDirection: 'row', gap: space.sm, flexWrap: 'wrap' }}>
-            <Button label="Çizimi düzenle" icon="create" variant="secondary" onPress={() => setDrawing(true)} />
+            {surfaces[active] ? (
+              <>
+                <Button label="Çizimi düzenle" icon="create" variant="secondary" onPress={() => startDrawing(surfaces[active].label, active)} />
+                <Button label="Yüzeyi sil" icon="trash" variant="ghost" onPress={removeActive} />
+              </>
+            ) : null}
             {onChangePhoto ? <Button label="Başka fotoğraf" icon="images" variant="ghost" onPress={onChangePhoto} /> : null}
           </View>
         </>
       )}
 
-      {onSaveOutline ? (
+      {onSaveSurfaces ? (
         <>
-          <Button
-            label="Çizimi projeye kaydet"
-            icon="save"
-            loading={saving}
-            disabled={!usable && pointCount > 0}
-            onPress={() => onSaveOutline(usable ? outline : null)}
-          />
+          <Button label="Projeye kaydet" icon="save" loading={saving} disabled={!!drawing} onPress={() => onSaveSurfaces(surfaces)} />
           {saveError ? (
             <Notice tone="danger" icon="alert-circle">
               {saveError}
@@ -159,8 +232,22 @@ export function ColourStudio({
       ) : null}
 
       <Notice icon="information-circle">
-        Bu bir önizlemedir. Ekrandaki renk; ışığa, ekran ayarına ve boyanın parlaklığına göre gerçekte farklı görünür. Karar vermeden önce boyanın renk kartına bak ya da küçük bir alana deneme yap.
+        Bu bir önizlemedir: renk, fotoğrafın üstüne yarı saydam bir katman olarak konur. Gerçekte renk ışığa, ekran ayarına ve boyanın parlaklığına göre farklı görünür. Karar vermeden önce renk kartına bak ya da küçük bir alana deneme yap.
       </Notice>
     </View>
   );
 }
+
+const styles = StyleSheet.create({
+  surfaceChip: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 6,
+    borderRadius: radius.pill,
+    borderWidth: StyleSheet.hairlineWidth,
+    paddingHorizontal: space.md,
+    minHeight: 40,
+  },
+  dot: { width: 16, height: 16, borderRadius: 8, borderWidth: StyleSheet.hairlineWidth },
+  quick: { width: 48, height: 48, borderRadius: 16 },
+});

@@ -332,6 +332,40 @@ export function Disclosure({ title, children, initiallyOpen = false }: { title: 
   );
 }
 
+/** Segmented tabs inside a screen. */
+export function Segmented<T extends string>({
+  options,
+  value,
+  onChange,
+}: {
+  options: { value: T; label: string; icon?: IconName }[];
+  value: T;
+  onChange: (v: T) => void;
+}) {
+  const p = usePalette();
+  return (
+    <View style={[styles.segmented, { backgroundColor: p.surfaceMuted }]} accessibilityRole="tablist">
+      {options.map((o) => {
+        const active = o.value === value;
+        return (
+          <PressableScale
+            key={o.value}
+            accessibilityRole="tab"
+            accessibilityState={{ selected: active }}
+            accessibilityLabel={o.label}
+            onPress={() => onChange(o.value)}
+            style={[styles.segment, active && [{ backgroundColor: p.surface }, shadowOf(p)]]}>
+            {o.icon ? <Icon name={o.icon} size={16} color={active ? p.text : p.textMuted} /> : null}
+            <AppText variant="small" numberOfLines={1} style={{ color: active ? p.text : p.textMuted, fontFamily: active ? fonts.bold : fonts.medium }}>
+              {o.label}
+            </AppText>
+          </PressableScale>
+        );
+      })}
+    </View>
+  );
+}
+
 /** Bottom bar for wizards: back and next. */
 export function WizardNav({
   onBack,
@@ -402,6 +436,8 @@ const styles = StyleSheet.create({
   tileRow: { flexDirection: 'row', flexWrap: 'wrap', gap: space.md },
   disclosure: { borderRadius: radius.lg, borderWidth: StyleSheet.hairlineWidth, overflow: 'hidden' },
   disclosureHead: { flexDirection: 'row', alignItems: 'center', gap: space.sm, padding: space.lg, minHeight: 56 },
+  segmented: { flexDirection: 'row', borderRadius: radius.pill, padding: 4, gap: 4 },
+  segment: { flex: 1, minHeight: 40, borderRadius: radius.pill, flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 6, paddingHorizontal: space.sm },
   wizardNav: { flexDirection: 'row', gap: space.md, alignItems: 'center' },
   backBtn: { width: 56, height: 56, borderRadius: 28, alignItems: 'center', justifyContent: 'center' },
   nextBtn: {

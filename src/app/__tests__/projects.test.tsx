@@ -201,7 +201,7 @@ describe('Malzeme ve maliyet', () => {
     expect(await screen.findByTestId('cost-total')).toHaveTextContent('4.200,00 ₺');
     expect(screen.getByText('Kesin fiyat: 1.200,00 ₺')).toBeTruthy();
     expect(screen.getByText('Tahmini: 3.000,00 ₺')).toBeTruthy();
-    expect(screen.getByText('Bütçe aşımı')).toBeTruthy();
+    expect(screen.getByText(/Bütçe aşımı/)).toBeTruthy();
     expect(screen.getByText(/1 kalemin fiyatı girilmedi/)).toBeTruthy();
   });
 
@@ -238,7 +238,16 @@ describe('Maliyet Hesapla (no account needed)', () => {
   it('adds up the groups', async () => {
     await renderRouter('./src/app', { initialUrl: '/cost' });
     await fireEvent.changeText(await screen.findByTestId('cost-paint'), '2500');
+    expect(screen.queryByTestId('cost-labor')).toBeNull();
+    await fireEvent.press(screen.getByText('Usta boyayacak'));
     await fireEvent.changeText(screen.getByTestId('cost-labor'), '4000,50');
     expect(screen.getByTestId('cost-total')).toHaveTextContent('6.500,50 ₺');
+  });
+
+  it('prices the litres handed over from the paint wizard', async () => {
+    await renderRouter('./src/app', { initialUrl: '/cost?paint=13.9&primer=0' });
+    expect(await screen.findByText('Hesaplanan: 13,9 L boya')).toBeTruthy();
+    await fireEvent.changeText(screen.getByTestId('cost-paint'), '200');
+    expect(screen.getByTestId('cost-total')).toHaveTextContent('2.780,00 ₺');
   });
 });

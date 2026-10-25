@@ -1,69 +1,178 @@
-import { Stack, useLocalSearchParams } from 'expo-router';
+import { useLocalSearchParams } from 'expo-router';
 import { useState } from 'react';
+import { View } from 'react-native';
 
+import { CompareColours, ColourExplorer, SelectedColour, SwatchCard, toPicked, type PickedColour } from '@/features/colour/colour-explorer';
 import { ColourStudio } from '@/features/colour/colour-studio';
-import type { ProjectPhoto } from '@/features/photos/api';
+import { useFavourites } from '@/features/colour/favourites';
 import type { PickedPhoto } from '@/features/photos/picker';
 import { PhotoSourceButtons } from '@/features/photos/photo-source';
-import { useProjectPhoto, useSaveOutline } from '@/features/photos/queries';
-import { AppText, Card, ErrorState, LoadingState, Notice, Screen } from '@/ui/components';
+import { useProjectPhoto, useSaveSurfaces } from '@/features/photos/queries';
+import { FeatureHeader, Segmented, SectionTitle, SwatchFan } from '@/ui/brand';
+import { AppText, Card, EmptyState, ErrorState, LoadingState, Notice, Screen, useScrollToTop } from '@/ui/components';
+import { space } from '@/ui/theme';
+
+type Tab = 'colours' | 'photo' | 'favourites';
+
+const MAX_COMPARE = 3;
 
 /** Try colours on a photo that never leaves the phone. */
-function LocalColour() {
+function LocalPhoto({ colour, quickColours, onPickColour }: { colour: PickedColour; quickColours: string[]; onPickColour: (c: PickedColour) => void }) {
   const [photo, setPhoto] = useState<PickedPhoto | null>(null);
-
   if (!photo) {
     return (
       <>
         <Card>
-          <AppText variant="heading">Duvarının fotoğrafını ekle</AppText>
-          <AppText tone="muted">
-            Boyamak istediğin duvarı gün ışığında, karşıdan çek. Fotoğraf telefonunda kalır; hiçbir yere yüklenmez.
-          </AppText>
+          <View style={{ flexDirection: 'row', alignItems: 'center', gap: space.md }}>
+            <View style={{ flex: 1, gap: space.xs }}>
+              <AppText variant="heading">Odanın fotoğrafını ekle</AppText>
+              <AppText tone="muted">
+                Duvarı gün ışığında, karşıdan çek. Sonra duvar, tavan ya da dolap gibi yüzeyleri çizip her birine ayrı renk dene. Fotoğraf telefonunda kalır.
+              </AppText>
+            </View>
+            <SwatchFan colours={[colour.hex, '#F1EDE4', '#2F5D6B', '#C08A6B']} size={64} />
+          </View>
         </Card>
         <PhotoSourceButtons onPicked={setPhoto} />
       </>
     );
   }
-  return <ColourStudio key={photo.uri} photo={photo} onChangePhoto={() => setPhoto(null)} />;
+  return (
+    <ColourStudio
+      key={photo.uri}
+      photo={photo}
+      colour={colour}
+      quickColours={quickColours}
+      onPickColour={onPickColour}
+      onChangePhoto={() => setPhoto(null)}
+    />
+  );
 }
 
-/** Same tool on a photo saved in a project; the outline can be saved back. */
-function ProjectPhotoColour({ photoId }: { photoId: string }) {
+/** Same tool on a photo saved in a project; the surfaces can be saved back. */
+function ProjectPhoto({ photoId, colour, quickColours, onPickColour }: { photoId: string; colour: PickedColour; quickColours: string[]; onPickColour: (c: PickedColour) => void }) {
   const query = useProjectPhoto(photoId);
+  const save = useSaveSurfaces({ id: photoId, project_id: query.data?.project_id ?? '' });
+  const [saved, setSaved] = useState(false);
   if (query.isPending) return <LoadingState label="Fotoğraf yükleniyor…" />;
   if (query.isError || !query.data.url) {
     return <ErrorState message="Fotoğraf yüklenemedi. Silinmiş olabilir ya da internet bağlantın yok." onRetry={() => query.refetch()} />;
   }
-  return <SavedPhotoStudio photo={query.data} />;
-}
-
-function SavedPhotoStudio({ photo }: { photo: ProjectPhoto }) {
-  const save = useSaveOutline(photo);
-  const [saved, setSaved] = useState(false);
+  const photo = query.data;
   return (
     <>
       <ColourStudio
         photo={{ uri: photo.url!, width: photo.width, height: photo.height }}
-        initialOutline={photo.wall_outline}
-        onSaveOutline={(outline) => {
+        colour={colour}
+        quickColours={quickColours}
+        onPickColour={onPickColour}
+        initialSurfaces={photo.surfaces}
+        onSaveSurfaces={(surfaces) => {
           setSaved(false);
-          save.mutate(outline, { onSuccess: () => setSaved(true) });
+          save.mutate(surfaces, { onSuccess: () => setSaved(true) });
         }}
         saving={save.isPending}
         saveError={save.isError ? save.error.message : null}
       />
-      {saved ? <Notice icon="checkmark-circle">Çizim projeye kaydedildi.</Notice> : null}
+      {saved ? (
+        <Notice tone="success" icon="checkmark-circle">
+          Yüzeyler ve renkler projeye kaydedildi.
+        </Notice>
+      ) : null}
     </>
   );
 }
 
 export default function ColourScreen() {
   const { photoId } = useLocalSearchParams<{ photoId?: string }>();
+  const scrollToTop = useScrollToTop();
+  const [tab, setTab] = useState<Tab>(photoId ? 'photo' : 'colours');
+  const [colour, setColour] = useState<PickedColour>(() => toPicked('#A3B49A'));
+  const [recent, setRecent] = useState<string[]>([]);
+  const [compare, setCompare] = useState<string[]>([]);
+  const favourites = useFavourites();
+
+  const pick = (c: PickedColour) => {
+    setColour({ hex: c.hex, name: c.name });
+    setRecent((r) => [c.hex, ...r.filter((h) => h !== c.hex)].slice(0, 8));
+  };
+  const toggleCompare = (hex: string) =>
+    setCompare((list) => (list.includes(hex) ? list.filter((h) => h !== hex) : [...list, hex].slice(-MAX_COMPARE)));
+  const quickColours = [...favourites.list, ...recent];
+
+  const selected = (
+    <SelectedColour
+      colour={colour}
+      favourite={favourites.isFavourite(colour.hex)}
+      comparing={compare.includes(colour.hex)}
+      onToggleFavourite={() => favourites.toggle(colour.hex)}
+      onToggleCompare={() => toggleCompare(colour.hex)}
+      onTryOnWall={() => {
+        setTab('photo');
+        scrollToTop();
+      }}
+      onSelect={pick}
+    />
+  );
+
   return (
     <Screen edges={['bottom']}>
-      <Stack.Screen options={{ title: 'Rengini Dene' }} />
-      {photoId ? <ProjectPhotoColour photoId={photoId} /> : <LocalColour />}
+      <FeatureHeader feature="color" icon="color-palette" title="Renk Stüdyosu" subtitle="Keşfet, karşılaştır, duvarında dene." />
+      <Segmented
+        options={[
+          { value: 'colours', label: 'Renkler', icon: 'color-palette' },
+          { value: 'photo', label: 'Duvarda', icon: 'camera' },
+          { value: 'favourites', label: `Favoriler${favourites.list.length ? ` (${favourites.list.length})` : ''}`, icon: 'heart' },
+        ]}
+        value={tab}
+        onChange={setTab}
+      />
+
+      {compare.length > 0 ? (
+        <View style={{ gap: space.sm }}>
+          <SectionTitle title={`Karşılaştır (${compare.length}/${MAX_COMPARE})`} />
+          <CompareColours hexes={compare} onRemove={toggleCompare} onSelect={pick} />
+        </View>
+      ) : null}
+
+      {tab === 'colours' ? (
+        <>
+          {selected}
+          <SectionTitle title="Renk kataloğu" />
+          <ColourExplorer selected={colour.hex} favourites={favourites.list} onSelect={pick} />
+        </>
+      ) : null}
+
+      {tab === 'photo' ? (
+        photoId ? (
+          <ProjectPhoto photoId={photoId} colour={colour} quickColours={quickColours} onPickColour={pick} />
+        ) : (
+          <LocalPhoto colour={colour} quickColours={quickColours} onPickColour={pick} />
+        )
+      ) : null}
+
+      {tab === 'favourites' ? (
+        favourites.list.length === 0 ? (
+          <EmptyState icon="heart" title="Henüz favorin yok" message="Beğendiğin renklerde kalp simgesine dokun; burada toplansın ve karşılaştırabilesin." />
+        ) : (
+          <View style={{ flexDirection: 'row', flexWrap: 'wrap', gap: space.sm }}>
+            {favourites.list.map((hex) => (
+              <SwatchCard
+                key={hex}
+                colour={toPicked(hex)}
+                width={108}
+                favourite
+                selected={colour.hex === hex}
+                onPress={() => {
+                  pick(toPicked(hex));
+                  setTab('colours');
+                  scrollToTop();
+                }}
+              />
+            ))}
+          </View>
+        )
+      ) : null}
     </Screen>
   );
 }

@@ -169,6 +169,24 @@ export type GuideArticleRow = {
 /** Normalised wall outline: points with 0 <= x, y <= 1. */
 export type WallOutline = [number, number][];
 
+/** One outlined surface on a photo and the colour tried on it. */
+export type PhotoSurface = { label: string; points: WallOutline; hex: string | null };
+
+/**
+ * Stored in project_photos.wall_outline. Older rows hold a single WallOutline;
+ * newer rows hold a list of surfaces.
+ */
+export type StoredOutline = WallOutline | PhotoSurface[];
+
+export type ProjectColourRow = {
+  id: string;
+  project_id: string;
+  hex: string;
+  name: string;
+  surface: string | null;
+  created_at: string;
+};
+
 export type ProjectPhotoRow = {
   id: string;
   project_id: string;
@@ -178,7 +196,7 @@ export type ProjectPhotoRow = {
   width: number;
   height: number;
   byte_size: number;
-  wall_outline: WallOutline | null;
+  wall_outline: StoredOutline | null;
   created_at: string;
 };
 
@@ -358,6 +376,11 @@ export type Database = {
         Pick<ProjectPhotoRow, 'id' | 'project_id' | 'storage_path' | 'width' | 'height' | 'byte_size'> &
           Partial<Pick<ProjectPhotoRow, 'room_id' | 'wall_outline'>>,
         Partial<Pick<ProjectPhotoRow, 'room_id' | 'wall_outline'>>
+      >;
+      project_colours: Table<
+        ProjectColourRow,
+        Pick<ProjectColourRow, 'project_id' | 'hex' | 'name'> & Partial<Pick<ProjectColourRow, 'surface'>>,
+        Record<string, never>
       >;
       pro_profiles: Table<
         ProProfileRow,

@@ -28,7 +28,7 @@ function PhotoTile({ photo, onDelete, deleting }: { photo: ProjectPhoto; onDelet
         )}
       </Pressable>
       <View style={{ flexDirection: 'row', alignItems: 'center', gap: space.xs }}>
-        <View style={{ flex: 1 }}>{photo.wall_outline ? <Badge label="Duvar çizili" tone="primary" /> : null}</View>
+        <View style={{ flex: 1 }}>{photo.surfaces.length > 0 ? <Badge label={`${photo.surfaces.length} yüzey çizili`} tone="primary" /> : null}</View>
         {confirming ? (
           <>
             <Pressable accessibilityRole="button" accessibilityLabel="Silmekten vazgeç" onPress={() => setConfirming(false)} style={{ padding: space.sm }}>

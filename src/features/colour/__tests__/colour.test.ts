@@ -1,4 +1,4 @@
-import { isUsableOutline, outlineArea, parseOutline, toNormalised, toSvgPoints } from '@/features/colour/outline';
+import { isUsableOutline, outlineArea, parseOutline, parseSurfaces, toNormalised, toSvgPoints } from '@/features/colour/outline';
 import { isLight, normaliseHex, PALETTE } from '@/features/colour/palette';
 
 describe('outline', () => {
@@ -46,5 +46,31 @@ describe('palette', () => {
   it('tells light from dark', () => {
     expect(isLight('#F7F7F4')).toBe(true);
     expect(isLight('#25324A')).toBe(false);
+  });
+});
+
+describe('parseSurfaces', () => {
+  const square = [[0.1, 0.1], [0.9, 0.1], [0.9, 0.9], [0.1, 0.9]];
+
+  it('reads the older single-outline shape as one wall', () => {
+    expect(parseSurfaces(square)).toEqual([{ label: 'Duvar', points: square, hex: null }]);
+  });
+
+  it('reads surfaces and drops broken ones', () => {
+    expect(
+      parseSurfaces([
+        { label: 'Tavan', points: square, hex: '#A3B49A' },
+        { label: 'Çizgi', points: [[0, 0], [1, 1]], hex: '#A3B49A' },
+        { label: '', points: square, hex: 'kırmızı' },
+      ]),
+    ).toEqual([
+      { label: 'Tavan', points: square, hex: '#A3B49A' },
+      { label: 'Yüzey', points: square, hex: null },
+    ]);
+  });
+
+  it('returns no surfaces for empty or invalid data', () => {
+    expect(parseSurfaces(null)).toEqual([]);
+    expect(parseSurfaces('x')).toEqual([]);
   });
 });

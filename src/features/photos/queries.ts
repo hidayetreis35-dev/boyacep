@@ -1,9 +1,9 @@
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 
 import { useSession } from '@/features/account/session';
-import type { WallOutline } from '@/lib/database.types';
+import type { PhotoSurface } from '@/lib/database.types';
 
-import { deleteProjectPhoto, getProjectPhoto, listProjectPhotos, saveWallOutline, uploadProjectPhoto, type ProjectPhoto } from './api';
+import { deleteProjectPhoto, getProjectPhoto, listProjectPhotos, saveSurfaces, uploadProjectPhoto, type ProjectPhoto } from './api';
 import type { PickedPhoto } from './picker';
 
 export const photoKeys = {
@@ -50,11 +50,11 @@ export function useDeletePhoto(projectId: string) {
   });
 }
 
-export function useSaveOutline(photo: Pick<ProjectPhoto, 'id' | 'project_id'>) {
+export function useSaveSurfaces(photo: Pick<ProjectPhoto, 'id' | 'project_id'>) {
   const { db } = useSession();
   const queryClient = useQueryClient();
   return useMutation({
-    mutationFn: (outline: WallOutline | null) => saveWallOutline(db!, photo.id, outline),
+    mutationFn: (surfaces: PhotoSurface[]) => saveSurfaces(db!, photo.id, surfaces),
     onSuccess: async () => {
       await queryClient.invalidateQueries({ queryKey: photoKeys.one(photo.id) });
       await queryClient.invalidateQueries({ queryKey: photoKeys.project(photo.project_id) });

@@ -1,7 +1,7 @@
 import { randomUUID } from 'expo-crypto';
 
-import { parseOutline } from '@/features/colour/outline';
-import type { ProjectPhotoRow, WallOutline } from '@/lib/database.types';
+import { parseSurfaces } from '@/features/colour/outline';
+import type { PhotoSurface, ProjectPhotoRow } from '@/lib/database.types';
 import type { DbClient } from '@/lib/supabase';
 
 import type { PickedPhoto } from './picker';
@@ -9,7 +9,8 @@ import { MAX_PHOTO_BYTES, photoErrorMessage, photoPath } from './prepare';
 
 export const PHOTO_BUCKET = 'project-photos';
 
-export type ProjectPhoto = ProjectPhotoRow & { url: string | null };
+/** A photo with its outlined surfaces parsed from wall_outline. */
+export type ProjectPhoto = Omit<ProjectPhotoRow, 'wall_outline'> & { surfaces: PhotoSurface[]; url: string | null };
 
 /** The project's photos with short-lived signed links (the bucket is private). */
 export async function listProjectPhotos(db: DbClient, projectId: string): Promise<ProjectPhoto[]> {
@@ -26,7 +27,7 @@ export async function listProjectPhotos(db: DbClient, projectId: string): Promis
     .createSignedUrls(data.map((p) => p.storage_path), 60 * 60);
   if (signError) throw new Error(signError.message);
   const urls = new Map(signed.map((s) => [s.path, s.signedUrl]));
-  return data.map((p) => ({ ...p, wall_outline: parseOutline(p.wall_outline), url: urls.get(p.storage_path) ?? null }));
+  return data.map(({ wall_outline, ...p }) => ({ ...p, surfaces: parseSurfaces(wall_outline), url: urls.get(p.storage_path) ?? null }));
 }
 
 export async function getProjectPhoto(db: DbClient, photoId: string): Promise<ProjectPhoto> {
@@ -34,7 +35,8 @@ export async function getProjectPhoto(db: DbClient, photoId: string): Promise<Pr
   if (error) throw new Error(error.message);
   const { data: signed, error: signError } = await db.storage.from(PHOTO_BUCKET).createSignedUrl(data.storage_path, 60 * 60);
   if (signError) throw new Error(signError.message);
-  return { ...data, wall_outline: parseOutline(data.wall_outline), url: signed.signedUrl };
+  const { wall_outline, ...row } = data;
+  return { ...row, surfaces: parseSurfaces(wall_outline), url: signed.signedUrl };
 }
 
 /** Uploads the file first, then records it; removes the file again if the record fails. */
@@ -70,8 +72,11 @@ export async function uploadProjectPhoto(
   return data;
 }
 
-export async function saveWallOutline(db: DbClient, photoId: string, outline: WallOutline | null): Promise<void> {
-  const { error } = await db.from('project_photos').update({ wall_outline: outline }).eq('id', photoId);
+export async function saveSurfaces(db: DbClient, photoId: string, surfaces: PhotoSurface[]): Promise<void> {
+  const { error } = await db
+    .from('project_photos')
+    .update({ wall_outline: surfaces.length > 0 ? surfaces : null })
+    .eq('id', photoId);
   if (error) throw new Error('Çizim kaydedilemedi. İnternet bağlantını kontrol et.');
 }
 

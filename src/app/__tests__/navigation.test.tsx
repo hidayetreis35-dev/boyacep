@@ -16,7 +16,7 @@ describe('first launch', () => {
     expect(screen.getByText('Başla')).toBeTruthy();
     await fireEvent.press(screen.getByLabelText('Ustayım'));
     await fireEvent.press(screen.getByText('Başla'));
-    expect(await screen.findByText('Boyanı planla, hesapla, doğru malzemeyi al.')).toBeTruthy();
+    expect(await screen.findByText('Evini boyamanın en kolay yolu')).toBeTruthy();
     expect(JSON.parse((await AsyncStorage.getItem('boyacep.roles.v1')) ?? '[]')).toEqual(['pro']);
   });
 });
@@ -28,11 +28,11 @@ describe('app navigation', () => {
 
   it('shows the six home actions and opens the calculator', async () => {
     await renderRouter('./src/app', { initialUrl: '/' });
-    await screen.findByText('Boyanı planla, hesapla, doğru malzemeyi al.');
-    for (const title of ['Boya Hesapla', 'Rengini Dene', 'Maliyet Hesapla', 'Duvarını İncele', 'Boya Rehberi', 'Ustaya Sor']) {
+    await screen.findByText('Evini boyamanın en kolay yolu');
+    for (const title of ['Ne Kadar Boya?', 'Renk Stüdyosu', 'Maliyet Hesapla', 'Duvarını İncele', 'Boya Rehberi', 'Ustaya Sor']) {
       expect(screen.getAllByText(title).length).toBeGreaterThan(0);
     }
-    await fireEvent.press(screen.getByLabelText('Boya Hesapla'));
+    await fireEvent.press(screen.getByLabelText('Ne Kadar Boya?'));
     expect(screen).toHavePathname('/calculate');
   });
 
@@ -61,9 +61,11 @@ describe('app navigation', () => {
 
   it('opens the colour preview without an account', async () => {
     await renderRouter('./src/app', { initialUrl: '/' });
-    await fireEvent.press(await screen.findByLabelText('Rengini Dene'));
+    await fireEvent.press(await screen.findByLabelText('Renk Stüdyosu'));
     expect(screen).toHavePathname('/colour');
-    expect(screen.getByText('Duvarının fotoğrafını ekle')).toBeTruthy();
+    expect(screen.getByText('Renk kataloğu')).toBeTruthy();
+    await fireEvent.press(screen.getByLabelText('Duvarda'));
+    expect(screen.getByText('Odanın fotoğrafını ekle')).toBeTruthy();
     expect(screen.getByText('Fotoğraf çek')).toBeTruthy();
   });
 
