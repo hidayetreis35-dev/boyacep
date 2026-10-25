@@ -430,7 +430,9 @@ const styles = StyleSheet.create({
     borderWidth: 2,
     minHeight: 72,
   },
-  optionTile: { gap: space.sm, padding: space.md + 2, borderRadius: radius.lg, borderWidth: 2, minHeight: 132, height: '100%' },
+  // flexGrow (not height: '100%') evens out tiles in a row: phones resolve the
+  // percentage against the screen and stretch every tile to full height.
+  optionTile: { flexGrow: 1, gap: space.sm, padding: space.md + 2, borderRadius: radius.lg, borderWidth: 2, minHeight: 120 },
   optionIcon: { width: 44, height: 44, borderRadius: 14, alignItems: 'center', justifyContent: 'center' },
   optionSwatch: { width: 44, height: 44, borderRadius: 14, borderWidth: StyleSheet.hairlineWidth },
   optionBadge: { alignSelf: 'flex-start', borderRadius: radius.pill, paddingHorizontal: space.sm, paddingVertical: 2, marginTop: 2 },
