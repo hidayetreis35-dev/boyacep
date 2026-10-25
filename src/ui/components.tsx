@@ -18,6 +18,7 @@ import {
   Text,
   TextInput,
   View,
+  type TextInputProps,
   type HostInstance,
   type ScrollViewInstance,
   type StyleProp,
@@ -154,15 +155,7 @@ export function Button({
   );
 }
 
-export function NumberField({
-  label,
-  value,
-  onChangeText,
-  unit,
-  error,
-  hint,
-  testID,
-}: {
+type FieldProps = {
   label: string;
   value: string;
   onChangeText: (text: string) => void;
@@ -170,7 +163,24 @@ export function NumberField({
   error?: string;
   hint?: string;
   testID?: string;
-}) {
+  placeholder?: string;
+};
+
+export function TextField({
+  label,
+  value,
+  onChangeText,
+  unit,
+  error,
+  hint,
+  testID,
+  placeholder,
+  ...inputProps
+}: FieldProps &
+  Pick<
+    TextInputProps,
+    'keyboardType' | 'inputMode' | 'autoCapitalize' | 'autoComplete' | 'autoCorrect' | 'maxLength' | 'onSubmitEditing' | 'textContentType' | 'autoFocus'
+  >) {
   const p = usePalette();
   const [focused, setFocused] = useState(false);
   return (
@@ -191,10 +201,10 @@ export function NumberField({
           onChangeText={onChangeText}
           onFocus={() => setFocused(true)}
           onBlur={() => setFocused(false)}
-          keyboardType="decimal-pad"
-          inputMode="decimal"
+          placeholder={placeholder}
           placeholderTextColor={p.textMuted}
           style={[styles.input, type.bodyStrong as TextStyle, { color: p.text }, webNoOutline]}
+          {...inputProps}
         />
         {unit ? (
           <AppText variant="small" tone="muted">
@@ -213,6 +223,10 @@ export function NumberField({
       ) : null}
     </View>
   );
+}
+
+export function NumberField(props: FieldProps) {
+  return <TextField keyboardType="decimal-pad" inputMode="decimal" {...props} />;
 }
 
 /** Single choice from a small set, shown as chips. */
@@ -356,6 +370,27 @@ export function EmptyState({ icon, title, message, action }: { icon: IconName; t
       </AppText>
       {action}
     </View>
+  );
+}
+
+export function LoadingState({ label = 'Yükleniyor…' }: { label?: string }) {
+  const p = usePalette();
+  return (
+    <View style={styles.empty} accessibilityRole="progressbar" accessibilityLabel={label}>
+      <ActivityIndicator color={p.primary} size="large" />
+      <AppText tone="muted">{label}</AppText>
+    </View>
+  );
+}
+
+export function ErrorState({ message, onRetry }: { message: string; onRetry?: () => void }) {
+  return (
+    <EmptyState
+      icon="cloud-offline"
+      title="Bir sorun oluştu"
+      message={message}
+      action={onRetry ? <Button label="Tekrar dene" icon="refresh" variant="secondary" onPress={onRetry} /> : undefined}
+    />
   );
 }
 

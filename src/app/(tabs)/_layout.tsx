@@ -1,6 +1,9 @@
 import Ionicons from '@expo/vector-icons/Ionicons';
+import { Redirect } from 'expo-router';
 import { Tabs } from 'expo-router/js-tabs';
-import type { ComponentProps } from 'react';
+import { useEffect, useState, type ComponentProps } from 'react';
+
+import { readLocalRoles } from '@/features/account/local-role';
 
 import { usePalette } from '@/ui/theme';
 
@@ -15,6 +18,13 @@ const TABS: { name: string; title: string; icon: IconName }[] = [
 
 export default function TabLayout() {
   const p = usePalette();
+  // First launch: ask homeowner or painter before anything else.
+  const [firstLaunch, setFirstLaunch] = useState<boolean | null>(null);
+  useEffect(() => {
+    readLocalRoles().then((roles) => setFirstLaunch(roles === null));
+  }, []);
+
+  if (firstLaunch) return <Redirect href="/welcome" />;
   return (
     <Tabs
       screenOptions={{

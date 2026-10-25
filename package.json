@@ -5,6 +5,9 @@
   "dependencies": {
     "@expo/ui": "~58.0.23",
     "@expo/vector-icons": "^15.1.1",
+    "@react-native-async-storage/async-storage": "2.2.0",
+    "@supabase/supabase-js": "^2.118.0",
+    "@tanstack/react-query": "^5.104.5",
     "expo": "~58.0.19",
     "expo-constants": "~58.0.13",
     "expo-device": "~58.0.5",
@@ -46,7 +49,8 @@
     "lint": "expo lint",
     "test": "jest",
     "typecheck": "tsc --noEmit",
-    "check": "npm run typecheck && npm run lint && npm test -- --ci"
+    "check": "npm run typecheck && npm run lint && npm test -- --ci",
+    "test:db": "supabase/tests/run.sh"
   },
   "private": true,
   "jest": {

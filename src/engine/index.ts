@@ -10,3 +10,4 @@ export {
   type ProjectTotals,
 } from './project';
 export { quickEstimate, HOUSE_TYPES, WALL_FACTOR, type HouseType, type QuickEstimate, type QuickInput } from './quick';
+export { round } from './round';
