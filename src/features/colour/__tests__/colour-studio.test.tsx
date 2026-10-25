@@ -52,6 +52,30 @@ describe('ColourStudio', () => {
     expect(onSave).toHaveBeenCalledWith([{ label: 'Duvar', points: [], seeds: [[0.25, 0.2667], [0.75, 0.2667]], tolerance: 24, hex: '#A3B49A' }]);
   });
 
+  it('keeps out spots tapped in remove mode, and undoes them', async () => {
+    const onSave = jest.fn();
+    await render(<Studio onSave={onSave} />);
+    await layout();
+    await tap(200, 200, 'Fotoğraf: boyanacak yere dokun');
+    await fireEvent.press(screen.getByLabelText('Çıkar'));
+    await tap(200, 20, 'Fotoğraf: boyanacak yere dokun');
+    await tap(380, 20, 'Fotoğraf: boyanacak yere dokun');
+    await fireEvent.press(screen.getByText('Geri al'));
+    await fireEvent.press(paint());
+    await fireEvent.press(screen.getByText('Projeye kaydet'));
+    expect(onSave).toHaveBeenCalledWith([
+      { label: 'Duvar', points: [], seeds: [[0.5, 0.6667]], excludes: [[0.5, 0.0667]], tolerance: 15, hex: '#A3B49A' },
+    ]);
+  });
+
+  it('remove taps alone cannot paint a surface', async () => {
+    await render(<Studio />);
+    await layout();
+    await fireEvent.press(screen.getByLabelText('Çıkar'));
+    await tap(200, 20, 'Fotoğraf: boyanacak yere dokun');
+    expect(paint()).toBeDisabled();
+  });
+
   it('needs three corners before a surface can be painted', async () => {
     await render(<Studio />);
     await layout();

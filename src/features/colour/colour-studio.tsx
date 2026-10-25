@@ -23,6 +23,9 @@ type Strength = (typeof STRENGTHS)[number]['value'];
 
 const SURFACE_KINDS = ['Duvar', 'Tavan', 'Dolap', 'Kapı', 'Diğer'] as const;
 
+/** A tap while picking: a corner, a spot to include, or (tap mode) a spot to keep out. */
+type Tap = { point: [number, number]; remove: boolean };
+
 function nextLabel(kind: string, surfaces: PhotoSurface[]): string {
   const same = surfaces.filter((s) => s.label.startsWith(kind)).length;
   return same === 0 ? kind : `${kind} ${same + 1}`;
@@ -62,13 +65,16 @@ export function ColourStudio({
   const [surfaces, setSurfaces] = useState<PhotoSurface[]>(initialSurfaces ?? []);
   const [active, setActive] = useState(0);
   const [drawing, setDrawing] = useState<string | null>(initialSurfaces?.length ? null : 'Duvar');
-  const [draft, setDraft] = useState<WallOutline>([]);
+  const [taps, setTaps] = useState<Tap[]>([]);
   const [mode, setMode] = useState<SelectMode>('tap');
+  const [removing, setRemoving] = useState(false);
   const [toleranceKey, setToleranceKey] = useState<ToleranceKey>('medium');
   const tolerance = TOLERANCES.find((t) => t.value === toleranceKey)?.tolerance ?? DEFAULT_TOLERANCE;
   const [strength, setStrength] = useState<Strength>('strong');
   const [view, setView] = useState<'after' | 'before'>('after');
   const [choosingKind, setChoosingKind] = useState(false);
+  const draft: WallOutline = taps.filter((t) => !t.remove).map((t) => t.point);
+  const excludes: WallOutline = taps.filter((t) => t.remove).map((t) => t.point);
   const usable = mode === 'tap' ? draft.length > 0 : isUsableOutline(draft);
   const editingExisting = drawing !== null && active < surfaces.length && surfaces[active].label === drawing;
 
@@ -77,34 +83,43 @@ export function ColourStudio({
     setActive(index);
     if (existing?.seeds?.length) {
       setMode('tap');
-      setDraft(existing.seeds);
+      setTaps([...existing.seeds.map((point) => ({ point, remove: false })), ...(existing.excludes ?? []).map((point) => ({ point, remove: true }))]);
       setToleranceKey(toleranceKeyOf(existing.tolerance ?? DEFAULT_TOLERANCE));
     } else if (existing) {
       setMode('corners');
-      setDraft(existing.points);
+      setTaps(existing.points.map((point) => ({ point, remove: false })));
     } else {
       setMode('tap');
-      setDraft([]);
+      setTaps([]);
     }
+    setRemoving(false);
     setDrawing(label);
     setChoosingKind(false);
   };
 
   const switchMode = (next: SelectMode) => {
     setMode(next);
-    setDraft([]);
+    setTaps([]);
+    setRemoving(false);
   };
 
-  const addPoint = (pt: [number, number]) =>
-    setDraft((d) => (d.length >= (mode === 'tap' ? MAX_SEEDS : MAX_OUTLINE_POINTS) ? d : [...d, pt]));
+  const addPoint = (point: [number, number]) => {
+    const remove = mode === 'tap' && removing;
+    const limit = mode === 'tap' ? MAX_SEEDS : MAX_OUTLINE_POINTS;
+    setTaps((list) => (list.filter((t) => t.remove === remove).length >= limit ? list : [...list, { point, remove }]));
+  };
 
   const finishDrawing = () => {
     if (!drawing || !usable) return;
     const hex = editingExisting ? surfaces[active].hex ?? colour.hex : colour.hex;
-    const surface: PhotoSurface = mode === 'tap' ? { label: drawing, points: [], seeds: draft, tolerance, hex } : { label: drawing, points: draft, hex };
+    const surface: PhotoSurface =
+      mode === 'tap'
+        ? { label: drawing, points: [], seeds: draft, tolerance, hex, ...(excludes.length ? { excludes } : {}) }
+        : { label: drawing, points: draft, hex };
     setSurfaces((list) => (editingExisting ? list.map((s, i) => (i === active ? surface : s)) : [...list, surface]));
     if (!editingExisting) setActive(surfaces.length);
-    setDraft([]);
+    setTaps([]);
+    setRemoving(false);
     setDrawing(null);
     setView('after');
   };
@@ -136,7 +151,7 @@ export function ColourStudio({
           />
           <Notice icon="hand-left">
             {mode === 'tap'
-              ? `“${drawing}” üzerine dokun. Benzer renkteki alan kendiliğinden seçilir; kapı, pencere ve eşyalar dışarıda kalır. Eksik kalan yere tekrar dokun.`
+              ? `“${drawing}” üzerine dokun. Seçim köşelerde ve eşyaların kenarında durur. Eksik kalan yere tekrar dokun; tavan ya da bir eşya da seçildiyse “Çıkar”a geç ve oraya dokun.`
               : `“${drawing}” için köşelere sırayla dokun. En az 3 nokta gerekir. Kapı, pencere ve eşyaların dışından geç.`}
           </Notice>
         </>
@@ -147,12 +162,23 @@ export function ColourStudio({
         aspect={photo.width / photo.height}
         surfaces={surfaces}
         active={active}
-        draft={{ mode, points: draft, tolerance }}
+        draft={{ mode, points: draft, excludes, tolerance }}
         drawing={!!drawing}
         showColour={view === 'after'}
         amount={STRENGTHS.find((s) => s.value === strength)!.amount}
         onTap={addPoint}
       />
+
+      {drawing && mode === 'tap' ? (
+        <Segmented
+          options={[
+            { value: 'add', label: 'Ekle', icon: 'add-circle' },
+            { value: 'remove', label: 'Çıkar', icon: 'remove-circle' },
+          ]}
+          value={removing ? 'remove' : 'add'}
+          onChange={(v) => setRemoving(v === 'remove')}
+        />
+      ) : null}
 
       {drawing && mode === 'tap' ? (
         <ChoiceChips
@@ -165,15 +191,25 @@ export function ColourStudio({
 
       {drawing ? (
         <View style={{ flexDirection: 'row', gap: space.sm, flexWrap: 'wrap' }}>
-          <Button label="Geri al" icon="arrow-undo" variant="secondary" disabled={draft.length === 0} onPress={() => setDraft((d) => d.slice(0, -1))} />
-          <Button label="Temizle" icon="close" variant="ghost" disabled={draft.length === 0} onPress={() => setDraft([])} />
+          <Button label="Geri al" icon="arrow-undo" variant="secondary" disabled={taps.length === 0} onPress={() => setTaps((t) => t.slice(0, -1))} />
+          <Button
+            label="Temizle"
+            icon="close"
+            variant="ghost"
+            disabled={taps.length === 0}
+            onPress={() => {
+              setTaps([]);
+              setRemoving(false);
+            }}
+          />
           <Button label="Yüzeyi boya" icon="color-fill" variant="cta" disabled={!usable} onPress={finishDrawing} />
           {surfaces.length > 0 ? <Button
               label="Vazgeç"
               variant="ghost"
               onPress={() => {
                 setDrawing(null);
-                setDraft([]);
+                setTaps([]);
+                setRemoving(false);
                 setActive((a) => Math.min(a, surfaces.length - 1));
               }}
             /> : null}

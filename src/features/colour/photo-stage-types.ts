@@ -14,8 +14,8 @@ export type PhotoStageProps = {
   surfaces: PhotoSurface[];
   /** Index of the highlighted surface. */
   active: number;
-  /** The surface being picked, while `drawing`. */
-  draft: { mode: SelectMode; points: WallOutline; tolerance: number };
+  /** The surface being picked, while `drawing`. `excludes` are taps on spots to keep out. */
+  draft: { mode: SelectMode; points: WallOutline; excludes: WallOutline; tolerance: number };
   drawing: boolean;
   showColour: boolean;
   /** 0–1: how fully the paint replaces the photo's own colour. */

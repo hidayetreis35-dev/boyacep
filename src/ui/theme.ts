@@ -27,7 +27,7 @@ const light = {
   // Text-safe orange for accent text on accentSoft.
   accent: '#A8430E',
   accentSoft: '#FFE9DC',
-  teal: '#0B7F7A',
+  teal: '#0A7570',
   tealSoft: '#D9F2EF',
   danger: '#B42318',
   dangerSoft: '#FDE7E5',

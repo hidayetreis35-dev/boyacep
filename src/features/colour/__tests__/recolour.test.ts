@@ -4,7 +4,9 @@ import {
   fillSmallHoles,
   hexToLab,
   labToRgb,
-  meanLightness,
+  meanLab,
+  paintInPhoto,
+  photoWhite,
   polygonMask,
   recolourPixel,
   rgbToLab,
@@ -37,6 +39,20 @@ function room() {
 }
 
 const at = (mask: Uint8Array, x: number, y: number) => mask[y * 100 + x];
+
+/** A 100×80 corner of a room: a white ceiling above a white wall, `step` L* apart, both shaded left to right. */
+function wallAndCeiling(step: number) {
+  const w = 100;
+  const h = 80;
+  const px = new Uint8Array(w * h * 4);
+  for (let y = 0; y < h; y++) {
+    for (let x = 0; x < w; x++) {
+      const [r, g, b] = labToRgb([(y < 25 ? 92 : 92 - step) - (x / w) * 6, 0, 3]);
+      px.set([r, g, b, 255], (y * w + x) * 4);
+    }
+  }
+  return toLabImage(px, w, h);
+}
 
 describe('colour conversion', () => {
   it('matches known Lab values', () => {
@@ -94,6 +110,32 @@ describe('tap to select', () => {
     expect(coverage(narrow)).toBeLessThan(coverage(wide));
   });
 
+  it('stops at the line where a wall meets a ceiling of the same colour', () => {
+    const mask = selectRegion(wallAndCeiling(10), { seeds: [[0.5, 0.7]], tolerance: 15 });
+    expect(at(mask, 50, 60)).toBe(255);
+    expect(at(mask, 50, 10)).toBe(0);
+    expect(at(mask, 50, 26)).toBe(255); // right up to the line
+  });
+
+  it('a remove tap keeps out a ceiling the selection would otherwise take', () => {
+    const img = wallAndCeiling(3);
+    const leaky = selectRegion(img, { seeds: [[0.5, 0.7]], tolerance: 24 });
+    expect(at(leaky, 50, 10)).toBe(255);
+    const mask = selectRegion(img, { seeds: [[0.5, 0.7]], excludes: [[0.5, 0.1]], tolerance: 24 });
+    expect(at(mask, 50, 60)).toBe(255);
+    expect(at(mask, 50, 10)).toBe(0);
+    expect(at(mask, 10, 5)).toBe(0);
+    // They meet at the line between them.
+    expect(coverage(mask)).toBeGreaterThan(0.62);
+    expect(coverage(mask)).toBeLessThan(0.72);
+  });
+
+  it('moves a tap that lands on a small mark onto the wall around it', () => {
+    const mask = selectRegion(room(), { seeds: [[20 / 99, 20 / 79]], tolerance: 15 });
+    expect(at(mask, 30, 30)).toBe(255);
+    expect(at(mask, 70, 20)).toBe(0);
+  });
+
   it('fills small holes but keeps big ones and anything open to the edge', () => {
     const w = 10;
     const h = 10;
@@ -105,6 +147,14 @@ describe('tap to select', () => {
     expect(out[5 * w + 5]).toBe(255);
     expect(out[2 * w + 2]).toBe(0);
     expect(out[9 * w + 9]).toBe(0);
+  });
+
+  it('never fills a gap the user removed', () => {
+    const mask = new Uint8Array(100).fill(255);
+    mask[55] = 0;
+    const keepOut = new Uint8Array(100);
+    keepOut[55] = 1;
+    expect(fillSmallHoles(mask, 10, 10, 4, keepOut)[55]).toBe(0);
   });
 });
 
@@ -122,33 +172,70 @@ describe('corner outlines', () => {
 });
 
 describe('lighting', () => {
-  it('keeps shadows darker than lit areas after recolouring', () => {
+  const wall: [number, number, number] = [60, 2, 14];
+
+  it('keeps shadows darker than lit areas, and the average on the paint', () => {
     const img = room();
     const mask = selectRegion(img, { seeds: [[0.1, 0.2]], tolerance: 15 });
-    const mean = meanLightness(img, mask);
+    const mean = meanLab(img, mask);
     const paint = hexToLab('#25324A');
-    const lit = recolourPixel([img.lab[(10 * 100 + 5) * 3], 0, 0], mean, paint);
-    const shade = recolourPixel([img.lab[(10 * 100 + 95) * 3], 0, 0], mean, paint);
+    const pixel = (x: number, y: number): [number, number, number] => [img.lab[(y * 100 + x) * 3], img.lab[(y * 100 + x) * 3 + 1], img.lab[(y * 100 + x) * 3 + 2]];
+    const lit = recolourPixel(pixel(5, 10), mean, paint);
+    const shade = recolourPixel(pixel(95, 10), mean, paint);
     expect(lit[0]).toBeGreaterThan(shade[0]);
-    expect(lit[1]).toBe(paint[1]);
-    expect(lit[2]).toBe(paint[2]);
-    // On average the wall ends up as light as the paint.
-    expect((lit[0] + shade[0]) / 2).toBeCloseTo(paint[0], -1);
+    const atMean = recolourPixel(mean, mean, paint);
+    expect(atMean[0]).toBeCloseTo(paint[0], 5);
+    expect(atMean[1]).toBeCloseTo(paint[1], 5);
+    expect(atMean[2]).toBeCloseTo(paint[2], 5);
   });
 
-  it('keeps shading when going lighter instead of burning to white', () => {
+  it('makes paint less colourful in shade and more in light, as real paint looks', () => {
+    const paint = hexToLab('#B35C3E');
+    const chroma = (lab: number[]) => Math.hypot(lab[1], lab[2]);
+    const shade = recolourPixel([45, wall[1], wall[2]], wall, paint);
+    const light = recolourPixel([70, wall[1], wall[2]], wall, paint);
+    expect(chroma(shade)).toBeLessThan(chroma(paint));
+    expect(chroma(light)).toBeGreaterThan(chroma(paint));
+  });
+
+  it('keeps the photo’s local tint, such as warm lamp light', () => {
+    const paint = hexToLab('#F1EDE4');
+    const plain = recolourPixel(wall, wall, paint);
+    const warm = recolourPixel([wall[0], wall[1] + 4, wall[2] + 10], wall, paint);
+    expect(warm[2]).toBeGreaterThan(plain[2] + 5);
+  });
+
+  it('eases highlights towards white instead of clipping when going lighter', () => {
     const paint = hexToLab('#F7F7F4');
-    const shadow = recolourPixel([35, 0, 0], 45, paint);
-    const mid = recolourPixel([45, 0, 0], 45, paint);
-    const highlight = recolourPixel([60, 0, 0], 45, paint);
+    const mid = recolourPixel([45, 0, 0], [45, 0, 0], paint);
+    const shadow = recolourPixel([35, 0, 0], [45, 0, 0], paint);
+    const highlight = recolourPixel([60, 0, 0], [45, 0, 0], paint);
+    const brighter = recolourPixel([75, 0, 0], [45, 0, 0], paint);
     expect(mid[0]).toBeCloseTo(paint[0], 5);
-    expect(mid[0] - shadow[0]).toBeCloseTo(10, 5);
+    expect(shadow[0]).toBeLessThan(mid[0] - 10);
     expect(highlight[0]).toBeGreaterThan(mid[0]);
-    expect(highlight[0]).toBeLessThan(100);
+    expect(brighter[0]).toBeGreaterThan(highlight[0]);
+    expect(brighter[0]).toBeLessThan(100);
+  });
+
+  it('shows paint dimmer in a dim photo, the way the room’s own whites are', () => {
+    const paint = hexToLab('#F1EDE4');
+    const bright = recolourPixel(wall, wall, paint, 100);
+    const dim = recolourPixel(wall, wall, paint, 80);
+    expect(bright[0]).toBeCloseTo(paint[0], 5);
+    expect(dim[0]).toBeLessThan(paint[0] - 10);
+    expect(paintInPhoto(paint, 100)).toEqual(paint);
+  });
+
+  it('finds how light white is in a photo', () => {
+    const lab = new Float32Array(100 * 3);
+    for (let i = 0; i < 100; i++) lab[i * 3] = i < 97 ? 50 : 82; // 3% of pixels are the photo's whites
+    expect(photoWhite({ width: 10, height: 10, lab })).toBe(82);
+    expect(photoWhite({ width: 10, height: 10, lab: new Float32Array(300) })).toBe(60);
   });
 
   it('scales the working copy down to the mask size', () => {
-    expect(workingSize(4032, 3024)).toEqual({ width: 360, height: 270 });
+    expect(workingSize(4032, 3024)).toEqual({ width: 480, height: 360 });
     expect(workingSize(200, 100)).toEqual({ width: 200, height: 100 });
   });
 });

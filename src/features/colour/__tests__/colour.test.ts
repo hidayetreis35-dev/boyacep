@@ -93,4 +93,13 @@ describe('tap-picked surfaces', () => {
     expect(parseSurfaces([{ label: 'Duvar', points: [], seeds: many, hex: null }])).toEqual([]);
     expect(parseSurfaces([{ label: 'Duvar', points: [], seeds: [[1.5, 0.5]], hex: null }])).toEqual([]);
   });
+
+  it('keeps valid remove taps and drops broken ones', () => {
+    const [kept, dropped] = parseSurfaces([
+      { label: 'Duvar', points: [], seeds: [[0.5, 0.7]], excludes: [[0.5, 0.1]], hex: null },
+      { label: 'Duvar 2', points: [], seeds: [[0.5, 0.7]], excludes: [[2, 0.1]], hex: null },
+    ]);
+    expect(kept.excludes).toEqual([[0.5, 0.1]]);
+    expect(dropped).toEqual({ label: 'Duvar 2', points: [], seeds: [[0.5, 0.7]], tolerance: 15, hex: null });
+  });
 });

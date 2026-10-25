@@ -61,7 +61,7 @@ export function parseSurfaces(value: unknown): PhotoSurface[] {
   const out: PhotoSurface[] = [];
   for (const item of value.slice(0, MAX_SURFACES)) {
     if (!item || typeof item !== 'object') continue;
-    const { label, points, hex, seeds, tolerance } = item as Record<string, unknown>;
+    const { label, points, hex, seeds, tolerance, excludes } = item as Record<string, unknown>;
     const taps = parseOutline(seeds);
     const outline = parseOutline(points);
     const picked = taps && taps.length > 0 && taps.length <= MAX_SEEDS;
@@ -77,6 +77,8 @@ export function parseSurfaces(value: unknown): PhotoSurface[] {
         typeof tolerance === 'number' && Number.isFinite(tolerance)
           ? Math.min(MAX_TOLERANCE, Math.max(MIN_TOLERANCE, tolerance))
           : DEFAULT_TOLERANCE;
+      const out = parseOutline(excludes);
+      if (out && out.length > 0 && out.length <= MAX_SEEDS) surface.excludes = out;
     }
     out.push(surface);
   }

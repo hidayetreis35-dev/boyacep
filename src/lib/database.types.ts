@@ -174,7 +174,15 @@ export type WallOutline = [number, number][];
  * outlined by its corners (`points`) or picked by tapping (`seeds`: the tapped
  * points, re-grown over similar colours with `tolerance` each time it is shown).
  */
-export type PhotoSurface = { label: string; points: WallOutline; hex: string | null; seeds?: WallOutline; tolerance?: number };
+export type PhotoSurface = {
+  label: string;
+  points: WallOutline;
+  hex: string | null;
+  seeds?: WallOutline;
+  tolerance?: number;
+  /** Taps on spots to keep out (a ceiling, a cupboard) when the surface was picked by tapping. */
+  excludes?: WallOutline;
+};
 
 /**
  * Stored in project_photos.wall_outline. Older rows hold a single WallOutline;

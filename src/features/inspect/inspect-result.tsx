@@ -10,11 +10,15 @@ import { SpotPhoto, type Spot } from './spot-photo';
 
 const SEVERITY_TONE: Record<Severity, 'success' | 'accent' | 'primary'> = { diy: 'success', careful: 'accent', expert: 'primary' };
 
+export const VERDICT_SHADES = { indigo: '#4C5FD5', teal: '#0A7570' } as const;
+
 type Verdict = { title: string; text: string; icon: IconName; from: string; to: string };
 
-function useVerdict(worst: Severity | null, blocked: boolean): Verdict {
-  const p = usePalette();
-  const f = useFeatureColour('inspect');
+/**
+ * The verdict banner always has white text, so its gradients use fixed deep
+ * shades rather than theme tokens, which turn light in dark mode.
+ */
+function verdictOf(worst: Severity | null, blocked: boolean): Verdict {
   if (worst === 'expert' || blocked) {
     return {
       title: 'Önce bir uzmana göster',
@@ -29,7 +33,7 @@ function useVerdict(worst: Severity | null, blocked: boolean): Verdict {
       title: 'Hazırlık gerekiyor',
       text: 'Önce nedeni çöz, sonra boyaya geç. Aşağıdaki sırayı izle.',
       icon: 'warning',
-      from: f.base,
+      from: VERDICT_SHADES.indigo,
       to: '#2E3C9E',
     };
   }
@@ -38,15 +42,15 @@ function useVerdict(worst: Severity | null, blocked: boolean): Verdict {
       title: 'Biraz hazırlıkla boyanır',
       text: 'Aşağıdaki sırayı izlersen bu işi kendin yapabilirsin.',
       icon: 'construct',
-      from: f.base,
-      to: p.teal,
+      from: VERDICT_SHADES.indigo,
+      to: VERDICT_SHADES.teal,
     };
   }
   return {
     title: 'Boyaya hazır görünüyor',
     text: 'İşaretlediğin bir sorun yok. Temel hazırlıkla boyayabilirsin.',
     icon: 'checkmark-circle',
-    from: p.teal,
+    from: VERDICT_SHADES.teal,
     to: '#0B5F6B',
   };
 }
@@ -104,7 +108,7 @@ export function InspectResult({
   const f = useFeatureColour('inspect');
   const { symptoms, worst } = assess(selected);
   const plan = workPlan(selected, place);
-  const verdict = useVerdict(worst, plan.blocked);
+  const verdict = verdictOf(worst, plan.blocked);
 
   return (
     <View style={{ gap: space.lg }} testID="inspect-result">
