@@ -5,6 +5,8 @@ import { Disclosure, Gradient, SectionTitle } from '@/ui/brand';
 import { AppText, Badge, Button, Card, Icon, Notice, type IconName } from '@/ui/components';
 import { fonts, radius, space, useFeatureColour, usePalette } from '@/ui/theme';
 
+import { SaveInspection } from '@/features/survey/save-inspection';
+
 import { assess, SEVERITY_LABEL, workPlan, type Place, type Severity, type Symptom } from './rules';
 import { SpotPhoto, type Spot } from './spot-photo';
 
@@ -179,6 +181,7 @@ export function InspectResult({
       ) : null}
 
       <View style={{ gap: space.sm }}>
+        <SaveInspection symptoms={symptoms.map((s) => s.id)} place={place} />
         <Button label="Ne kadar boya gerekir?" icon="color-fill" variant="cta" size="lg" onPress={() => router.push('/calculate')} />
         <Button label="Bir ustaya sor" icon="chatbubbles" variant="secondary" onPress={() => router.push('/ask')} />
         <View style={{ flexDirection: 'row', gap: space.sm, flexWrap: 'wrap' }}>

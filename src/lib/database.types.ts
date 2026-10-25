@@ -190,6 +190,18 @@ export type PhotoSurface = {
  */
 export type StoredOutline = WallOutline | PhotoSurface[];
 
+export type InspectionPlace = 'room' | 'wet' | 'exterior';
+
+export type InspectionResultRow = {
+  id: string;
+  project_id: string;
+  place: InspectionPlace;
+  /** Symptom ids from src/features/inspect/rules.ts; empty when nothing was wrong. */
+  symptoms: string[];
+  location: string | null;
+  created_at: string;
+};
+
 export type ProjectColourRow = {
   id: string;
   project_id: string;
@@ -394,6 +406,11 @@ export type Database = {
         Pick<ProjectPhotoRow, 'id' | 'project_id' | 'storage_path' | 'width' | 'height' | 'byte_size'> &
           Partial<Pick<ProjectPhotoRow, 'room_id' | 'wall_outline'>>,
         Partial<Pick<ProjectPhotoRow, 'room_id' | 'wall_outline'>>
+      >;
+      inspection_results: Table<
+        InspectionResultRow,
+        Pick<InspectionResultRow, 'project_id' | 'place'> & Partial<Pick<InspectionResultRow, 'symptoms' | 'location'>>,
+        never
       >;
       project_colours: Table<
         ProjectColourRow,

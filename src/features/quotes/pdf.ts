@@ -1,9 +1,7 @@
 import { QUOTE_KIND_LABEL, lineTotal, quoteTotals, type QuoteItemKind } from '@/engine';
 import type { ProProfileRow, QuoteItemRow, QuoteRow } from '@/lib/database.types';
+import { escapeHtml } from '@/lib/html';
 import { formatMoney, formatNumber } from '@/lib/number';
-
-const escapeHtml = (text: string) =>
-  text.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;').replace(/'/g, '&#39;');
 
 const multiline = (text: string) => escapeHtml(text).replace(/\n/g, '<br>');
 

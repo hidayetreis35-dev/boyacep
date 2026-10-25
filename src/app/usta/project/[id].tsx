@@ -84,6 +84,13 @@ export default function SharedProjectScreen() {
         </View>
       </Card>
 
+      <Button
+        label="Keşif dosyasını aç"
+        icon="document-text"
+        variant="secondary"
+        onPress={() => router.push({ pathname: '/usta/survey/[id]', params: { id } })}
+      />
+
       <View style={{ gap: space.sm }}>
         <AppText variant="heading">Odalar</AppText>
         {rooms.length === 0 ? (

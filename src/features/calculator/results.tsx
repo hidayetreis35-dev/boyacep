@@ -1,15 +1,12 @@
 import { View } from 'react-native';
 
-import type { Assumption, PackagePlan } from '@/engine';
-import { formatNumber } from '@/lib/number';
+import type { Assumption } from '@/engine';
 import { AppText, Badge, Card } from '@/ui/components';
 import { space } from '@/ui/theme';
 
 import { SOURCE_LABEL } from './labels';
 
-export function packageText(plan: PackagePlan): string {
-  return plan.lines.map((l) => `${l.count} × ${formatNumber(l.size)} L`).join(' + ');
-}
+export { packageText } from './labels';
 
 export function AssumptionList({ assumptions }: { assumptions: Assumption[] }) {
   return (

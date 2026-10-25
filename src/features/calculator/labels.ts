@@ -1,4 +1,5 @@
-import type { SurfaceCondition, SurfaceType, ValueSource } from '@/engine';
+import type { PackagePlan, SurfaceCondition, SurfaceType, ValueSource } from '@/engine';
+import { formatNumber } from '@/lib/number';
 
 export const SURFACE_TYPE_OPTIONS: { value: SurfaceType; label: string }[] = [
   { value: 'painted', label: 'Daha önce boyalı' },
@@ -18,3 +19,8 @@ export const SOURCE_LABEL: Record<ValueSource, { label: string; tone: 'success' 
   user: { label: 'Senin değerin', tone: 'primary' },
   estimate: { label: 'Tahmini', tone: 'accent' },
 };
+
+/** "2 × 15 L + 1 × 2,5 L" */
+export function packageText(plan: PackagePlan): string {
+  return plan.lines.map((l) => `${l.count} × ${formatNumber(l.size)} L`).join(' + ');
+}

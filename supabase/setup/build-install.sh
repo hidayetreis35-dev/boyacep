@@ -15,6 +15,7 @@ markers=(
  "to_regclass('public.consultations') is null"
  "to_regclass('public.project_colours') is null"
  "to_regclass('public.invite_redeem_failures') is null"
+ "to_regclass('public.inspection_results') is null"
 )
 echo "-- BoyaCep: eksik veritabanı parçalarını kurar. Daha önce kurulanları atlar, tekrar çalıştırmak güvenlidir."
 echo "do \$boyacep\$"
@@ -38,6 +39,7 @@ cat <<'SQL'
 
 select case when to_regclass('public.project_colours') is not null
               and to_regclass('public.invite_redeem_failures') is not null
+              and to_regclass('public.inspection_results') is not null
               and exists (select 1 from public.guide_articles where slug = 'ustanin-altin-kurallari')
             then 'TAMAM: BoyaCep veritabanı eksiksiz kuruldu'
             else 'EKSİK: bu ekranın görüntüsünü gönder' end as sonuc;

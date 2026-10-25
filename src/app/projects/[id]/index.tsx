@@ -203,6 +203,13 @@ export default function ProjectScreen() {
         <QuickAction icon="share-social" label="Ustayla paylaş" feature="ask" onPress={() => router.push({ pathname: '/projects/[id]/share', params: { id: project.id } })} />
       </View>
 
+      <Button
+        label="Keşif dosyası"
+        icon="document-text"
+        variant="secondary"
+        onPress={() => router.push({ pathname: '/projects/[id]/survey', params: { id: project.id } })}
+      />
+
       <ChoiceChips
         label="Projenin durumu"
         options={STATUS_ORDER.map((s) => ({ value: s, label: STATUS_LABEL[s] }))}
