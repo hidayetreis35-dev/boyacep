@@ -1,4 +1,4 @@
-import { formatNumber, parseDecimal } from '@/lib/number';
+import { formatMoney, formatNumber, parseDecimal } from '@/lib/number';
 
 describe('parseDecimal', () => {
   it.each([
@@ -27,5 +27,15 @@ describe('formatNumber', () => {
     [0.04, 1, '0'],
   ])('formats %s with %s decimals as %s', (value, decimals, expected) => {
     expect(formatNumber(value, decimals)).toBe(expected);
+  });
+});
+
+describe('formatMoney', () => {
+  it.each([
+    [0, '0,00 ₺'],
+    [1850.5, '1.850,50 ₺'],
+    [1234567.891, '1.234.567,89 ₺'],
+  ])('formats %s as %s', (value, expected) => {
+    expect(formatMoney(value)).toBe(expected);
   });
 });

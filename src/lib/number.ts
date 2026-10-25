@@ -16,3 +16,9 @@ export function formatNumber(value: number, decimals = 1): string {
   if (!frac || /^0+$/.test(frac)) return grouped;
   return `${grouped},${frac.replace(/0+$/, '')}`;
 }
+
+/** Turkish lira with two decimals, e.g. 1.850,50 ₺ */
+export function formatMoney(value: number): string {
+  const [int, frac] = value.toFixed(2).split('.');
+  return `${int.replace(/\B(?=(\d{3})+(?!\d))/g, '.')},${frac} ₺`;
+}

@@ -30,6 +30,8 @@ export default function RootLayout() {
             <Stack.Screen name="calculate" options={{ title: 'Boya Hesapla' }} />
             <Stack.Screen name="projects/[id]/index" options={{ title: 'Proje' }} />
             <Stack.Screen name="projects/[id]/room" options={{ title: 'Oda' }} />
+            <Stack.Screen name="projects/[id]/cost" options={{ title: 'Malzeme ve maliyet' }} />
+            <Stack.Screen name="cost" options={{ title: 'Maliyet Hesapla' }} />
             <Stack.Screen name="soon/[feature]" options={{ title: 'Yakında' }} />
           </Stack>
         </ThemeProvider>

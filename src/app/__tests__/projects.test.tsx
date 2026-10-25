@@ -2,6 +2,7 @@ import AsyncStorage from '@react-native-async-storage/async-storage';
 import { fireEvent, screen } from '@testing-library/react-native';
 import { renderRouter } from 'expo-router/testing-library';
 
+import * as materialsApi from '@/features/materials/api';
 import * as projectsApi from '@/features/projects/api';
 import type { ProjectRow } from '@/lib/database.types';
 
@@ -27,6 +28,8 @@ jest.mock('@/features/account/api', () => ({
 
 jest.mock('@/features/projects/api');
 const api = jest.mocked(projectsApi);
+jest.mock('@/features/materials/api');
+const mapi = jest.mocked(materialsApi);
 
 function project(overrides: Partial<ProjectRow> = {}): ProjectRow {
   return {
@@ -143,5 +146,99 @@ describe('Project detail', () => {
     await fireEvent.press(screen.getByText('Kaydet'));
     expect(screen.getByText('Oda adı yazın.')).toBeTruthy();
     expect(api.saveRoom).not.toHaveBeenCalled();
+  });
+});
+
+const salon = {
+  id: 'r1',
+  project_id: 'p1',
+  name: 'Salon',
+  length_m: 4,
+  width_m: 3,
+  height_m: 2.5,
+  paint_walls: true,
+  paint_ceiling: true,
+  coats: 2,
+  surface_type: 'painted' as const,
+  surface_condition: 'good' as const,
+  coverage_m2_per_l: null,
+  coverage_source: null,
+  sort_order: 0,
+  created_at: '',
+  updated_at: '',
+  openings: [],
+};
+
+const paintRow = {
+  id: 'm1',
+  project_id: 'p1',
+  catalog_id: null,
+  category: 'interior_paint' as const,
+  name: 'İç cephe boyası (7,5 L kutu)',
+  quantity: 1,
+  unit: 'kutu' as const,
+  unit_price: 1200,
+  price_source: 'store' as const,
+  store_name: null,
+  note: null,
+  from_calculation: true,
+  sort_order: 0,
+  created_at: '',
+  updated_at: '1',
+};
+
+describe('Malzeme ve maliyet', () => {
+  beforeEach(() => {
+    api.getProject.mockResolvedValue({ project: project({ budget: 2000 }), rooms: [salon] });
+    mapi.listCosts.mockResolvedValue([
+      { id: 'c1', project_id: 'p1', kind: 'labor', label: 'İşçilik', amount: 3000, price_source: 'estimate', note: null, created_at: '', updated_at: '' },
+    ]);
+  });
+
+  it('sums materials and costs, and separates store from estimate', async () => {
+    mapi.listMaterials.mockResolvedValue([paintRow, { ...paintRow, id: 'm2', name: 'Rulo', category: 'roller', unit: 'adet', unit_price: null, price_source: 'estimate' }]);
+    await renderRouter('./src/app', { initialUrl: '/projects/p1/cost' });
+    expect(await screen.findByTestId('cost-total')).toHaveTextContent('4.200,00 ₺');
+    expect(screen.getByText('Kesin fiyat: 1.200,00 ₺')).toBeTruthy();
+    expect(screen.getByText('Tahmini: 3.000,00 ₺')).toBeTruthy();
+    expect(screen.getByText('Bütçe aşımı')).toBeTruthy();
+    expect(screen.getByText(/1 kalemin fiyatı girilmedi/)).toBeTruthy();
+  });
+
+  it('builds the shopping list from the room measurements', async () => {
+    mapi.listMaterials.mockResolvedValue([]);
+    mapi.syncFromCalculation.mockResolvedValue();
+    await renderRouter('./src/app', { initialUrl: '/projects/p1/cost' });
+    await fireEvent.press(await screen.findByText('Ölçülerden oluştur'));
+    const drafts = mapi.syncFromCalculation.mock.calls[0][2];
+    expect(drafts).toEqual(
+      expect.arrayContaining([
+        { category: 'interior_paint', name: 'İç cephe boyası (7,5 L kutu)', quantity: 1, unit: 'kutu' },
+      ]),
+    );
+  });
+
+  it('saves an edited price as a store price', async () => {
+    mapi.listMaterials.mockResolvedValue([{ ...paintRow, unit_price: null, price_source: 'estimate' }]);
+    mapi.updateMaterial.mockResolvedValue();
+    await renderRouter('./src/app', { initialUrl: '/projects/p1/cost' });
+    await fireEvent.changeText(await screen.findByLabelText('Birim fiyat (kutu)'), '1450,5');
+    await fireEvent.press(screen.getByText('Mağaza fiyatı'));
+    await fireEvent.press(screen.getByText('Kaydet'));
+    expect(mapi.updateMaterial).toHaveBeenCalledWith(expect.anything(), 'm1', {
+      quantity: 1,
+      unit_price: 1450.5,
+      price_source: 'store',
+      store_name: null,
+    });
+  });
+});
+
+describe('Maliyet Hesapla (no account needed)', () => {
+  it('adds up the groups', async () => {
+    await renderRouter('./src/app', { initialUrl: '/cost' });
+    await fireEvent.changeText(await screen.findByTestId('cost-paint'), '2500');
+    await fireEvent.changeText(screen.getByTestId('cost-labor'), '4000,50');
+    expect(screen.getByTestId('cost-total')).toHaveTextContent('6.500,50 ₺');
   });
 });

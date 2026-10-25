@@ -11,3 +11,15 @@ export {
 } from './project';
 export { quickEstimate, HOUSE_TYPES, WALL_FACTOR, type HouseType, type QuickEstimate, type QuickInput } from './quick';
 export { round } from './round';
+export {
+  COST_GROUP_LABEL,
+  COST_GROUP_ORDER,
+  groupOfCategory,
+  summarizeCost,
+  type CostGroup,
+  type CostGroupTotal,
+  type CostSummary,
+  type ExtraCost,
+  type PriceSource,
+  type PricedMaterial,
+} from './cost';

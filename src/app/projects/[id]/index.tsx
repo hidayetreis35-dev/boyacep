@@ -173,6 +173,12 @@ export default function ProjectScreen() {
         </>
       ) : null}
 
+      <Button
+        label="Malzeme listesi ve maliyet"
+        icon="wallet"
+        onPress={() => router.push({ pathname: '/projects/[id]/cost', params: { id: project.id } })}
+      />
+
       <DeleteProject id={project.id} />
     </Screen>
   );

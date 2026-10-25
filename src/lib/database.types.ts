@@ -83,6 +83,65 @@ export type CalculationRow = {
   created_at: string;
 };
 
+export type MaterialCategoryDb =
+  | 'interior_paint'
+  | 'ceiling_paint'
+  | 'exterior_paint'
+  | 'primer'
+  | 'filler'
+  | 'sandpaper'
+  | 'roller'
+  | 'brush'
+  | 'masking_tape'
+  | 'drop_sheet'
+  | 'other';
+
+export type MaterialUnitDb = 'L' | 'kg' | 'adet' | 'rulo' | 'kutu' | 'paket' | 'm²';
+export type PriceSourceDb = 'estimate' | 'store';
+
+export type MaterialCatalogRow = {
+  id: string;
+  category: MaterialCategoryDb;
+  name: string;
+  unit: MaterialUnitDb;
+  active: boolean;
+  sort_order: number;
+  created_at: string;
+  updated_at: string;
+};
+
+export type ProjectMaterialRow = {
+  id: string;
+  project_id: string;
+  catalog_id: string | null;
+  category: MaterialCategoryDb;
+  name: string;
+  quantity: number;
+  unit: MaterialUnitDb;
+  unit_price: number | null;
+  price_source: PriceSourceDb;
+  store_name: string | null;
+  note: string | null;
+  from_calculation: boolean;
+  sort_order: number;
+  created_at: string;
+  updated_at: string;
+};
+
+export type ProjectCostRow = {
+  id: string;
+  project_id: string;
+  kind: 'labor' | 'transport' | 'other';
+  label: string;
+  amount: number;
+  price_source: PriceSourceDb;
+  note: string | null;
+  created_at: string;
+  updated_at: string;
+};
+
+type Generated = 'id' | 'created_at' | 'updated_at';
+
 export type Database = {
   public: {
     Tables: {
@@ -102,6 +161,16 @@ export type Database = {
       >;
       room_openings: Table<RoomOpeningRow, Omit<RoomOpeningRow, 'id' | 'created_at'> & Partial<Pick<RoomOpeningRow, 'id'>>>;
       calculations: Table<CalculationRow, Omit<CalculationRow, 'id' | 'created_at'>>;
+      material_catalog: Table<MaterialCatalogRow, Omit<MaterialCatalogRow, Generated | 'active' | 'sort_order'>>;
+      project_materials: Table<
+        ProjectMaterialRow,
+        Omit<ProjectMaterialRow, Generated | 'catalog_id' | 'store_name' | 'note' | 'from_calculation' | 'sort_order' | 'unit_price' | 'price_source'> &
+          Partial<Pick<ProjectMaterialRow, 'catalog_id' | 'store_name' | 'note' | 'from_calculation' | 'sort_order' | 'unit_price' | 'price_source'>>
+      >;
+      project_costs: Table<
+        ProjectCostRow,
+        Omit<ProjectCostRow, Generated | 'note' | 'price_source'> & Partial<Pick<ProjectCostRow, 'note' | 'price_source'>>
+      >;
     };
     Views: Record<string, never>;
     Functions: {
