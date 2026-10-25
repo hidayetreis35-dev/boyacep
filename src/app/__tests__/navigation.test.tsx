@@ -50,13 +50,34 @@ describe('app navigation', () => {
 
   it('explains wall problems without an account', async () => {
     await renderRouter('./src/app', { initialUrl: '/inspect' });
+    await fireEvent.press(screen.getByText('Fotoğrafsız devam et'));
+    expect(screen.getByRole('button', { name: 'Devam' })).toBeDisabled();
+    await fireEvent.press(screen.getByText('Banyo ya da mutfak'));
+    await fireEvent.press(screen.getByText('Devam'));
+
     expect(screen.getByRole('button', { name: 'Sonucu göster' })).toBeDisabled();
-    await fireEvent.press(screen.getByText('Küf, siyah noktalar'));
-    await fireEvent.press(screen.getByText('Geniş ya da büyüyen çatlak'));
+    await fireEvent.press(screen.getByText('Küf'));
+    await fireEvent.press(screen.getByText('Çatlak'));
+    expect(screen.getByRole('button', { name: 'Sonucu göster' })).toBeDisabled();
+    await fireEvent.press(screen.getByText('Geniş ya da büyüyor'));
     await fireEvent.press(screen.getByText('Sonucu göster'));
+
     expect(screen.getByTestId('inspect-result')).toBeTruthy();
-    expect(screen.getByText(/uzmanın görmesi gereken/)).toBeTruthy();
-    expect(screen.getAllByText('Uzmana danış').length).toBe(1);
+    expect(screen.getByTestId('inspect-verdict')).toHaveTextContent('Önce bir uzmana göster');
+    expect(screen.getByText(/inşaat mühendisine/)).toBeTruthy();
+    expect(screen.getByText(/küfe dayanıklı/)).toBeTruthy();
+    await fireEvent.press(screen.getAllByText('Geniş çatlak').at(-1)!);
+    expect(screen.getByText('Uzmana danış')).toBeTruthy();
+  });
+
+  it('says a wall in good shape is ready to paint', async () => {
+    await renderRouter('./src/app', { initialUrl: '/inspect' });
+    await fireEvent.press(screen.getByText('Fotoğrafsız devam et'));
+    await fireEvent.press(screen.getByText('Oda ya da salon'));
+    await fireEvent.press(screen.getByText('Devam'));
+    await fireEvent.press(screen.getByText('Hiçbiri, duvar iyi görünüyor'));
+    await fireEvent.press(screen.getByText('Sonucu göster'));
+    expect(screen.getByTestId('inspect-verdict')).toHaveTextContent('Boyaya hazır görünüyor');
   });
 
   it('opens the colour preview without an account', async () => {

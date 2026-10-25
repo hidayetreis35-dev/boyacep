@@ -28,7 +28,7 @@ const SEVERITY_RANK: Record<Severity, number> = { expert: 0, careful: 1, diy: 2 
 export const SYMPTOMS: Symptom[] = [
   {
     id: 'wide_crack',
-    label: 'Geniş ya da büyüyen çatlak',
+    label: 'Geniş çatlak',
     hint: '2 mm’den geniş, çapraz ya da kapı ve pencere köşelerinden çıkan',
     severity: 'expert',
     cause: 'Binadaki oturma ya da taşıyıcı sistemdeki hareket olabilir. Bu bir boya sorunu değildir.',
@@ -40,7 +40,7 @@ export const SYMPTOMS: Symptom[] = [
   },
   {
     id: 'damp_stain',
-    label: 'Nem lekesi, sararma',
+    label: 'Nem lekesi',
     hint: 'Kahverengi halka, sarı leke ya da ıslak görünen bölge',
     severity: 'expert',
     cause: 'Tesisat sızıntısı, çatıdan ya da dış cepheden su alma veya zeminden yükselen nem.',
@@ -55,8 +55,8 @@ export const SYMPTOMS: Symptom[] = [
   },
   {
     id: 'mould',
-    label: 'Küf, siyah noktalar',
-    hint: 'Özellikle banyo, mutfak, dolap arkası ve pencere çevresinde',
+    label: 'Küf',
+    hint: 'Siyah ya da yeşil noktalar; çoğunlukla banyo, mutfak ve pencere çevresinde',
     severity: 'careful',
     cause: 'Yoğuşma ve yetersiz havalandırma. Soğuk duvarda biriken nem küfü besler.',
     steps: [
@@ -71,8 +71,8 @@ export const SYMPTOMS: Symptom[] = [
   },
   {
     id: 'blistering',
-    label: 'Kabarma, balonlaşma',
-    hint: 'Boya duvardan ayrılıp kabarcık yapmış',
+    label: 'Kabarma',
+    hint: 'Boya balon gibi şişmiş, duvardan ayrılmış',
     severity: 'careful',
     cause: 'Genellikle nem ya da boyanın nemli, tozlu veya kirli yüzeye uygulanması. Çok sıcak havada boyamak da kabartabilir.',
     steps: [
@@ -100,7 +100,7 @@ export const SYMPTOMS: Symptom[] = [
   },
   {
     id: 'peeling',
-    label: 'Dökülme, pul pul kalkma',
+    label: 'Dökülme',
     hint: 'Boya kat kat ya da pul pul ayrılıyor',
     severity: 'diy',
     cause: 'Astar kullanılmaması, tozlu ya da yağlı yüzey veya yağlı boya üstüne su bazlı boya sürülmesi.',
@@ -114,7 +114,7 @@ export const SYMPTOMS: Symptom[] = [
   },
   {
     id: 'hairline_crack',
-    label: 'İnce (kılcal) çatlak',
+    label: 'İnce çatlak',
     hint: 'Saç teli inceliğinde, yüzeysel çatlaklar',
     severity: 'diy',
     cause: 'Sıvanın kururken çekmesi ya da eski boyanın yaşlanması. Genelde yapısal değildir.',
@@ -123,12 +123,26 @@ export const SYMPTOMS: Symptom[] = [
       'Macunla doldur, kuruyunca zımparala.',
       'Macunlu yerlere astar sür, sonra tüm duvarı boya.',
     ],
-    callExpertIf: 'Çatlak genişliyorsa ya da kapanıp tekrar açılıyorsa "Geniş ya da büyüyen çatlak" seçeneğine bak.',
+    callExpertIf: 'Çatlak genişliyorsa ya da kapanıp tekrar açılıyorsa "Geniş çatlak" sonucuna bak.',
+    guideSlug: 'macun-ve-zimpara',
+  },
+  {
+    id: 'surface_damage',
+    label: 'Yüzey bozukluğu',
+    hint: 'Delik, göçük, pürüz ya da eski dübel ve çivi yerleri',
+    severity: 'diy',
+    cause: 'Zamanla oluşan darbeler, sökülen raf ve tablolar ya da düzgün yapılmamış eski tamirler.',
+    steps: [
+      'Gevşek parçaları ve çıkıntıları spatula ile temizle.',
+      'Delik ve göçükleri macunla doldur; derin yerleri iki seferde doldur.',
+      'Kuruyunca zımparala, elinle yokladığında düz olmalı; tozunu al.',
+      'Macunlu yerlere astar sür, sonra tüm duvarı boya.',
+    ],
     guideSlug: 'macun-ve-zimpara',
   },
   {
     id: 'patchy',
-    label: 'Alacalı görünüm, rulo izleri',
+    label: 'Rulo ya da fırça izi',
     hint: 'Duvarda parlak ve mat bölgeler, yamalı görüntü',
     severity: 'diy',
     cause: 'Macunlu yerlere astar sürülmemesi, ince kat boya ya da kurumaya başlamış kenara geri dönülmesi.',
@@ -141,7 +155,7 @@ export const SYMPTOMS: Symptom[] = [
   },
   {
     id: 'chalking',
-    label: 'Tebeşirlenme',
+    label: 'Tozlanma',
     hint: 'Dokununca eline toz boya bulaşıyor (çoğunlukla dış cephe)',
     severity: 'diy',
     cause: 'Güneş ve hava etkisiyle eskiyen boya yüzeyi tozlaşır.',
@@ -161,4 +175,104 @@ export function assess(selected: string[]): { symptoms: Symptom[]; worst: Severi
     (a, b) => SEVERITY_RANK[a.severity] - SEVERITY_RANK[b.severity],
   );
   return { symptoms, worst: symptoms[0]?.severity ?? null };
+}
+
+/** Where the wall is; adds a tip and decides on mould-resistant paint. */
+export type Place = 'room' | 'wet' | 'exterior';
+
+export const PLACES: { value: Place; label: string; hint: string }[] = [
+  { value: 'room', label: 'Oda ya da salon', hint: 'Yatak odası, salon, koridor' },
+  { value: 'wet', label: 'Banyo ya da mutfak', hint: 'Buharlı ve nemli alanlar' },
+  { value: 'exterior', label: 'Dış cephe', hint: 'Balkon, bahçe duvarı, bina dışı' },
+];
+
+type Task = 'expert' | 'water' | 'dry' | 'protect' | 'mould' | 'salt' | 'wash' | 'clean' | 'scrape' | 'fill' | 'sand' | 'primer' | 'paint';
+type Primer = 'stain' | 'salt' | 'binding' | 'patch';
+
+/** The work each finding adds to the plan. Order comes from TASK_ORDER, not from here. */
+const WORK: Record<string, { tasks: Task[]; primer?: Primer }> = {
+  wide_crack: { tasks: ['expert'] },
+  damp_stain: { tasks: ['water', 'dry', 'primer'], primer: 'stain' },
+  mould: { tasks: ['mould', 'dry'] },
+  blistering: { tasks: ['scrape', 'sand', 'primer'], primer: 'patch' },
+  efflorescence: { tasks: ['water', 'salt', 'primer'], primer: 'salt' },
+  peeling: { tasks: ['scrape', 'sand', 'primer'], primer: 'patch' },
+  hairline_crack: { tasks: ['fill', 'sand', 'primer'], primer: 'patch' },
+  surface_damage: { tasks: ['scrape', 'fill', 'sand', 'primer'], primer: 'patch' },
+  patchy: { tasks: ['primer'], primer: 'patch' },
+  chalking: { tasks: ['wash', 'primer'], primer: 'binding' },
+};
+
+const TASK_ORDER: Task[] = ['expert', 'water', 'dry', 'protect', 'mould', 'salt', 'wash', 'clean', 'scrape', 'fill', 'sand', 'primer', 'paint'];
+
+const TASK_TEXT: Record<Exclude<Task, 'primer' | 'paint'>, string> = {
+  expert: 'Çatlağı boyamadan önce bir inşaat mühendisine ya da deneyimli bir ustaya göster.',
+  water: 'Nemin ya da suyun nereden geldiğini bul ve onarılmasını sağla.',
+  dry: 'Duvarın tamamen kurumasını bekle; bu birkaç hafta sürebilir.',
+  protect: 'Eşyaları ve zemini ört, kenarlara maskeleme bandı yapıştır.',
+  mould: 'Eldiven ve maske tak, küfü küf temizleyiciyle temizle; kuru fırçalama.',
+  salt: 'Beyaz tuzu sert, kuru bir fırçayla al; suyla silme.',
+  wash: 'Tozlanan yüzeyi fırçala ya da yıka, kurumasını bekle.',
+  clean: 'Duvarın tozunu al, yağlı ve kirli lekeleri sil.',
+  scrape: 'Kabaran ve gevşeyen boyayı spatulayla kazı.',
+  fill: 'Çatlak, delik ve göçükleri macunla doldur.',
+  sand: 'Kuruyunca zımparala ve tozunu al.',
+};
+
+const PRIMER_TEXT: Record<Primer, string> = {
+  stain: 'leke örtücü (izolasyon) astar',
+  salt: 'tuzlanmaya dayanıklı astar',
+  binding: 'tozlanan yüzeyi bağlayan astar',
+  patch: 'kazınan ve macunlanan yerlere astar',
+};
+
+const PRIMER_PRODUCT: Record<Primer, string> = {
+  stain: 'Leke örtücü astar',
+  salt: 'Tuzlanma astarı',
+  binding: 'Bağlayıcı astar',
+  patch: 'Astar',
+};
+
+const MATERIALS: Partial<Record<Task, string[]>> = {
+  protect: ['Örtü naylonu', 'Maskeleme bandı'],
+  mould: ['Küf temizleyici', 'Eldiven ve maske'],
+  salt: ['Sert fırça'],
+  scrape: ['Spatula'],
+  fill: ['Macun'],
+  sand: ['Zımpara kâğıdı'],
+  paint: ['Rulo ve fırça'],
+};
+
+export type PlanStep = { key: Task; text: string };
+
+/**
+ * One ordered work plan for everything the user marked, so steps shared by
+ * several findings (scraping, primer…) appear once and in the right order.
+ */
+export function workPlan(selected: string[], place: Place): { steps: PlanStep[]; materials: string[]; blocked: boolean } {
+  const { symptoms } = assess(selected);
+  const tasks = new Set<Task>(['protect', 'paint']);
+  const primers = new Set<Primer>();
+  for (const s of symptoms) {
+    const work = WORK[s.id];
+    if (!work) continue;
+    work.tasks.forEach((t) => tasks.add(t));
+    if (work.primer) primers.add(work.primer);
+  }
+  if (symptoms.length === 0) tasks.add('clean');
+  const antiMould = selected.includes('mould') || place === 'wet';
+
+  const steps: PlanStep[] = TASK_ORDER.filter((t) => tasks.has(t)).map((key) => {
+    if (key === 'primer') return { key, text: `Astar sür: ${[...primers].map((p) => PRIMER_TEXT[p]).join(', ')}.` };
+    if (key === 'paint') {
+      const paint = place === 'exterior' ? 'dış cephe boyası' : antiMould ? 'küfe dayanıklı, silinebilir boya' : 'iç cephe boyası';
+      return { key, text: `Astar kuruyunca iki kat ${paint} uygula; her katı ara vermeden, ıslak kenarı koruyarak sür.` };
+    }
+    return { key, text: TASK_TEXT[key] };
+  });
+  const materials = [
+    ...steps.flatMap((s) => MATERIALS[s.key] ?? []),
+    ...[...primers].map((p) => PRIMER_PRODUCT[p]),
+  ];
+  return { steps, materials: [...new Set(materials)], blocked: tasks.has('expert') || tasks.has('water') };
 }

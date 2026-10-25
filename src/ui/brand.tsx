@@ -141,6 +141,7 @@ export function OptionCard({
   badge,
   disabled,
   swatch,
+  multiple,
   testID,
 }: {
   title: string;
@@ -153,13 +154,16 @@ export function OptionCard({
   disabled?: boolean;
   /** Shows a colour chip instead of an icon. */
   swatch?: string;
+  /** Part of a pick-several list: shows a checkbox instead of a radio. */
+  multiple?: boolean;
   testID?: string;
 }) {
   const p = usePalette();
   const f = useFeatureColour(feature);
   const layout = useContext(OptionLayout);
   const tile = layout === 'tile';
-  const check = <Icon name={selected ? 'checkmark-circle' : 'ellipse-outline'} size={24} color={selected ? f.base : p.border} />;
+  const checkIcon = multiple ? (selected ? 'checkbox' : 'square-outline') : selected ? 'checkmark-circle' : 'ellipse-outline';
+  const check = <Icon name={checkIcon} size={24} color={selected ? f.base : p.border} />;
   const visual = swatch ? (
     <View style={[styles.optionSwatch, { backgroundColor: swatch, borderColor: p.border }]} />
   ) : icon ? (
@@ -170,9 +174,9 @@ export function OptionCard({
   return (
     <PressableScale
       testID={testID}
-      accessibilityRole="radio"
+      accessibilityRole={multiple ? 'checkbox' : 'radio'}
       accessibilityLabel={badge ? `${title}, ${badge}` : title}
-      accessibilityState={{ selected, disabled: !!disabled }}
+      accessibilityState={multiple ? { checked: selected, disabled: !!disabled } : { selected, disabled: !!disabled }}
       disabled={disabled}
       onPress={onPress}
       style={[
