@@ -3,6 +3,7 @@ import { ScrollView, StyleSheet, View } from 'react-native';
 
 import { useSession } from '@/features/account/session';
 import { HOME_ACTIONS, type HomeAction } from '@/features/home/actions';
+import { CityPrompt } from '@/features/market/components';
 import { useProjects } from '@/features/projects/queries';
 import { STATUS_LABEL } from '@/features/projects/mapping';
 import { t } from '@/i18n';
@@ -197,6 +198,9 @@ export default function HomeScreen() {
             </View>
           ))}
         </View>
+      </FadeIn>
+      <FadeIn delay={120}>
+        <CityPrompt />
       </FadeIn>
       <FadeIn delay={160}>
         <RecentProjects />

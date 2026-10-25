@@ -3,8 +3,9 @@ import { StyleSheet, View } from 'react-native';
 
 import { DEFAULT_CAN_SIZES, planPackages, type MaterialCategory, type MaterialItem, type PackagePlan, type ProjectCalculation, type QuickEstimate } from '@/engine';
 import { useSession } from '@/features/account/session';
+import { RegionalCostCard } from '@/features/market/regional-cost';
 import { t } from '@/i18n';
-import { formatNumber } from '@/lib/number';
+import { formatNumber, parseDecimal } from '@/lib/number';
 import { Disclosure, Gradient, SectionTitle, StatTile, TileRow } from '@/ui/brand';
 import { AppText, Badge, Button, Card, Icon, Notice, Row, type IconName } from '@/ui/components';
 import { fonts, radius, space, useFeatureColour, usePalette } from '@/ui/theme';
@@ -237,6 +238,8 @@ export function RoomResult({
       ) : null}
 
       <CostTeaser paintLitres={finish} primerLitres={totals.primerLitres} />
+      {/* Market data for single rooms covers jobs up to 30 m² of floor. */}
+      {room.areas.ceiling > 0 && room.areas.ceiling <= 30 ? <RegionalCostCard kind="room" floorArea={room.areas.ceiling} litres={finish} /> : null}
 
       <Disclosure title={t('Hesap detayları')}>
         <Row label={t('Toplam duvar alanı')} value={`${formatNumber(room.areas.grossWall, 2)} m²`} />
@@ -303,6 +306,7 @@ export function HomeResult({
         ) : null}
       </TileRow>
       <CostTeaser paintLitres={result.totalLitres} primerLitres={0} />
+      <RegionalCostCard kind="home" floorArea={parseDecimal(home.area)} litres={result.totalLitres} />
       <Notice>
         {t('Hızlı hesap, ev tipine göre ortalama duvar alanı kullanır (taslak katsayılar, usta kontrolü bekliyor). Astar ve yardımcı malzemeler için odaları tek tek hesapla.')}
       </Notice>

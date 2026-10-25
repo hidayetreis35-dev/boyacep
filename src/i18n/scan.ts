@@ -12,7 +12,14 @@ export type Finding = { file: string; line: number; text: string };
 const SRC = path.resolve(__dirname, '..');
 
 /** Files whose Turkish text is data, not UI: translated through en.ts where shown. */
-export const DATA_FILES = new Set(['features/colour/catalogue.ts', 'features/colour/palette.ts', 'lib/database.types.ts']);
+export const DATA_FILES = new Set([
+  'features/colour/catalogue.ts',
+  'features/colour/palette.ts',
+  'features/market/provinces.ts',
+  'features/market/snapshot.ts',
+  'features/market/sources.ts',
+  'lib/database.types.ts',
+]);
 
 /** Turkish letters that English never uses. */
 export const TURKISH = /[çğıöşüÇĞİÖŞÜ]/;

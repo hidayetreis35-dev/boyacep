@@ -2,6 +2,7 @@ import AsyncStorage from '@react-native-async-storage/async-storage';
 import { fireEvent, screen } from '@testing-library/react-native';
 import { renderRouter } from 'expo-router/testing-library';
 
+import { DISTRICTS, PROVINCES } from '@/features/market/provinces';
 import { TURKISH } from '@/i18n/scan';
 
 // The screens that work without a backend, opened in English.
@@ -25,8 +26,10 @@ function shownText(): string[] {
   return out;
 }
 
-// The language picker names Turkish in Turkish.
-const turkishOnScreen = () => shownText().filter((text) => TURKISH.test(text) && text !== 'Türkçe');
+// Place names are proper nouns, shown as they are; the language picker names Turkish in Turkish.
+const PLACES = [...PROVINCES.map((p) => p.name), ...Object.values(DISTRICTS).flat(), 'Türkçe'].sort((a, b) => b.length - a.length);
+const withoutPlaces = (text: string) => PLACES.reduce((rest, place) => rest.split(place).join(''), text);
+const turkishOnScreen = () => shownText().filter((text) => TURKISH.test(withoutPlaces(text)));
 
 beforeEach(async () => {
   await AsyncStorage.clear();
@@ -48,6 +51,8 @@ describe('the app in English', () => {
     ['/usta', 'Painter'],
     ['/ask', 'Ask a Painter'],
     ['/guide', "The guide can't open right now"],
+    ['/prices', 'Turkey Painting Prices'],
+    ['/prices?pick=1', 'Search provinces'],
   ])('shows %s with no Turkish text', async (url, expected) => {
     await renderRouter('./src/app', { initialUrl: url });
     expect((await screen.findAllByText(expected, { exact: false })).length).toBeGreaterThan(0);
@@ -70,6 +75,7 @@ describe('the app in English', () => {
     await fireEvent.press(screen.getByRole('button', { name: 'Show result' }));
     expect(screen.getByText('Result · Room')).toBeTruthy();
     expect(screen.getByText('Dust sheet (20 m²)')).toBeTruthy();
+    expect(screen.getByText('Market reference')).toBeTruthy();
     expect(turkishOnScreen()).toEqual([]);
   });
 });

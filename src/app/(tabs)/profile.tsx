@@ -17,6 +17,7 @@ import { readLocalRoles, writeLocalRoles } from '@/features/account/local-role';
 import { PrivacyActions } from '@/features/account/privacy-actions';
 import { RolePicker } from '@/features/account/role-picker';
 import { useAccount, useSession } from '@/features/account/session';
+import { CitySetting } from '@/features/market/components';
 import { t } from '@/i18n';
 import {
   AppText,
@@ -177,6 +178,7 @@ export default function ProfileScreen() {
       <View style={{ gap: space.lg }}>
         {loading ? <LoadingState /> : session ? <AccountProfile /> : <GuestProfile hasBackend={!!db} />}
         <LanguagePicker />
+        <CitySetting />
       </View>
     </Screen>
   );

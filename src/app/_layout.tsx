@@ -99,6 +99,7 @@ function App() {
             <Stack.Screen name="projects/[id]/share" options={{ title: t('Ustayla paylaş') }} />
             <Stack.Screen name="projects/[id]/survey" options={{ title: t('Keşif dosyası') }} />
             <Stack.Screen name="cost" options={{ title: t('Maliyet Hesapla') }} />
+            <Stack.Screen name="prices" options={{ title: t('Boya Fiyatları') }} />
             <Stack.Screen name="usta/profile" options={{ title: t('Usta profili') }} />
             <Stack.Screen name="usta/project/[id]" options={{ title: t('Paylaşılan proje') }} />
             <Stack.Screen name="usta/survey/[id]" options={{ title: t('Keşif dosyası') }} />

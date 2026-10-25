@@ -169,6 +169,7 @@ export default function QuickCostScreen() {
           <SectionTitle title={t('İşçilik')} />
           <Card>
             <PriceField label={t('Ustanın işçilik ücreti (toplam)')} price={form.labour} onChange={(v) => set('labour', v)} testID="cost-labor" />
+            <Button label={t('Şehrindeki usta fiyatlarını gör')} icon="stats-chart" variant="ghost" onPress={() => router.push('/prices')} />
           </Card>
         </>
       ) : null}
