@@ -48,7 +48,7 @@ export default function ShareProjectScreen() {
               {formatInviteCode(invite.code)}
             </AppText>
             <AppText variant="caption" tone="muted">
-              Son geçerlilik: {formatDate(invite.expires_at)}. Kodu bilen her usta katılabilir; sadece güvendiğin kişilere gönder.
+              Son geçerlilik: {formatDate(invite.expires_at)}. Bu kodla en fazla {invite.max_uses} usta katılabilir ({invite.uses} katıldı). Sadece güvendiğin kişilere gönder.
             </AppText>
             <Button label="Kodu gönder" icon="share-social" onPress={() => share(invite.code)} />
             <Button

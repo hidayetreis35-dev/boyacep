@@ -2,7 +2,7 @@ import { View } from 'react-native';
 
 import { QUOTE_KIND_LABEL, lineTotal, quoteTotals, type QuoteItemKind } from '@/engine';
 import { VERIFICATION_LABEL } from '@/features/pros/form';
-import type { ProProfileRow, QuoteItemRow, QuoteRow } from '@/lib/database.types';
+import type { ProCard, QuoteItemRow, QuoteRow } from '@/lib/database.types';
 import { formatMoney, formatNumber } from '@/lib/number';
 import { AppText, Badge, Card, Row } from '@/ui/components';
 import { space } from '@/ui/theme';
@@ -28,7 +28,7 @@ export function QuoteTotalsCard({ items, vatRate, discount }: { items: { kind: Q
 }
 
 /** Read-only quote, as both the painter and the homeowner see it. */
-export function QuoteView({ quote, items, pro, showPro }: { quote: QuoteRow; items: QuoteItemRow[]; pro: ProProfileRow | null; showPro: boolean }) {
+export function QuoteView({ quote, items, pro, showPro }: { quote: QuoteRow; items: QuoteItemRow[]; pro: ProCard | null; showPro: boolean }) {
   return (
     <>
       <Card>

@@ -83,8 +83,8 @@ select tests.fails($$select public.redeem_project_invite('BOYA2345')$$, 'non-pai
 select tests.check((select count(*) from public.project_invites) = 0, 'others cannot list invite codes');
 
 select tests.as_user('00000000-0000-0000-0000-000000000602');
-select tests.fails($$select public.redeem_project_invite('EXPRD234')$$, 'expired codes do not work');
-select tests.fails($$select public.redeem_project_invite('NOPE2345')$$, 'unknown codes do not work');
+select tests.check(public.redeem_project_invite('EXPRD234') is null, 'expired codes do not work');
+select tests.check(public.redeem_project_invite('NOPE2345') is null, 'unknown codes do not work');
 select tests.check(public.redeem_project_invite(' boya2345 ') = '60000000-0000-0000-0000-000000000001', 'painter joins with the code');
 select tests.check(public.redeem_project_invite('BOYA2345') = '60000000-0000-0000-0000-000000000001', 'joining twice is harmless');
 select tests.check((select count(*) from public.shared_projects()) = 1, 'painter lists the shared project');
@@ -107,7 +107,11 @@ select tests.check(
   (select full_name from public.project_member_list('60000000-0000-0000-0000-000000000001')) = 'Mehmet Usta',
   'homeowner sees who joined'
 );
-select tests.check((select count(*) from public.pro_profiles) = 1, 'homeowner reads the profile of a painter on the project');
+select tests.check((select count(*) from public.pro_profiles) = 0, 'homeowner does not read painter profiles directly');
+select tests.check(
+  (select full_name from public.pro_card('00000000-0000-0000-0000-000000000602')) = 'Mehmet Usta',
+  'homeowner reads the card of a painter on the project'
+);
 
 select tests.as_user('00000000-0000-0000-0000-000000000603');
 select tests.check((select count(*) from public.rooms) = 0, 'other painters see nothing');
@@ -167,7 +171,7 @@ select tests.fails($$select public.respond_to_quote('64000000-0000-0000-0000-000
 select tests.as_user('00000000-0000-0000-0000-000000000601');
 select tests.check((select count(*) from public.quotes) = 1, 'homeowner sees the sent quote');
 select tests.check((select count(*) from public.quote_items) = 2, 'homeowner sees its items');
-select tests.check((select count(*) from public.pro_profiles) = 1, 'homeowner reads the quoting painter');
+select tests.check((select count(*) from public.pro_card('00000000-0000-0000-0000-000000000602')) = 1, 'homeowner reads the quoting painter''s card');
 update public.quotes set status = 'accepted';
 select tests.check(
   (select status from public.quotes where id = '64000000-0000-0000-0000-000000000002') = 'sent',
@@ -197,7 +201,7 @@ delete from public.project_members where user_id = '00000000-0000-0000-0000-0000
 select tests.as_user('00000000-0000-0000-0000-000000000602');
 select tests.check((select count(*) from public.rooms) = 0, 'removed painter loses access to rooms');
 select tests.check((select count(*) from storage.objects where bucket_id = 'project-photos') = 0, 'removed painter loses access to photos');
-select tests.fails($$select public.redeem_project_invite('BOYA2345')$$, 'revoked codes do not work');
+select tests.check(public.redeem_project_invite('BOYA2345') is null, 'revoked codes do not work');
 select tests.check((select count(*) from public.quotes) = 2, 'painter keeps their own quotes');
 
 -- Deleting the project keeps the painter's quote on record, without the project link.

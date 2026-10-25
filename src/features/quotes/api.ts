@@ -1,4 +1,4 @@
-import type { ProProfileRow, QuoteItemRow, QuoteRow, QuoteStatus } from '@/lib/database.types';
+import type { ProCard, QuoteItemRow, QuoteRow, QuoteStatus } from '@/lib/database.types';
 import type { DbClient } from '@/lib/supabase';
 
 import type { ItemRecord, QuoteRecord } from './form';
@@ -6,7 +6,7 @@ import type { ItemRecord, QuoteRecord } from './form';
 export type QuoteWithItems = {
   quote: QuoteRow;
   items: QuoteItemRow[];
-  pro: ProProfileRow | null;
+  pro: ProCard | null;
 };
 
 function quoteErrorMessage(message: string): string {
@@ -41,7 +41,8 @@ export async function getQuote(db: DbClient, id: string): Promise<QuoteWithItems
   if (error) throw new Error(error.message);
   const [items, pro] = await Promise.all([
     db.from('quote_items').select('*').eq('quote_id', id).order('sort_order'),
-    db.from('pro_profiles').select('*').eq('user_id', quote.pro_id).maybeSingle(),
+    // The card leaves out the painter's phone unless they chose to show it.
+    db.rpc('pro_card', { pro: quote.pro_id }).maybeSingle(),
   ]);
   if (items.error) throw new Error(items.error.message);
   return { quote, items: items.data, pro: pro.data ?? null };

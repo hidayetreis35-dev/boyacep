@@ -12,13 +12,20 @@ export function normaliseInviteCode(input: string): string | null {
 /** "BOYA2345" → "BOYA-2345", easier to read out on the phone. */
 export const formatInviteCode = (code: string) => `${code.slice(0, 4)}-${code.slice(4)}`;
 
-export function isInviteActive(invite: Pick<ProjectInviteRow, 'expires_at' | 'revoked_at'>, now = new Date()): boolean {
-  return invite.revoked_at === null && new Date(invite.expires_at) > now;
+export function isInviteActive(
+  invite: Pick<ProjectInviteRow, 'expires_at' | 'revoked_at' | 'uses' | 'max_uses'>,
+  now = new Date(),
+): boolean {
+  return invite.revoked_at === null && new Date(invite.expires_at) > now && invite.uses < invite.max_uses;
 }
+
+export const INVITE_NOT_FOUND = 'Kod bulunamadı ya da süresi doldu. Ev sahibinden yeni bir kod iste.';
 
 export function redeemErrorMessage(message: string): string {
   if (message.includes('only painters')) return 'Paylaşılan projeye katılmak için usta rolünün açık olması gerekir.';
-  if (message.includes('not found or expired')) return 'Kod bulunamadı ya da süresi doldu. Ev sahibinden yeni bir kod iste.';
+  if (message.includes('not found or expired')) return INVITE_NOT_FOUND;
+  if (message.includes('used up')) return 'Bu kodun katılım sınırı doldu. Ev sahibinden yeni bir kod iste.';
+  if (message.includes('too many attempts')) return 'Çok fazla yanlış kod denendi. Bir saat sonra tekrar dene.';
   if (message.includes('your own project')) return 'Bu senin kendi projen.';
   return 'Katılınamadı. İnternet bağlantını kontrol et.';
 }
@@ -58,6 +65,7 @@ export async function removeMember(db: DbClient, projectId: string, userId: stri
 export async function redeemInvite(db: DbClient, code: string): Promise<string> {
   const { data, error } = await db.rpc('redeem_project_invite', { invite_code: code });
   if (error) throw new Error(redeemErrorMessage(error.message));
+  if (!data) throw new Error(INVITE_NOT_FOUND);
   return data;
 }
 

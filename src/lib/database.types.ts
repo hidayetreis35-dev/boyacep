@@ -242,6 +242,9 @@ export type ProProfileRow = {
   updated_at: string;
 };
 
+/** What a customer sees of a painter (pro_card): the phone only when the painter shows it. */
+export type ProCard = Omit<ProProfileRow, 'created_at' | 'updated_at'>;
+
 export type ProjectInviteRow = {
   id: string;
   project_id: string;
@@ -249,6 +252,9 @@ export type ProjectInviteRow = {
   created_by: string;
   expires_at: string;
   revoked_at: string | null;
+  /** How many painters may join with this code, and how many already did. */
+  max_uses: number;
+  uses: number;
   created_at: string;
 };
 
@@ -402,7 +408,7 @@ export type Database = {
       project_members: Table<ProjectMemberRow, never, never>;
       project_invites: Table<
         ProjectInviteRow,
-        Pick<ProjectInviteRow, 'project_id'> & Partial<Pick<ProjectInviteRow, 'expires_at'>>,
+        Pick<ProjectInviteRow, 'project_id'> & Partial<Pick<ProjectInviteRow, 'expires_at' | 'max_uses'>>,
         Partial<Pick<ProjectInviteRow, 'revoked_at'>>
       >;
       quotes: Table<
@@ -433,7 +439,9 @@ export type Database = {
       has_role: { Args: { check_role: AppRole }; Returns: boolean };
       is_admin: { Args: Record<string, never>; Returns: boolean };
       admin_stats: { Args: Record<string, never>; Returns: AdminStats[] };
-      redeem_project_invite: { Args: { invite_code: string }; Returns: string };
+      /** null when the code is unknown, expired or revoked. */
+      redeem_project_invite: { Args: { invite_code: string }; Returns: string | null };
+      pro_card: { Args: { pro: string }; Returns: ProCard[] };
       shared_projects: { Args: Record<string, never>; Returns: SharedProject[] };
       project_member_list: { Args: { project: string }; Returns: ProjectMember[] };
       respond_to_quote: { Args: { quote: string; accept: boolean }; Returns: undefined };

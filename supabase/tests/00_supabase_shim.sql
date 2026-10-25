@@ -36,6 +36,12 @@ $$;
 grant usage on schema auth, public, extensions to anon, authenticated, service_role;
 grant execute on function auth.uid() to anon, authenticated, service_role;
 
+-- Like Supabase: new tables and functions in public are granted to the API roles
+-- unless a migration revokes them, so tests catch a forgotten revoke.
+alter default privileges in schema public grant all on tables to anon, authenticated, service_role;
+alter default privileges in schema public grant all on sequences to anon, authenticated, service_role;
+alter default privileges in schema public grant execute on functions to anon, authenticated, service_role;
+
 create table if not exists storage.buckets (
   id text primary key,
   name text not null,

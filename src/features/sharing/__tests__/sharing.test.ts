@@ -1,4 +1,5 @@
-import { formatInviteCode, isInviteActive, normaliseInviteCode, redeemErrorMessage } from '@/features/sharing/api';
+import { formatInviteCode, isInviteActive, normaliseInviteCode, redeemErrorMessage, redeemInvite } from '@/features/sharing/api';
+import type { DbClient } from '@/lib/supabase';
 
 describe('invite codes', () => {
   it('accepts what people type', () => {
@@ -18,13 +19,22 @@ describe('invite codes', () => {
 
   it('knows when a code still works', () => {
     const now = new Date('2026-10-25T12:00:00Z');
-    expect(isInviteActive({ expires_at: '2026-10-30T00:00:00Z', revoked_at: null }, now)).toBe(true);
-    expect(isInviteActive({ expires_at: '2026-10-20T00:00:00Z', revoked_at: null }, now)).toBe(false);
-    expect(isInviteActive({ expires_at: '2026-10-30T00:00:00Z', revoked_at: '2026-10-25T00:00:00Z' }, now)).toBe(false);
+    const open = { expires_at: '2026-10-30T00:00:00Z', revoked_at: null, uses: 1, max_uses: 3 };
+    expect(isInviteActive(open, now)).toBe(true);
+    expect(isInviteActive({ ...open, expires_at: '2026-10-20T00:00:00Z' }, now)).toBe(false);
+    expect(isInviteActive({ ...open, revoked_at: '2026-10-25T00:00:00Z' }, now)).toBe(false);
+    expect(isInviteActive({ ...open, uses: 3 }, now)).toBe(false);
   });
 
   it('explains redeem errors', () => {
     expect(redeemErrorMessage('only painters can join shared projects')).toMatch(/usta rolünün/);
     expect(redeemErrorMessage('invite not found or expired')).toMatch(/süresi doldu/);
+    expect(redeemErrorMessage('invite used up')).toMatch(/sınırı doldu/);
+    expect(redeemErrorMessage('too many attempts')).toMatch(/bir saat sonra/i);
+  });
+
+  it('treats a code the server does not know as not found', async () => {
+    const db = { rpc: jest.fn().mockResolvedValue({ data: null, error: null }) } as unknown as DbClient;
+    await expect(redeemInvite(db, 'NOPE2345')).rejects.toThrow(/süresi doldu/);
   });
 });
