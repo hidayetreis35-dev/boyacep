@@ -18,10 +18,10 @@ What has to be true before BoyaCep goes to the first testers, and what is still 
 | Profile | Use |
 | --- | --- |
 | `preview` | Android APK and iOS ad-hoc build for testers (internal distribution) |
-| `development` | Development client for local debugging |
+| `development` | Development client for local debugging (needs `expo-dev-client`, not installed yet) |
 | `production` | Store builds; version is incremented remotely |
 
-Android testers install the APK from the link EAS prints. iOS testers need their device registered (`eas device:create`) or TestFlight, which requires an Apple Developer account (paid).
+Android testers install the APK from the link EAS prints and work through [telefon-testi.md](telefon-testi.md). iOS testers need their device registered (`eas device:create`) or TestFlight, which requires an Apple Developer account (paid).
 
 ## Open before a public launch
 
