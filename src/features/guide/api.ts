@@ -1,22 +1,23 @@
 import { useQuery } from '@tanstack/react-query';
 
 import { useSession } from '@/features/account/session';
+import { msg, t } from '@/i18n';
 import type { GuideArticleRow, GuideCategory } from '@/lib/database.types';
 import type { DbClient } from '@/lib/supabase';
 
 export const GUIDE_CATEGORIES: { value: GuideCategory; label: string }[] = [
-  { value: 'preparation', label: 'Boya öncesi hazırlık' },
-  { value: 'primer', label: 'Astar uygulaması' },
-  { value: 'filler_sanding', label: 'Macun ve zımpara' },
-  { value: 'ceiling', label: 'Tavan boyama' },
-  { value: 'walls', label: 'Duvar boyama' },
-  { value: 'tools', label: 'Rulo ve fırça kullanımı' },
-  { value: 'mistakes', label: 'Boya hataları' },
-  { value: 'exterior', label: 'Dış cephe uygulamaları' },
-  { value: 'materials', label: 'Malzeme seçimi' },
+  { value: 'preparation', label: msg('Boya öncesi hazırlık') },
+  { value: 'primer', label: msg('Astar uygulaması') },
+  { value: 'filler_sanding', label: msg('Macun ve zımpara') },
+  { value: 'ceiling', label: msg('Tavan boyama') },
+  { value: 'walls', label: msg('Duvar boyama') },
+  { value: 'tools', label: msg('Rulo ve fırça kullanımı') },
+  { value: 'mistakes', label: msg('Boya hataları') },
+  { value: 'exterior', label: msg('Dış cephe uygulamaları') },
+  { value: 'materials', label: msg('Malzeme seçimi') },
 ];
 
-export const categoryLabel = (c: GuideCategory) => GUIDE_CATEGORIES.find((x) => x.value === c)?.label ?? c;
+export const categoryLabel = (c: GuideCategory) => t(GUIDE_CATEGORIES.find((x) => x.value === c)?.label ?? c);
 
 export type GuideListItem = Pick<GuideArticleRow, 'id' | 'slug' | 'category' | 'title' | 'summary' | 'reading_minutes' | 'status' | 'sort_order'>;
 

@@ -1,4 +1,5 @@
 import type { Opening, RoomInput } from '@/engine';
+import { msg } from '@/i18n';
 import type { ProjectStatus, RoomOpeningRow, RoomRow } from '@/lib/database.types';
 import { formatNumber } from '@/lib/number';
 import type { RoomForm } from '@/features/calculator/form';
@@ -11,12 +12,12 @@ export type RoomRecord = Omit<RoomRow, 'id' | 'project_id' | 'created_at' | 'upd
 export type OpeningRecord = Pick<RoomOpeningRow, 'kind' | 'width_m' | 'height_m' | 'count'>;
 
 export const STATUS_LABEL: Record<ProjectStatus, string> = {
-  draft: 'Taslak',
-  planning: 'Planlanıyor',
-  awaiting_quote: 'Teklif bekliyor',
-  in_progress: 'Devam ediyor',
-  completed: 'Tamamlandı',
-  cancelled: 'İptal edildi',
+  draft: msg('Taslak'),
+  planning: msg('Planlanıyor'),
+  awaiting_quote: msg('Teklif bekliyor'),
+  in_progress: msg('Devam ediyor'),
+  completed: msg('Tamamlandı'),
+  cancelled: msg('İptal edildi'),
 };
 
 export const STATUS_ORDER: ProjectStatus[] = [

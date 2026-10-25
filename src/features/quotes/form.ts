@@ -1,19 +1,20 @@
 import type { QuoteItemKind } from '@/engine';
+import { msg, t } from '@/i18n';
 import type { QuoteItemRow, QuoteRow, QuoteStatus } from '@/lib/database.types';
 import { formatNumber, parseDecimal } from '@/lib/number';
 
 export const QUOTE_STATUS_LABEL: Record<QuoteStatus, string> = {
-  draft: 'Taslak',
-  sent: 'Gönderildi',
-  accepted: 'Kabul edildi',
-  rejected: 'Reddedildi',
-  withdrawn: 'Geri çekildi',
+  draft: msg('Taslak'),
+  sent: msg('Gönderildi'),
+  accepted: msg('Kabul edildi'),
+  rejected: msg('Reddedildi'),
+  withdrawn: msg('Geri çekildi'),
 };
 
 export const VALIDITY_OPTIONS = [
-  { value: '7', label: '7 gün' },
-  { value: '15', label: '15 gün' },
-  { value: '30', label: '30 gün' },
+  { value: '7', label: msg('7 gün') },
+  { value: '15', label: msg('15 gün') },
+  { value: '30', label: msg('30 gün') },
 ] as const;
 export type ValidityDays = (typeof VALIDITY_OPTIONS)[number]['value'];
 
@@ -41,7 +42,7 @@ let keySeq = 0;
 export const newItemKey = () => `item-${Date.now().toString(36)}-${(keySeq++).toString(36)}`;
 
 export function emptyItem(kind: QuoteItemKind = 'labor'): ItemForm {
-  return { key: newItemKey(), kind, description: '', quantity: '1', unit: kind === 'labor' ? 'm²' : 'adet', unitPrice: '' };
+  return { key: newItemKey(), kind, description: '', quantity: '1', unit: kind === 'labor' ? 'm²' : t('adet'), unitPrice: '' };
 }
 
 export function emptyQuoteForm(title = ''): QuoteForm {
@@ -90,9 +91,9 @@ export type QuoteFormErrors = {
 
 /** "1.850" typed as a price means one thousand eight hundred fifty in Turkish; allow thousands dots. */
 function parseMoney(text: string): number {
-  const t = text.trim();
-  if (/^\d{1,3}(\.\d{3})+(,\d{1,2})?$/.test(t)) return parseDecimal(t.replace(/\./g, ''));
-  return parseDecimal(t);
+  const value = text.trim();
+  if (/^\d{1,3}(\.\d{3})+(,\d{1,2})?$/.test(value)) return parseDecimal(value.replace(/\./g, ''));
+  return parseDecimal(value);
 }
 
 export function addDays(date: Date, days: number): string {
@@ -109,10 +110,10 @@ export function validateQuoteForm(
   const vat = form.vatRate.trim() === '' ? 0 : parseDecimal(form.vatRate);
   const discount = form.discount.trim() === '' ? 0 : parseMoney(form.discount);
 
-  if (!title) errors.title = 'Teklife bir başlık ver.';
-  else if (title.length > 120) errors.title = 'Başlık en fazla 120 karakter olabilir.';
-  if (!Number.isFinite(vat) || vat < 0 || vat > 50) errors.vatRate = 'KDV oranı 0 ile 50 arasında olmalı.';
-  if (!Number.isFinite(discount) || discount < 0) errors.discount = 'İndirim tutarı geçersiz.';
+  if (!title) errors.title = t('Teklife bir başlık ver.');
+  else if (title.length > 120) errors.title = t('Başlık en fazla 120 karakter olabilir.');
+  if (!Number.isFinite(vat) || vat < 0 || vat > 50) errors.vatRate = t('KDV oranı 0 ile 50 arasında olmalı.');
+  if (!Number.isFinite(discount) || discount < 0) errors.discount = t('İndirim tutarı geçersiz.');
 
   const items: ItemRecord[] = [];
   const itemErrors: NonNullable<QuoteFormErrors['item']> = {};
@@ -122,18 +123,18 @@ export function validateQuoteForm(
     const quantity = parseDecimal(item.quantity);
     const unit = item.unit.trim();
     const price = parseMoney(item.unitPrice);
-    if (!description) e.description = 'Kalemi açıkla.';
-    else if (description.length > 200) e.description = 'En fazla 200 karakter.';
-    if (!Number.isFinite(quantity) || quantity <= 0 || quantity > 100000) e.quantity = 'Miktar geçersiz.';
-    if (!unit || unit.length > 20) e.unit = 'Birim yaz.';
-    if (!Number.isFinite(price) || price < 0 || price > 10000000) e.unitPrice = 'Fiyat geçersiz.';
+    if (!description) e.description = t('Kalemi açıkla.');
+    else if (description.length > 200) e.description = t('En fazla 200 karakter.');
+    if (!Number.isFinite(quantity) || quantity <= 0 || quantity > 100000) e.quantity = t('Miktar geçersiz.');
+    if (!unit || unit.length > 20) e.unit = t('Birim yaz.');
+    if (!Number.isFinite(price) || price < 0 || price > 10000000) e.unitPrice = t('Fiyat geçersiz.');
     if (Object.keys(e).length > 0) itemErrors[item.key] = e;
     else items.push({ kind: item.kind, description, quantity, unit, unit_price: price, sort_order: i });
   });
-  if (form.items.length === 0) errors.items = 'En az bir kalem ekle.';
+  if (form.items.length === 0) errors.items = t('En az bir kalem ekle.');
   if (Object.keys(itemErrors).length > 0) {
     errors.item = itemErrors;
-    errors.items = 'Kırmızı işaretli kalemleri düzelt.';
+    errors.items = t('Kırmızı işaretli kalemleri düzelt.');
   }
 
   if (Object.keys(errors).length > 0) return { errors };
@@ -155,10 +156,10 @@ export function validateQuoteForm(
 export function itemsFromProject(paintableM2: number | null, materials: { name: string; quantity: number; unit: string }[]): ItemForm[] {
   const items: ItemForm[] = [];
   if (paintableM2 && paintableM2 > 0) {
-    items.push({ ...emptyItem('labor'), description: 'Duvar ve tavan boya işçiliği', quantity: fmt(paintableM2), unit: 'm²' });
+    items.push({ ...emptyItem('labor'), description: t('Duvar ve tavan boya işçiliği'), quantity: fmt(paintableM2), unit: 'm²' });
   }
   for (const m of materials) {
-    items.push({ ...emptyItem('material'), description: m.name, quantity: fmt(m.quantity), unit: m.unit });
+    items.push({ ...emptyItem('material'), description: t(m.name), quantity: fmt(m.quantity), unit: t(m.unit) });
   }
   return items;
 }

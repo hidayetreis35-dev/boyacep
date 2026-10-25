@@ -1,3 +1,4 @@
+import { t } from '@/i18n';
 import type { ProCard, QuoteItemRow, QuoteRow, QuoteStatus } from '@/lib/database.types';
 import type { DbClient } from '@/lib/supabase';
 
@@ -11,11 +12,11 @@ export type QuoteWithItems = {
 
 function quoteErrorMessage(message: string): string {
   if (message.includes('cannot be edited') || message.includes('items of a sent quote')) {
-    return 'Gönderilmiş teklif değiştirilemez. Değiştirmek için önce geri çek.';
+    return t('Gönderilmiş teklif değiştirilemez. Değiştirmek için önce geri çek.');
   }
-  if (message.includes('cannot move')) return 'Teklifin durumu bu şekilde değiştirilemez.';
-  if (message.includes('row-level security')) return 'Teklif yazmak için usta rolünün açık olması gerekir.';
-  return 'Teklif kaydedilemedi. İnternet bağlantını kontrol et.';
+  if (message.includes('cannot move')) return t('Teklifin durumu bu şekilde değiştirilemez.');
+  if (message.includes('row-level security')) return t('Teklif yazmak için usta rolünün açık olması gerekir.');
+  return t('Teklif kaydedilemedi. İnternet bağlantını kontrol et.');
 }
 
 export async function listMyQuotes(db: DbClient, userId: string): Promise<QuoteRow[]> {
@@ -80,14 +81,14 @@ export async function setQuoteStatus(db: DbClient, id: string, status: QuoteStat
 
 export async function deleteQuote(db: DbClient, id: string): Promise<void> {
   const { error } = await db.from('quotes').delete().eq('id', id);
-  if (error) throw new Error('Teklif silinemedi.');
+  if (error) throw new Error(t('Teklif silinemedi.'));
 }
 
 export async function respondToQuote(db: DbClient, id: string, accept: boolean): Promise<void> {
   const { error } = await db.rpc('respond_to_quote', { quote: id, accept });
   if (error) {
-    if (error.message.includes('not waiting')) throw new Error('Bu teklif artık yanıt beklemiyor.');
-    throw new Error('Yanıt gönderilemedi. İnternet bağlantını kontrol et.');
+    if (error.message.includes('not waiting')) throw new Error(t('Bu teklif artık yanıt beklemiyor.'));
+    throw new Error(t('Yanıt gönderilemedi. İnternet bağlantını kontrol et.'));
   }
 }
 

@@ -5,6 +5,7 @@ import { useSession } from '@/features/account/session';
 import { HOME_ACTIONS, type HomeAction } from '@/features/home/actions';
 import { useProjects } from '@/features/projects/queries';
 import { STATUS_LABEL } from '@/features/projects/mapping';
+import { t } from '@/i18n';
 import { Gradient, PaintDrops, RollerMark, SectionTitle, SwatchFan } from '@/ui/brand';
 import { AppText, Badge, Button, Icon, Screen } from '@/ui/components';
 import { FadeIn, PressableScale } from '@/ui/motion';
@@ -31,12 +32,12 @@ function Hero() {
           </AppText>
         </View>
         <AppText variant="display" style={{ color: p.onHero, paddingRight: 72 }}>
-          Evini boyamanın en kolay yolu
+          {t('Evini boyamanın en kolay yolu')}
         </AppText>
-        <AppText style={{ color: p.onHeroMuted }}>Ne kadar boya, hangi renk, ne kadar tutar: hepsi tek yerde.</AppText>
+        <AppText style={{ color: p.onHeroMuted }}>{t('Ne kadar boya, hangi renk, ne kadar tutar: hepsi tek yerde.')}</AppText>
       </View>
       <View style={{ flexDirection: 'row', gap: space.sm, flexWrap: 'wrap' }}>
-        <Button label="Hesaplamaya başla" icon="arrow-forward" variant="cta" onPress={() => router.push('/calculate')} />
+        <Button label={t('Hesaplamaya başla')} icon="arrow-forward" variant="cta" onPress={() => router.push('/calculate')} />
       </View>
     </View>
   );
@@ -48,7 +49,7 @@ function WideCard({ action, art }: { action: HomeAction; art: React.ReactNode })
   return (
     <PressableScale
       accessibilityRole="button"
-      accessibilityLabel={action.title}
+      accessibilityLabel={t(action.title)}
       onPress={() => open(action)}
       style={[styles.wide, { backgroundColor: f.soft }]}>
       <View style={{ flex: 1, gap: space.xs }}>
@@ -56,14 +57,14 @@ function WideCard({ action, art }: { action: HomeAction; art: React.ReactNode })
           <Icon name={action.icon} size={22} color="#FFFFFF" />
         </View>
         <AppText variant="heading" style={{ color: f.ink, fontFamily: fonts.extrabold }}>
-          {action.title}
+          {t(action.title)}
         </AppText>
         <AppText variant="small" style={{ color: f.ink, opacity: 0.85 }}>
-          {action.subtitle}
+          {t(action.subtitle)}
         </AppText>
         <View style={[styles.go, { backgroundColor: f.base }]}>
           <AppText variant="caption" style={{ color: '#FFFFFF', fontFamily: fonts.bold }}>
-            Başla
+            {t('Başla')}
           </AppText>
           <Icon name="arrow-forward" size={14} color="#FFFFFF" />
         </View>
@@ -79,19 +80,19 @@ function SmallCard({ action }: { action: HomeAction }) {
   return (
     <PressableScale
       accessibilityRole="button"
-      accessibilityLabel={action.href ? action.title : `${action.title}, yakında`}
+      accessibilityLabel={action.href ? t(action.title) : t('{title}, yakında', { title: t(action.title) })}
       onPress={() => open(action)}
       style={[styles.small, { backgroundColor: p.surface, borderColor: p.border }, shadowOf(p)]}>
       <View style={[styles.smallIcon, { backgroundColor: f.soft }]}>
         <Icon name={action.icon} size={22} color={f.ink} />
       </View>
       <AppText variant="bodyStrong" style={{ fontFamily: fonts.bold }}>
-        {action.title}
+        {t(action.title)}
       </AppText>
       <AppText variant="caption" tone="muted">
-        {action.subtitle}
+        {t(action.subtitle)}
       </AppText>
-      {!action.href && <Badge label="Yakında" />}
+      {!action.href && <Badge label={t('Yakında')} />}
     </PressableScale>
   );
 }
@@ -105,7 +106,7 @@ function RecentProjects() {
     return (
       <PressableScale
         accessibilityRole="button"
-        accessibilityLabel="Projeni kaydet"
+        accessibilityLabel={t('Projeni kaydet')}
         onPress={() => router.push(db ? '/sign-in' : '/projects')}
         style={[styles.saveCta, { backgroundColor: p.surface, borderColor: p.border }, shadowOf(p)]}>
         <View style={[styles.smallIcon, { backgroundColor: p.primarySoft }]}>
@@ -113,10 +114,10 @@ function RecentProjects() {
         </View>
         <View style={{ flex: 1, gap: 2 }}>
           <AppText variant="bodyStrong" style={{ fontFamily: fonts.bold }}>
-            Projeni kaydet
+            {t('Projeni kaydet')}
           </AppText>
           <AppText variant="small" tone="muted">
-            Oda ölçülerin, malzeme listen ve renklerin bir arada dursun.
+            {t('Oda ölçülerin, malzeme listen ve renklerin bir arada dursun.')}
           </AppText>
         </View>
         <Icon name="chevron-forward" color={p.textMuted} />
@@ -128,17 +129,17 @@ function RecentProjects() {
   return (
     <View style={{ gap: space.md }}>
       <SectionTitle
-        title="Son projelerin"
+        title={t('Son projelerin')}
         action={
           list.length > 0 ? (
-            <Button label="Tümü" variant="ghost" onPress={() => router.push('/projects')} />
+            <Button label={t('Tümü')} variant="ghost" onPress={() => router.push('/projects')} />
           ) : undefined
         }
       />
       {list.length === 0 ? (
         <PressableScale
           accessibilityRole="button"
-          accessibilityLabel="İlk projeni oluştur"
+          accessibilityLabel={t('İlk projeni oluştur')}
           onPress={() => router.push('/projects')}
           style={[styles.saveCta, { backgroundColor: p.accentSoft, borderColor: 'transparent' }]}>
           <View style={[styles.smallIcon, { backgroundColor: p.cta }]}>
@@ -146,10 +147,10 @@ function RecentProjects() {
           </View>
           <View style={{ flex: 1, gap: 2 }}>
             <AppText variant="bodyStrong" style={{ fontFamily: fonts.bold }}>
-              İlk projeni oluştur
+              {t('İlk projeni oluştur')}
             </AppText>
             <AppText variant="small" tone="muted">
-              Odalarını ekle, malzeme ve maliyet kendiliğinden çıksın.
+              {t('Odalarını ekle, malzeme ve maliyet kendiliğinden çıksın.')}
             </AppText>
           </View>
         </PressableScale>
@@ -168,7 +169,7 @@ function RecentProjects() {
               <AppText variant="bodyStrong" numberOfLines={1} style={{ fontFamily: fonts.bold }}>
                 {project.title}
               </AppText>
-              <Badge label={STATUS_LABEL[project.status]} tone="primary" />
+              <Badge label={t(STATUS_LABEL[project.status])} tone="primary" />
             </PressableScale>
           ))}
         </ScrollView>
@@ -186,7 +187,7 @@ export default function HomeScreen() {
         <Hero />
       </FadeIn>
       <FadeIn delay={80} style={{ gap: space.md }}>
-        <SectionTitle title="Ne yapmak istersin?" />
+        <SectionTitle title={t('Ne yapmak istersin?')} />
         <WideCard action={calculate} art={<RollerMark colour={c.base} size={76} />} />
         <WideCard action={colour} art={<SwatchFan colours={['#2F5D6B', '#C2367A', '#D99A1E', '#A3B49A']} size={80} />} />
         <View style={styles.grid}>

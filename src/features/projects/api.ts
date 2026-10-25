@@ -1,4 +1,5 @@
 import { deleteAllProjectPhotos } from '@/features/photos/api';
+import { t } from '@/i18n';
 import type { ProjectRow, ProjectStatus } from '@/lib/database.types';
 import type { DbClient } from '@/lib/supabase';
 
@@ -6,7 +7,7 @@ import type { OpeningRecord, RoomRecord, RoomWithOpenings } from './mapping';
 
 function check<T>(result: { data: T; error: { message: string } | null }): NonNullable<T> {
   if (result.error) throw new Error(result.error.message);
-  if (result.data == null) throw new Error('Kayıt bulunamadı.');
+  if (result.data == null) throw new Error(t('Kayıt bulunamadı.'));
   return result.data;
 }
 
@@ -17,7 +18,7 @@ export async function listProjects(db: DbClient): Promise<ProjectRow[]> {
 export async function createProject(db: DbClient, title: string): Promise<ProjectRow> {
   const result = await db.from('projects').insert({ title: title.trim() }).select().single();
   if (result.error?.message.includes('project limit')) {
-    throw new Error('Planındaki proje sınırına ulaştın. Yer açmak için eski bir projeyi silebilirsin.');
+    throw new Error(t('Planındaki proje sınırına ulaştın. Yer açmak için eski bir projeyi silebilirsin.'));
   }
   return check(result);
 }

@@ -6,6 +6,7 @@ import { StyleSheet, View } from 'react-native';
 import { isValidEmail, sendEmailCode } from '@/features/account/api';
 import { completeSignIn } from '@/features/account/auth-link';
 import { useSession } from '@/features/account/session';
+import { t } from '@/i18n';
 import { AppText, Button, Card, EmptyState, Icon, Notice, Screen, TextField } from '@/ui/components';
 import { fonts, space, usePalette } from '@/ui/theme';
 
@@ -44,9 +45,9 @@ export default function SignInScreen() {
       <Screen edges={['bottom']}>
         <EmptyState
           icon="cloud-offline"
-          title="Hesap sistemi henüz bağlı değil"
-          message="Giriş ve proje kaydetme, sunucu bağlantısı kurulunca açılacak. Ne Kadar Boya? şimdiden çalışıyor."
-          action={<Button label="Ne Kadar Boya?" icon="calculator" onPress={() => router.replace('/calculate')} />}
+          title={t('Hesap sistemi henüz bağlı değil')}
+          message={t('Giriş ve proje kaydetme, sunucu bağlantısı kurulunca açılacak. Ne Kadar Boya? şimdiden çalışıyor.')}
+          action={<Button label={t('Ne Kadar Boya?')} icon="calculator" onPress={() => router.replace('/calculate')} />}
         />
       </Screen>
     );
@@ -58,7 +59,7 @@ export default function SignInScreen() {
     try {
       await task();
     } catch (e) {
-      setError(e instanceof Error ? e.message : 'Bir sorun oluştu.');
+      setError(e instanceof Error ? e.message : t('Bir sorun oluştu.'));
     } finally {
       setBusy(false);
     }
@@ -66,7 +67,7 @@ export default function SignInScreen() {
 
   const sendCode = () =>
     run(async () => {
-      if (!isValidEmail(email)) throw new Error('Geçerli bir e-posta adresi yazın.');
+      if (!isValidEmail(email)) throw new Error(t('Geçerli bir e-posta adresi yazın.'));
       await sendEmailCode(db, email, Linking.createURL('/'));
       setStep('code');
     });
@@ -85,23 +86,23 @@ export default function SignInScreen() {
           <Icon name={step === 'email' ? 'mail' : 'mail-open'} size={34} color={p.cta} />
         </View>
         <View style={{ flexDirection: 'row', alignItems: 'center', gap: space.sm }}>
-          <StepDot n={1} label="E-posta" active={step === 'email'} done={step === 'code'} />
+          <StepDot n={1} label={t('E-posta')} active={step === 'email'} done={step === 'code'} />
           <View style={{ width: 28, height: 2, backgroundColor: p.border }} />
-          <StepDot n={2} label="Bağlantı" active={step === 'code'} done={false} />
+          <StepDot n={2} label={t('Bağlantı')} active={step === 'code'} done={false} />
         </View>
       </View>
       <View style={{ gap: space.xs }}>
-        <AppText variant="title">{step === 'email' ? 'E-postanla giriş yap' : 'E-postanı kontrol et'}</AppText>
+        <AppText variant="title">{step === 'email' ? t('E-postanla giriş yap') : t('E-postanı kontrol et')}</AppText>
         <AppText tone="muted">
           {step === 'email'
-            ? 'Şifre yok. E-postana tek kullanımlık bir giriş bağlantısı göndereceğiz. Hesabın yoksa otomatik açılır.'
-            : `${email.trim()} adresine bir e-posta gönderdik. Bu telefonda e-postadaki bağlantıya dokun. Olmazsa bağlantıya basılı tutup kopyala ve aşağıya yapıştır. E-postada kod varsa kodu da yazabilirsin.`}
+            ? t('Şifre yok. E-postana tek kullanımlık bir giriş bağlantısı göndereceğiz. Hesabın yoksa otomatik açılır.')
+            : t('{email} adresine bir e-posta gönderdik. Bu telefonda e-postadaki bağlantıya dokun. Olmazsa bağlantıya basılı tutup kopyala ve aşağıya yapıştır. E-postada kod varsa kodu da yazabilirsin.', { email: email.trim() })}
         </AppText>
       </View>
       <Card>
         {step === 'email' ? (
           <TextField
-            label="E-posta"
+            label={t('E-posta')}
             value={email}
             onChangeText={setEmail}
             keyboardType="email-address"
@@ -115,7 +116,7 @@ export default function SignInScreen() {
           />
         ) : (
           <TextField
-            label="Bağlantı ya da kod"
+            label={t('Bağlantı ya da kod')}
             value={code}
             onChangeText={setCode}
             autoCapitalize="none"
@@ -132,7 +133,7 @@ export default function SignInScreen() {
           </Notice>
         ) : null}
         <Button
-          label={step === 'email' ? 'Giriş e-postası gönder' : 'Giriş yap'}
+          label={step === 'email' ? t('Giriş e-postası gönder') : t('Giriş yap')}
           variant="cta"
           size="lg"
           onPress={step === 'email' ? sendCode : verify}
@@ -140,7 +141,7 @@ export default function SignInScreen() {
         />
         {step === 'code' ? (
           <Button
-            label="E-postayı değiştir"
+            label={t('E-postayı değiştir')}
             variant="ghost"
             onPress={() => {
               setStep('email');
@@ -151,7 +152,7 @@ export default function SignInScreen() {
         ) : null}
       </Card>
       <AppText variant="caption" tone="muted">
-        Giriş yaparak verilerinin BoyaCep hesabında saklanmasını kabul etmiş olursun. Hesabını ve verilerini istediğin zaman silebileceksin.
+        {t('Giriş yaparak verilerinin BoyaCep hesabında saklanmasını kabul etmiş olursun. Hesabını ve verilerini istediğin zaman silebileceksin.')}
       </AppText>
     </Screen>
   );

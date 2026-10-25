@@ -1,6 +1,7 @@
 import { randomUUID } from 'expo-crypto';
 
 import { parseSurfaces } from '@/features/colour/outline';
+import { t } from '@/i18n';
 import type { PhotoSurface, ProjectPhotoRow } from '@/lib/database.types';
 import type { DbClient } from '@/lib/supabase';
 
@@ -77,15 +78,15 @@ export async function saveSurfaces(db: DbClient, photoId: string, surfaces: Phot
     .from('project_photos')
     .update({ wall_outline: surfaces.length > 0 ? surfaces : null })
     .eq('id', photoId);
-  if (error) throw new Error('Çizim kaydedilemedi. İnternet bağlantını kontrol et.');
+  if (error) throw new Error(t('Çizim kaydedilemedi. İnternet bağlantını kontrol et.'));
 }
 
 /** Removes the file, then the record. A left-over record without a file is harmless; the reverse would leak storage. */
 export async function deleteProjectPhoto(db: DbClient, photo: Pick<ProjectPhotoRow, 'id' | 'storage_path'>): Promise<void> {
   const removed = await db.storage.from(PHOTO_BUCKET).remove([photo.storage_path]);
-  if (removed.error) throw new Error('Fotoğraf silinemedi.');
+  if (removed.error) throw new Error(t('Fotoğraf silinemedi.'));
   const { error } = await db.from('project_photos').delete().eq('id', photo.id);
-  if (error) throw new Error('Fotoğraf silinemedi.');
+  if (error) throw new Error(t('Fotoğraf silinemedi.'));
 }
 
 /** Removes every photo file of a project; called before the project itself is deleted. */
@@ -94,5 +95,5 @@ export async function deleteAllProjectPhotos(db: DbClient, projectId: string): P
   if (error) throw new Error(error.message);
   if (data.length === 0) return;
   const removed = await db.storage.from(PHOTO_BUCKET).remove(data.map((p) => p.storage_path));
-  if (removed.error) throw new Error('Proje fotoğrafları silinemedi.');
+  if (removed.error) throw new Error(t('Proje fotoğrafları silinemedi.'));
 }

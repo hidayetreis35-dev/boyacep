@@ -8,6 +8,7 @@ import { useFavourites } from '@/features/colour/favourites';
 import type { PickedPhoto } from '@/features/photos/picker';
 import { PhotoSourceButtons } from '@/features/photos/photo-source';
 import { useProjectPhoto, useSaveSurfaces } from '@/features/photos/queries';
+import { t } from '@/i18n';
 import { FeatureHeader, Segmented, SectionTitle, SwatchFan } from '@/ui/brand';
 import { AppText, Card, EmptyState, ErrorState, LoadingState, Notice, Screen, useScrollToTop } from '@/ui/components';
 import { space } from '@/ui/theme';
@@ -27,9 +28,9 @@ function LocalPhoto({ colour, quickColours, onPickColour, onBrowse }: PhotoProps
         <Card>
           <View style={{ flexDirection: 'row', alignItems: 'center', gap: space.md }}>
             <View style={{ flex: 1, gap: space.xs }}>
-              <AppText variant="heading">Odanın fotoğrafını ekle</AppText>
+              <AppText variant="heading">{t('Odanın fotoğrafını ekle')}</AppText>
               <AppText tone="muted">
-                Duvarı gün ışığında, karşıdan çek. Sonra duvar, tavan ya da dolap gibi yüzeyleri çizip her birine ayrı renk dene. Fotoğraf telefonunda kalır.
+                {t('Duvarı gün ışığında, karşıdan çek. Sonra duvar, tavan ya da dolap gibi yüzeyleri çizip her birine ayrı renk dene. Fotoğraf telefonunda kalır.')}
               </AppText>
             </View>
             <SwatchFan colours={[colour.hex, '#F1EDE4', '#2F5D6B', '#C08A6B']} size={64} />
@@ -57,9 +58,9 @@ function ProjectPhoto({ photoId, colour, quickColours, onPickColour, onBrowse }:
   const query = useProjectPhoto(photoId);
   const save = useSaveSurfaces({ id: photoId, project_id: query.data?.project_id ?? '' });
   const [saved, setSaved] = useState(false);
-  if (query.isPending) return <LoadingState label="Fotoğraf yükleniyor…" />;
+  if (query.isPending) return <LoadingState label={t('Fotoğraf yükleniyor…')} />;
   if (query.isError || !query.data.url) {
-    return <ErrorState message="Fotoğraf yüklenemedi. Silinmiş olabilir ya da internet bağlantın yok." onRetry={() => query.refetch()} />;
+    return <ErrorState message={t('Fotoğraf yüklenemedi. Silinmiş olabilir ya da internet bağlantın yok.')} onRetry={() => query.refetch()} />;
   }
   const photo = query.data;
   return (
@@ -80,7 +81,7 @@ function ProjectPhoto({ photoId, colour, quickColours, onPickColour, onBrowse }:
       />
       {saved ? (
         <Notice tone="success" icon="checkmark-circle">
-          Yüzeyler ve renkler projeye kaydedildi.
+          {t('Yüzeyler ve renkler projeye kaydedildi.')}
         </Notice>
       ) : null}
     </>
@@ -121,12 +122,12 @@ export default function ColourScreen() {
 
   return (
     <Screen edges={['bottom']}>
-      <FeatureHeader feature="color" icon="color-palette" title="Renk Stüdyosu" subtitle="Keşfet, karşılaştır, duvarında dene." />
+      <FeatureHeader feature="color" icon="color-palette" title={t('Renk Stüdyosu')} subtitle={t('Keşfet, karşılaştır, duvarında dene.')} />
       <Segmented
         options={[
-          { value: 'colours', label: 'Renkler', icon: 'color-palette' },
-          { value: 'photo', label: 'Duvarda', icon: 'camera' },
-          { value: 'favourites', label: `Favoriler${favourites.list.length ? ` (${favourites.list.length})` : ''}`, icon: 'heart' },
+          { value: 'colours', label: t('Renkler'), icon: 'color-palette' },
+          { value: 'photo', label: t('Duvarda'), icon: 'camera' },
+          { value: 'favourites', label: favourites.list.length ? t('Favoriler ({count})', { count: favourites.list.length }) : t('Favoriler'), icon: 'heart' },
         ]}
         value={tab}
         onChange={setTab}
@@ -134,7 +135,7 @@ export default function ColourScreen() {
 
       {compare.length > 0 ? (
         <View style={{ gap: space.sm }}>
-          <SectionTitle title={`Karşılaştır (${compare.length}/${MAX_COMPARE})`} />
+          <SectionTitle title={t('Karşılaştır ({count}/{max})', { count: compare.length, max: MAX_COMPARE })} />
           <CompareColours hexes={compare} onRemove={toggleCompare} onSelect={pick} />
         </View>
       ) : null}
@@ -142,7 +143,7 @@ export default function ColourScreen() {
       {tab === 'colours' ? (
         <>
           {selected}
-          <SectionTitle title="Renk kataloğu" />
+          <SectionTitle title={t('Renk kataloğu')} />
           <ColourExplorer selected={colour.hex} favourites={favourites.list} onSelect={pick} />
         </>
       ) : null}
@@ -158,7 +159,7 @@ export default function ColourScreen() {
 
       {tab === 'favourites' ? (
         favourites.list.length === 0 ? (
-          <EmptyState icon="heart" title="Henüz favorin yok" message="Beğendiğin renklerde kalp simgesine dokun; burada toplansın ve karşılaştırabilesin." />
+          <EmptyState icon="heart" title={t('Henüz favorin yok')} message={t('Beğendiğin renklerde kalp simgesine dokun; burada toplansın ve karşılaştırabilesin.')} />
         ) : (
           <View style={{ flexDirection: 'row', flexWrap: 'wrap', gap: space.sm }}>
             {favourites.list.map((hex) => (

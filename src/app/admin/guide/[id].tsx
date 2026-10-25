@@ -19,6 +19,7 @@ import {
 } from '@/features/admin/api';
 import { GUIDE_CATEGORIES } from '@/features/guide/api';
 import { ArticleBody } from '@/features/guide/article-body';
+import { t } from '@/i18n';
 import type { GuideArticleRow } from '@/lib/database.types';
 import {
   AppText,
@@ -69,7 +70,7 @@ function GuideEditor({ existing }: { existing?: GuideArticleRow }) {
       queryClient.setQueryData(adminKeys.guide(saved.id), saved);
       router.back();
     } catch (e) {
-      setSaveError(e instanceof Error ? e.message : 'Kaydedilemedi.');
+      setSaveError(e instanceof Error ? e.message : t('Kaydedilemedi.'));
     } finally {
       setBusy(false);
     }
@@ -84,16 +85,16 @@ function GuideEditor({ existing }: { existing?: GuideArticleRow }) {
       await refresh();
       router.back();
     } catch (e) {
-      setSaveError(e instanceof Error ? e.message : 'Silinemedi.');
+      setSaveError(e instanceof Error ? e.message : t('Silinemedi.'));
       setBusy(false);
     }
   };
 
   return (
     <>
-      <Stack.Screen options={{ title: existing ? 'Yazı düzenle' : 'Yeni yazı' }} />
+      <Stack.Screen options={{ title: existing ? t('Yazı düzenle') : t('Yeni yazı') }} />
       <TextField
-        label="Başlık"
+        label={t('Başlık')}
         value={form.title}
         maxLength={140}
         error={errors.title}
@@ -101,13 +102,13 @@ function GuideEditor({ existing }: { existing?: GuideArticleRow }) {
         onChangeText={(title) => setForm((f) => ({ ...f, title, slug: slugTouched ? f.slug : slugify(title) }))}
       />
       <TextField
-        label="Adres (slug)"
+        label={t('Adres (slug)')}
         value={form.slug}
         maxLength={80}
         autoCapitalize="none"
         autoCorrect={false}
         error={errors.slug}
-        hint="Yazının bağlantısında görünür. Yayınlandıktan sonra değiştirmemek iyi olur."
+        hint={t('Yazının bağlantısında görünür. Yayınlandıktan sonra değiştirmemek iyi olur.')}
         testID="guide-slug"
         onChangeText={(slug) => {
           setSlugTouched(true);
@@ -115,14 +116,14 @@ function GuideEditor({ existing }: { existing?: GuideArticleRow }) {
         }}
       />
       <ChoiceChips
-        label="Kategori"
+        label={t('Kategori')}
         options={GUIDE_CATEGORIES}
         value={form.category}
         onChange={(c) => set('category', c)}
       />
-      <TextField label="Kısa özet" value={form.summary} maxLength={300} error={errors.summary} onChangeText={(v) => set('summary', v)} />
+      <TextField label={t('Kısa özet')} value={form.summary} maxLength={300} error={errors.summary} onChangeText={(v) => set('summary', v)} />
       <TextField
-        label="Okuma süresi"
+        label={t('Okuma süresi')}
         unit="dk"
         value={form.readingMinutes}
         keyboardType="number-pad"
@@ -133,30 +134,30 @@ function GuideEditor({ existing }: { existing?: GuideArticleRow }) {
 
       <ChoiceChips
         options={[
-          { value: 'edit', label: 'Yaz' },
-          { value: 'preview', label: 'Önizle' },
+          { value: 'edit', label: t('Yaz') },
+          { value: 'preview', label: t('Önizle') },
         ]}
         value={preview ? 'preview' : 'edit'}
         onChange={(v) => setPreview(v === 'preview')}
       />
       {preview ? (
         <Card>
-          {form.body.trim() ? <ArticleBody body={form.body} /> : <AppText tone="muted">Önizlenecek metin yok.</AppText>}
+          {form.body.trim() ? <ArticleBody body={form.body} /> : <AppText tone="muted">{t('Önizlenecek metin yok.')}</AppText>}
         </Card>
       ) : (
         <TextField
-          label="Yazı"
+          label={t('Yazı')}
           multiline
           value={form.body}
           maxLength={20000}
           error={errors.body}
-          hint="## Ara başlık · - madde · 1. adım · **kalın**"
+          hint={t('## Ara başlık · - madde · 1. adım · **kalın**')}
           testID="guide-body"
           onChangeText={(v) => set('body', v)}
         />
       )}
 
-      <Toggle label="Yayında (herkes görebilir)" value={form.published} onChange={(v) => set('published', v)} />
+      <Toggle label={t('Yayında (herkes görebilir)')} value={form.published} onChange={(v) => set('published', v)} />
 
       {saveError ? (
         <Notice tone="danger" icon="alert-circle">
@@ -164,19 +165,19 @@ function GuideEditor({ existing }: { existing?: GuideArticleRow }) {
         </Notice>
       ) : null}
 
-      <Button label="Kaydet" icon="save" loading={busy} onPress={save} />
+      <Button label={t('Kaydet')} icon="save" loading={busy} onPress={save} />
       {existing ? (
         confirmDelete ? (
           <Card>
-            <AppText variant="bodyStrong">Bu yazı kalıcı olarak silinsin mi?</AppText>
-            <AppText tone="muted">Silinen yazı geri getirilemez. Sadece gizlemek istiyorsan Yayında seçeneğini kapatıp kaydet.</AppText>
+            <AppText variant="bodyStrong">{t('Bu yazı kalıcı olarak silinsin mi?')}</AppText>
+            <AppText tone="muted">{t('Silinen yazı geri getirilemez. Sadece gizlemek istiyorsan Yayında seçeneğini kapatıp kaydet.')}</AppText>
             <View style={{ flexDirection: 'row', gap: space.sm, flexWrap: 'wrap' }}>
-              <Button label="Vazgeç" variant="secondary" onPress={() => setConfirmDelete(false)} />
-              <Button label="Evet, sil" variant="ghost" icon="trash" loading={busy} onPress={remove} />
+              <Button label={t('Vazgeç')} variant="secondary" onPress={() => setConfirmDelete(false)} />
+              <Button label={t('Evet, sil')} variant="ghost" icon="trash" loading={busy} onPress={remove} />
             </View>
           </Card>
         ) : (
-          <Button label="Yazıyı sil" variant="ghost" icon="trash-outline" onPress={() => setConfirmDelete(true)} />
+          <Button label={t('Yazıyı sil')} variant="ghost" icon="trash-outline" onPress={() => setConfirmDelete(true)} />
         )
       ) : null}
     </>
@@ -194,7 +195,7 @@ export default function AdminGuideScreen() {
   if (!db || !session || !admin.isAdmin) {
     return (
       <Screen edges={['bottom']}>
-        <EmptyState icon="lock-closed" title="Yetkin yok" message="Bu sayfayı yalnızca BoyaCep yöneticileri açabilir." />
+        <EmptyState icon="lock-closed" title={t('Yetkin yok')} message={t('Bu sayfayı yalnızca BoyaCep yöneticileri açabilir.')} />
       </Screen>
     );
   }
@@ -207,7 +208,7 @@ export default function AdminGuideScreen() {
   }
   if (guide.isPending) return <Screen edges={['bottom']}><LoadingState /></Screen>;
   if (guide.isError) {
-    return <Screen edges={['bottom']}><ErrorState message="Yazı yüklenemedi." onRetry={() => guide.refetch()} /></Screen>;
+    return <Screen edges={['bottom']}><ErrorState message={t('Yazı yüklenemedi.')} onRetry={() => guide.refetch()} /></Screen>;
   }
   return (
     <Screen edges={['bottom']}>

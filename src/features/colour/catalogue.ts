@@ -1,7 +1,12 @@
+import { msg, t } from '@/i18n';
+
 /**
  * BoyaCep's generic colour catalogue. These are generic tones, not any brand's
  * colour codes: the studio tells users to check the real swatch. Brand colour
  * cards live in a separate layer (`BRAND_CATALOGUES` in colour-data.ts).
+ *
+ * Names are Turkish data: they are saved with project colours and translated
+ * where shown, t(colour.name). The i18n tests check every name has an English entry.
  */
 
 export type FamilyKey =
@@ -26,18 +31,18 @@ export type CatalogColour = {
 };
 
 export const FAMILIES: { key: FamilyKey; label: string; sample: string }[] = [
-  { key: 'whites', label: 'Beyazlar', sample: '#F4F2EC' },
-  { key: 'creams', label: 'Krem tonları', sample: '#EFE3C8' },
-  { key: 'beiges', label: 'Bejler', sample: '#D8C3A5' },
-  { key: 'greys', label: 'Griler', sample: '#B9B8B3' },
-  { key: 'darks', label: 'Antrasit ve koyular', sample: '#3E4144' },
-  { key: 'blues', label: 'Maviler', sample: '#6F95B8' },
-  { key: 'greens', label: 'Yeşiller', sample: '#8FA587' },
-  { key: 'yellows', label: 'Sarılar', sample: '#E8C468' },
-  { key: 'earth', label: 'Toprak tonları', sample: '#B9744F' },
-  { key: 'pinks', label: 'Pembeler', sample: '#E2AFAF' },
-  { key: 'reds', label: 'Kırmızı ve bordolar', sample: '#9E3B3B' },
-  { key: 'purples', label: 'Morlar', sample: '#8E7AA8' },
+  { key: 'whites', label: msg('Beyazlar'), sample: '#F4F2EC' },
+  { key: 'creams', label: msg('Krem tonları'), sample: '#EFE3C8' },
+  { key: 'beiges', label: msg('Bejler'), sample: '#D8C3A5' },
+  { key: 'greys', label: msg('Griler'), sample: '#B9B8B3' },
+  { key: 'darks', label: msg('Antrasit ve koyular'), sample: '#3E4144' },
+  { key: 'blues', label: msg('Maviler'), sample: '#6F95B8' },
+  { key: 'greens', label: msg('Yeşiller'), sample: '#8FA587' },
+  { key: 'yellows', label: msg('Sarılar'), sample: '#E8C468' },
+  { key: 'earth', label: msg('Toprak tonları'), sample: '#B9744F' },
+  { key: 'pinks', label: msg('Pembeler'), sample: '#E2AFAF' },
+  { key: 'reds', label: msg('Kırmızı ve bordolar'), sample: '#9E3B3B' },
+  { key: 'purples', label: msg('Morlar'), sample: '#8E7AA8' },
 ];
 
 const RAW: Record<FamilyKey, [string, string][]> = {
@@ -231,15 +236,20 @@ export const CLASSICS = pick(['Kırık beyaz', 'Fildişi', 'Kum beji', 'Greige',
 export const TRENDS = pick(['Terakota', 'Okaliptüs', 'Petrol mavisi', 'Gül kurusu', 'Hardal', 'Zeytin', 'Erik', 'Karamel']);
 
 export function familyLabel(key: FamilyKey): string {
-  return FAMILIES.find((f) => f.key === key)?.label ?? key;
+  return t(FAMILIES.find((f) => f.key === key)?.label ?? key);
 }
 
-/** Search by name ("adaçayı") or code ("#8FB3", "8fb3cf"). Turkish letters are matched loosely. */
+/** Search by name in Turkish or the current language ("adaçayı", "sage") or code ("#8FB3", "8fb3cf"). Turkish letters are matched loosely. */
 export function searchColours(query: string, list: CatalogColour[] = COLOURS): CatalogColour[] {
   const q = fold(query.trim());
   if (!q) return list;
   const hex = q.replace(/^#/, '');
-  return list.filter((c) => fold(c.name).includes(q) || (/^[0-9a-f]{2,6}$/.test(hex) && c.hex.slice(1).toLowerCase().startsWith(hex)));
+  return list.filter(
+    (c) =>
+      fold(c.name).includes(q) ||
+      fold(t(c.name)).includes(q) ||
+      (/^[0-9a-f]{2,6}$/.test(hex) && c.hex.slice(1).toLowerCase().startsWith(hex)),
+  );
 }
 
 function fold(s: string): string {

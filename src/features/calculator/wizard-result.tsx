@@ -3,13 +3,14 @@ import { StyleSheet, View } from 'react-native';
 
 import { DEFAULT_CAN_SIZES, planPackages, type MaterialCategory, type MaterialItem, type PackagePlan, type ProjectCalculation, type QuickEstimate } from '@/engine';
 import { useSession } from '@/features/account/session';
+import { t } from '@/i18n';
 import { formatNumber } from '@/lib/number';
 import { Disclosure, Gradient, SectionTitle, StatTile, TileRow } from '@/ui/brand';
 import { AppText, Badge, Button, Card, Icon, Notice, Row, type IconName } from '@/ui/components';
 import { fonts, radius, space, useFeatureColour, usePalette } from '@/ui/theme';
 
 import type { RoomForm } from './form';
-import { SOURCE_LABEL } from './labels';
+import { quantityText, SOURCE_LABEL } from './labels';
 import { packageText } from './results';
 import { SPACE_LABEL, type SpaceKind } from './wizard';
 
@@ -38,7 +39,7 @@ function CanChips({ plan }: { plan: PackagePlan }) {
         <View key={l.size} style={[styles.can, { backgroundColor: p.surfaceMuted }]}>
           <Icon name="beaker" size={16} color={p.text} />
           <AppText variant="small" style={{ fontFamily: fonts.bold }}>
-            {l.count} × {formatNumber(l.size)} L
+            {`${l.count} × ${formatNumber(l.size)} L`}
           </AppText>
         </View>
       ))}
@@ -48,10 +49,14 @@ function CanChips({ plan }: { plan: PackagePlan }) {
 
 /** Wall and ceiling paint are different products, so their cans are listed separately. */
 function buyText(paints: MaterialItem[]): string {
-  if (paints.length === 1 && paints[0].packages) return `Al: ${packageText(paints[0].packages)}`;
+  if (paints.length === 1 && paints[0].packages) return t('Al: {cans}', { cans: packageText(paints[0].packages) });
   return paints
     .filter((m) => m.packages)
-    .map((m) => `${m.category === 'ceiling_paint' ? 'Tavan' : 'Duvar'}: ${packageText(m.packages!)}`)
+    .map((m) =>
+      m.category === 'ceiling_paint'
+        ? t('Tavan: {cans}', { cans: packageText(m.packages!) })
+        : t('Duvar: {cans}', { cans: packageText(m.packages!) }),
+    )
     .join(' · ');
 }
 
@@ -70,7 +75,7 @@ function ResultHero({ overline, litres, caption, buy, estimate }: { overline: st
           {formatNumber(litres)}
         </AppText>
         <AppText variant="heading" style={{ color: '#FFFFFF' }}>
-          litre boya
+          {t('litre boya')}
         </AppText>
       </View>
       <AppText style={{ color: '#FFFFFF', opacity: 0.92 }}>{caption}</AppText>
@@ -79,7 +84,7 @@ function ResultHero({ overline, litres, caption, buy, estimate }: { overline: st
         <AppText variant="small" style={{ flex: 1, fontFamily: fonts.semibold }}>
           {buy}
         </AppText>
-        {estimate ? <Badge label="Tahmini" tone="accent" /> : null}
+        {estimate ? <Badge label={t('Tahmini')} tone="accent" /> : null}
       </View>
     </View>
   );
@@ -96,23 +101,21 @@ function MaterialLine({ item }: { item: MaterialItem }) {
       <View style={{ flex: 1, gap: 4 }}>
         <View style={{ flexDirection: 'row', gap: space.sm, alignItems: 'center' }}>
           <AppText variant="bodyStrong" style={{ flex: 1 }}>
-            {item.name}
+            {t(item.name)}
           </AppText>
-          <AppText variant="bodyStrong">
-            {formatNumber(item.quantity)} {item.unit}
-          </AppText>
+          <AppText variant="bodyStrong">{quantityText(item.quantity, item.unit)}</AppText>
         </View>
         {item.packages && item.packages.lines.length > 0 ? (
           <>
             <CanChips plan={item.packages} />
             {item.packages.leftover > 0 ? (
               <AppText variant="caption" tone="muted">
-                Yaklaşık {formatNumber(item.packages.leftover)} L artar; rötuş için saklayabilirsin.
+                {t('Yaklaşık {litres} L artar; rötuş için saklayabilirsin.', { litres: formatNumber(item.packages.leftover) })}
               </AppText>
             ) : null}
           </>
         ) : null}
-        {LIQUID.includes(item.category) ? <Badge label={source.label} tone={source.tone} /> : null}
+        {LIQUID.includes(item.category) ? <Badge label={t(source.label)} tone={source.tone} /> : null}
       </View>
     </View>
   );
@@ -125,14 +128,14 @@ function CostTeaser({ paintLitres, primerLitres }: { paintLitres: number; primer
       <View style={{ flexDirection: 'row', alignItems: 'center', gap: space.sm }}>
         <Icon name="wallet" size={22} color={f.ink} />
         <AppText variant="heading" style={{ color: f.ink, flex: 1 }}>
-          Tahmini maliyet
+          {t('Tahmini maliyet')}
         </AppText>
       </View>
       <AppText style={{ color: f.ink }}>
-        Fiyatlar markaya ve mağazaya göre çok değişiyor. Gördüğün litre fiyatını yaz, toplamı hemen hesaplayalım.
+        {t('Fiyatlar markaya ve mağazaya göre çok değişiyor. Gördüğün litre fiyatını yaz, toplamı hemen hesaplayalım.')}
       </AppText>
       <Button
-        label="Maliyeti hesapla"
+        label={t('Maliyeti hesapla')}
         icon="calculator"
         variant="primary"
         onPress={() =>
@@ -149,7 +152,7 @@ function Actions({ onEdit, onRestart }: { onEdit: () => void; onRestart: () => v
     <View style={{ gap: space.sm }}>
       {db ? (
         <Button
-          label={session ? 'Projelerime kaydet' : 'Giriş yap ve kaydet'}
+          label={session ? t('Projelerime kaydet') : t('Giriş yap ve kaydet')}
           icon="bookmark"
           variant="cta"
           onPress={() => router.push(session ? '/projects' : '/sign-in')}
@@ -157,10 +160,10 @@ function Actions({ onEdit, onRestart }: { onEdit: () => void; onRestart: () => v
       ) : null}
       <View style={{ flexDirection: 'row', gap: space.sm }}>
         <View style={{ flex: 1 }}>
-          <Button label="Düzenle" icon="create" variant="secondary" onPress={onEdit} />
+          <Button label={t('Düzenle')} icon="create" variant="secondary" onPress={onEdit} />
         </View>
         <View style={{ flex: 1 }}>
-          <Button label="Yeni hesap" icon="refresh" variant="secondary" onPress={onRestart} />
+          <Button label={t('Yeni hesap')} icon="refresh" variant="secondary" onPress={onRestart} />
         </View>
       </View>
     </View>
@@ -190,33 +193,35 @@ export function RoomResult({
   return (
     <View style={{ gap: space.lg }} testID="room-results" accessibilityLiveRegion="polite">
       <ResultHero
-        overline={`Sonuç · ${SPACE_LABEL[kind]}`}
+        overline={t('Sonuç · {space}', { space: t(SPACE_LABEL[kind]) })}
         litres={finish}
-        caption={`${formatNumber(totals.totalPaintable, 2)} m² alana ${form.coats} kat`}
+        caption={t('{area} m² alana {count} kat', { area: formatNumber(totals.totalPaintable, 2), count: form.coats })}
         buy={buyText(liquids.filter((m) => m.category !== 'primer'))}
         estimate={estimate}
       />
 
       <TileRow>
-        <StatTile label="Boyanacak alan" value={formatNumber(totals.totalPaintable, 1)} unit="m²" icon="resize" feature="calculate" />
+        <StatTile label={t('Boyanacak alan')} value={formatNumber(totals.totalPaintable, 1)} unit="m²" icon="resize" feature="calculate" />
         <StatTile
-          label="Astar"
-          value={totals.primerLitres > 0 ? formatNumber(totals.primerLitres) : 'Gerekmiyor'}
+          label={t('Astar')}
+          value={totals.primerLitres > 0 ? formatNumber(totals.primerLitres) : t('Gerekmiyor')}
           unit={totals.primerLitres > 0 ? 'L' : undefined}
           icon="water"
           feature="ask"
-          hint={totals.primerLitres > 0 ? 'Boyadan önce 1 kat' : undefined}
+          hint={totals.primerLitres > 0 ? t('Boyadan önce 1 kat') : undefined}
         />
       </TileRow>
 
       {kind === 'kitchen' || kind === 'bathroom' ? (
         <Notice icon="water" tone="info">
-          {kind === 'kitchen' ? 'Mutfakta' : 'Banyoda'} buhar ve nem olur. Silinebilir, küfe dayanıklı “mutfak-banyo” boyası seç.
+          {kind === 'kitchen'
+            ? t('Mutfakta buhar ve nem olur. Silinebilir, küfe dayanıklı “mutfak-banyo” boyası seç.')
+            : t('Banyoda buhar ve nem olur. Silinebilir, küfe dayanıklı “mutfak-banyo” boyası seç.')}
         </Notice>
       ) : null}
 
       <Card>
-        <SectionTitle title="Alacağın boyalar" />
+        <SectionTitle title={t('Alacağın boyalar')} />
         {liquids.map((m) => (
           <MaterialLine key={m.category} item={m} />
         ))}
@@ -224,7 +229,7 @@ export function RoomResult({
 
       {supplies.length > 0 ? (
         <Card>
-          <SectionTitle title="Yardımcı malzemeler" />
+          <SectionTitle title={t('Yardımcı malzemeler')} />
           {supplies.map((m) => (
             <MaterialLine key={m.category} item={m} />
           ))}
@@ -233,29 +238,29 @@ export function RoomResult({
 
       <CostTeaser paintLitres={finish} primerLitres={totals.primerLitres} />
 
-      <Disclosure title="Hesap detayları">
-        <Row label="Toplam duvar alanı" value={`${formatNumber(room.areas.grossWall, 2)} m²`} />
-        <Row label="Kapı düşümü" value={`− ${formatNumber(room.areas.doorDeduction, 2)} m²`} />
-        <Row label="Pencere düşümü" value={`− ${formatNumber(room.areas.windowDeduction, 2)} m²`} />
-        <Row label="Boyanacak duvar" value={`${formatNumber(room.areas.netWall, 2)} m²`} strong />
-        <Row label="Tavan alanı" value={`${formatNumber(room.areas.ceiling, 2)} m²`} strong />
+      <Disclosure title={t('Hesap detayları')}>
+        <Row label={t('Toplam duvar alanı')} value={`${formatNumber(room.areas.grossWall, 2)} m²`} />
+        <Row label={t('Kapı düşümü')} value={`− ${formatNumber(room.areas.doorDeduction, 2)} m²`} />
+        <Row label={t('Pencere düşümü')} value={`− ${formatNumber(room.areas.windowDeduction, 2)} m²`} />
+        <Row label={t('Boyanacak duvar')} value={`${formatNumber(room.areas.netWall, 2)} m²`} strong />
+        <Row label={t('Tavan alanı')} value={`${formatNumber(room.areas.ceiling, 2)} m²`} strong />
         <View style={{ height: 1 }} />
-        <AppText variant="bodyStrong">Hesapta kullanılan değerler</AppText>
+        <AppText variant="bodyStrong">{t('Hesapta kullanılan değerler')}</AppText>
         {result.assumptions.map((a) => {
           const s = SOURCE_LABEL[a.source];
           return (
             <View key={`${a.key}-${a.label}`} style={{ flexDirection: 'row', alignItems: 'center', gap: space.sm }}>
               <AppText variant="small" style={{ flex: 1 }}>
-                {a.label}
+                {t(a.label)}
               </AppText>
-              <Badge label={s.label} tone={s.tone} />
+              <Badge label={t(s.label)} tone={s.tone} />
             </View>
           );
         })}
       </Disclosure>
 
       <Notice>
-        Sonuçlar tahminidir. Kesin miktar için boyanın teknik föyündeki sarfiyatı gir; duvarın emiciliği ve uygulama şekli sonucu değiştirebilir.
+        {t('Sonuçlar tahminidir. Kesin miktar için boyanın teknik föyündeki sarfiyatı gir; duvarın emiciliği ve uygulama şekli sonucu değiştirebilir.')}
       </Notice>
 
       <Actions onEdit={onEdit} onRestart={onRestart} />
@@ -277,25 +282,29 @@ export function HomeResult({
   return (
     <View style={{ gap: space.lg }} testID="quick-results" accessibilityLiveRegion="polite">
       <ResultHero
-        overline={`Sonuç · Tüm ev (${home.houseType})`}
+        overline={t('Sonuç · Tüm ev ({houseType})', { houseType: home.houseType })}
         litres={result.totalLitres}
-        caption={`${home.area} m² ev, ${home.coats} kat${home.ceilings ? ', tavanlar dahil' : ''}`}
+        caption={
+          home.ceilings
+            ? t('{area} m² ev, {count} kat, tavanlar dahil', { area: home.area, count: home.coats })
+            : t('{area} m² ev, {count} kat', { area: home.area, count: home.coats })
+        }
         buy={
           home.ceilings && result.ceilingLitres > 0
-            ? `Duvar: ${packageText(planPackages(result.wallLitres, DEFAULT_CAN_SIZES))} · Tavan: ${packageText(planPackages(result.ceilingLitres, DEFAULT_CAN_SIZES))}`
-            : `Al: ${packageText(planPackages(result.wallLitres, DEFAULT_CAN_SIZES))}`
+            ? `${t('Duvar: {cans}', { cans: packageText(planPackages(result.wallLitres, DEFAULT_CAN_SIZES)) })} · ${t('Tavan: {cans}', { cans: packageText(planPackages(result.ceilingLitres, DEFAULT_CAN_SIZES)) })}`
+            : t('Al: {cans}', { cans: packageText(planPackages(result.wallLitres, DEFAULT_CAN_SIZES)) })
         }
         estimate
       />
       <TileRow>
-        <StatTile label="Duvar boyası" value={formatNumber(result.wallLitres)} unit="L" icon="color-fill" feature="calculate" hint={`≈ ${formatNumber(result.wallArea)} m² duvar`} />
+        <StatTile label={t('Duvar boyası')} value={formatNumber(result.wallLitres)} unit="L" icon="color-fill" feature="calculate" hint={t('≈ {area} m² duvar', { area: formatNumber(result.wallArea) })} />
         {home.ceilings ? (
-          <StatTile label="Tavan boyası" value={formatNumber(result.ceilingLitres)} unit="L" icon="arrow-up-circle" feature="ask" hint={`≈ ${formatNumber(result.ceilingArea)} m² tavan`} />
+          <StatTile label={t('Tavan boyası')} value={formatNumber(result.ceilingLitres)} unit="L" icon="arrow-up-circle" feature="ask" hint={t('≈ {area} m² tavan', { area: formatNumber(result.ceilingArea) })} />
         ) : null}
       </TileRow>
       <CostTeaser paintLitres={result.totalLitres} primerLitres={0} />
       <Notice>
-        Hızlı hesap, ev tipine göre ortalama duvar alanı kullanır (taslak katsayılar, usta kontrolü bekliyor). Astar ve yardımcı malzemeler için odaları tek tek hesapla.
+        {t('Hızlı hesap, ev tipine göre ortalama duvar alanı kullanır (taslak katsayılar, usta kontrolü bekliyor). Astar ve yardımcı malzemeler için odaları tek tek hesapla.')}
       </Notice>
       <Actions onEdit={onEdit} onRestart={onRestart} />
     </View>

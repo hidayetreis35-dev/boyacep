@@ -18,6 +18,7 @@ import {
 import { useMemo, useState } from 'react';
 import { ActivityIndicator, Image, Pressable, View } from 'react-native';
 
+import { t } from '@/i18n';
 import type { PhotoSurface, WallOutline } from '@/lib/database.types';
 import { radius, usePalette } from '@/ui/theme';
 
@@ -237,7 +238,7 @@ export default function RealisticPhoto({ uri, aspect, surfaces, active, draft, d
   const height = width > 0 ? width / aspect : 0;
   const ready = !!photo && !!img && width > 0;
 
-  const label = drawing ? (draft.mode === 'tap' ? TAP_LABEL : CORNER_LABEL) : 'Oda fotoğrafı ve renk önizlemesi';
+  const label = drawing ? t(draft.mode === 'tap' ? TAP_LABEL : CORNER_LABEL) : t('Oda fotoğrafı ve renk önizlemesi');
   const activeSurface: PhotoSurface | undefined = surfaces[active];
 
   return (

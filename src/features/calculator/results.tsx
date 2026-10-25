@@ -1,6 +1,7 @@
 import { View } from 'react-native';
 
 import type { Assumption } from '@/engine';
+import { t } from '@/i18n';
 import { AppText, Badge, Card } from '@/ui/components';
 import { space } from '@/ui/theme';
 
@@ -11,15 +12,15 @@ export { packageText } from './labels';
 export function AssumptionList({ assumptions }: { assumptions: Assumption[] }) {
   return (
     <Card>
-      <AppText variant="heading">Hesapta kullanılan değerler</AppText>
+      <AppText variant="heading">{t('Hesapta kullanılan değerler')}</AppText>
       {assumptions.map((a) => {
         const s = SOURCE_LABEL[a.source];
         return (
           <View key={`${a.key}-${a.label}`} style={{ flexDirection: 'row', alignItems: 'center', gap: space.sm }}>
             <AppText variant="small" style={{ flex: 1 }}>
-              {a.label}
+              {t(a.label)}
             </AppText>
-            <Badge label={s.label} tone={s.tone} />
+            <Badge label={t(s.label)} tone={s.tone} />
           </View>
         );
       })}

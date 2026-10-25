@@ -1,4 +1,5 @@
 import type { SurfaceCondition, SurfaceType } from '@/engine';
+import { msg } from '@/i18n';
 import type { IconName } from '@/ui/components';
 
 import { toRoomInput, type FormErrors, type RoomForm } from './form';
@@ -7,13 +8,13 @@ import { toRoomInput, type FormErrors, type RoomForm } from './form';
 export type SpaceKind = 'room' | 'living' | 'kitchen' | 'bathroom' | 'home' | 'exterior' | 'custom';
 
 export const SPACES: { value: SpaceKind; label: string; hint: string; icon: IconName; ready: boolean }[] = [
-  { value: 'room', label: 'Oda', hint: 'Yatak, çocuk ya da çalışma odası', icon: 'bed', ready: true },
-  { value: 'living', label: 'Salon', hint: 'Oturma ve yemek alanı', icon: 'tv', ready: true },
-  { value: 'kitchen', label: 'Mutfak', hint: 'Buhara dayanıklı boya önerilir', icon: 'restaurant', ready: true },
-  { value: 'bathroom', label: 'Banyo', hint: 'Neme dayanıklı boya önerilir', icon: 'water', ready: true },
-  { value: 'home', label: 'Tüm ev', hint: 'Ev tipi ve metrekareyle hızlı tahmin', icon: 'home', ready: true },
-  { value: 'custom', label: 'Özel alan', hint: 'Koridor, antre, ofis…', icon: 'shapes', ready: true },
-  { value: 'exterior', label: 'Dış cephe', hint: 'Ayrı katsayılar gerekiyor', icon: 'business', ready: false },
+  { value: 'room', label: msg('Oda'), hint: msg('Yatak, çocuk ya da çalışma odası'), icon: 'bed', ready: true },
+  { value: 'living', label: msg('Salon'), hint: msg('Oturma ve yemek alanı'), icon: 'tv', ready: true },
+  { value: 'kitchen', label: msg('Mutfak'), hint: msg('Buhara dayanıklı boya önerilir'), icon: 'restaurant', ready: true },
+  { value: 'bathroom', label: msg('Banyo'), hint: msg('Neme dayanıklı boya önerilir'), icon: 'water', ready: true },
+  { value: 'home', label: msg('Tüm ev'), hint: msg('Ev tipi ve metrekareyle hızlı tahmin'), icon: 'home', ready: true },
+  { value: 'custom', label: msg('Özel alan'), hint: msg('Koridor, antre, ofis…'), icon: 'shapes', ready: true },
+  { value: 'exterior', label: msg('Dış cephe'), hint: msg('Ayrı katsayılar gerekiyor'), icon: 'business', ready: false },
 ];
 
 export const SPACE_LABEL = Object.fromEntries(SPACES.map((s) => [s.value, s.label])) as Record<SpaceKind, string>;
@@ -22,12 +23,12 @@ export const SPACE_LABEL = Object.fromEntries(SPACES.map((s) => [s.value, s.labe
 export type WallState = 'new_plaster' | 'painted' | 'light_damage' | 'heavy_damage' | 'plasterboard' | 'concrete';
 
 export const WALL_STATES: { value: WallState; label: string; hint: string; icon: IconName; surfaceType: SurfaceType; condition: SurfaceCondition }[] = [
-  { value: 'painted', label: 'Daha önce boyanmış', hint: 'Temiz, sağlam boya', icon: 'checkmark-done', surfaceType: 'painted', condition: 'good' },
-  { value: 'new_plaster', label: 'Yeni sıva', hint: 'Hiç boyanmamış sıva ya da alçı', icon: 'construct', surfaceType: 'new_plaster', condition: 'good' },
-  { value: 'light_damage', label: 'Hafif hasarlı', hint: 'Küçük delik, ince çatlak', icon: 'bandage', surfaceType: 'painted', condition: 'minor_repair' },
-  { value: 'heavy_damage', label: 'Çok hasarlı', hint: 'Kabarma, dökülme, geniş çatlak', icon: 'warning', surfaceType: 'painted', condition: 'poor' },
-  { value: 'plasterboard', label: 'Alçıpan', hint: 'Yeni alçıpan duvar', icon: 'grid', surfaceType: 'plasterboard', condition: 'good' },
-  { value: 'concrete', label: 'Brüt beton', hint: 'Sıvasız beton yüzey', icon: 'cube', surfaceType: 'concrete', condition: 'good' },
+  { value: 'painted', label: msg('Daha önce boyanmış'), hint: msg('Temiz, sağlam boya'), icon: 'checkmark-done', surfaceType: 'painted', condition: 'good' },
+  { value: 'new_plaster', label: msg('Yeni sıva'), hint: msg('Hiç boyanmamış sıva ya da alçı'), icon: 'construct', surfaceType: 'new_plaster', condition: 'good' },
+  { value: 'light_damage', label: msg('Hafif hasarlı'), hint: msg('Küçük delik, ince çatlak'), icon: 'bandage', surfaceType: 'painted', condition: 'minor_repair' },
+  { value: 'heavy_damage', label: msg('Çok hasarlı'), hint: msg('Kabarma, dökülme, geniş çatlak'), icon: 'warning', surfaceType: 'painted', condition: 'poor' },
+  { value: 'plasterboard', label: msg('Alçıpan'), hint: msg('Yeni alçıpan duvar'), icon: 'grid', surfaceType: 'plasterboard', condition: 'good' },
+  { value: 'concrete', label: msg('Brüt beton'), hint: msg('Sıvasız beton yüzey'), icon: 'cube', surfaceType: 'concrete', condition: 'good' },
 ];
 
 export function wallStateOf(form: Pick<RoomForm, 'surfaceType' | 'surfaceCondition'>): WallState {
@@ -56,12 +57,12 @@ export function applySurfaces(s: Surfaces): Pick<RoomForm, 'paintWalls' | 'paint
 export type RoomStep = 'space' | 'size' | 'surfaces' | 'openings' | 'condition' | 'coats';
 
 export const ROOM_STEPS: { key: RoomStep; label: string }[] = [
-  { key: 'space', label: 'Hangi alanı boyayacaksın?' },
-  { key: 'size', label: 'Alanın ölçüleri' },
-  { key: 'surfaces', label: 'Boyanacak yüzeyler' },
-  { key: 'openings', label: 'Kapı ve pencereler' },
-  { key: 'condition', label: 'Duvarın durumu' },
-  { key: 'coats', label: 'Kaç kat boya?' },
+  { key: 'space', label: msg('Hangi alanı boyayacaksın?') },
+  { key: 'size', label: msg('Alanın ölçüleri') },
+  { key: 'surfaces', label: msg('Boyanacak yüzeyler') },
+  { key: 'openings', label: msg('Kapı ve pencereler') },
+  { key: 'condition', label: msg('Duvarın durumu') },
+  { key: 'coats', label: msg('Kaç kat boya?') },
 ];
 
 const STEP_FIELDS: Record<RoomStep, (keyof FormErrors)[]> = {

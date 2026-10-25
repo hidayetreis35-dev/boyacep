@@ -5,6 +5,7 @@ import { QUOTE_KIND_LABEL, calculateProject, type QuoteItemKind } from '@/engine
 import { useSession } from '@/features/account/session';
 import { roomToInput } from '@/features/projects/mapping';
 import { getSharedProject } from '@/features/sharing/api';
+import { t } from '@/i18n';
 import type { QuoteRow } from '@/lib/database.types';
 import { parseDecimal } from '@/lib/number';
 import { AppText, Button, Card, ChoiceChips, FieldRow, Icon, Notice, TextField } from '@/ui/components';
@@ -23,7 +24,7 @@ import {
 } from './form';
 import { QuoteTotalsCard } from './quote-view';
 
-const KINDS = (['labor', 'material', 'other'] as QuoteItemKind[]).map((k) => ({ value: k, label: QUOTE_KIND_LABEL[k] }));
+const KINDS = (['labor', 'material', 'other'] as QuoteItemKind[]).map((k) => ({ value: k, label: t(QUOTE_KIND_LABEL[k]) }));
 
 function ItemEditor({
   item,
@@ -44,20 +45,20 @@ function ItemEditor({
     <Card>
       <View style={{ flexDirection: 'row', alignItems: 'center' }}>
         <AppText variant="bodyStrong" style={{ flex: 1 }}>
-          Kalem {index + 1}
+          {t('Kalem {n}', { n: index + 1 })}
         </AppText>
-        <Pressable accessibilityRole="button" accessibilityLabel={`Kalem ${index + 1} sil`} onPress={onRemove} style={{ padding: space.sm }}>
+        <Pressable accessibilityRole="button" accessibilityLabel={t('Kalem {n} sil', { n: index + 1 })} onPress={onRemove} style={{ padding: space.sm }}>
           <Icon name="trash-outline" size={20} color={p.textMuted} />
         </Pressable>
       </View>
       <ChoiceChips options={KINDS} value={item.kind} onChange={(k) => set('kind', k)} />
-      <TextField label="Açıklama" value={item.description} maxLength={200} error={errors?.description} onChangeText={(v) => set('description', v)} />
+      <TextField label={t('Açıklama')} value={item.description} maxLength={200} error={errors?.description} onChangeText={(v) => set('description', v)} />
       <FieldRow>
-        <TextField label="Miktar" value={item.quantity} keyboardType="decimal-pad" inputMode="decimal" error={errors?.quantity} onChangeText={(v) => set('quantity', v)} />
-        <TextField label="Birim" value={item.unit} maxLength={20} error={errors?.unit} onChangeText={(v) => set('unit', v)} />
+        <TextField label={t('Miktar')} value={item.quantity} keyboardType="decimal-pad" inputMode="decimal" error={errors?.quantity} onChangeText={(v) => set('quantity', v)} />
+        <TextField label={t('Birim')} value={item.unit} maxLength={20} error={errors?.unit} onChangeText={(v) => set('unit', v)} />
       </FieldRow>
       <TextField
-        label="Birim fiyat"
+        label={t('Birim fiyat')}
         unit="₺"
         value={item.unitPrice}
         keyboardType="decimal-pad"
@@ -70,8 +71,8 @@ function ItemEditor({
 }
 
 const priceOf = (text: string) => {
-  const t = text.trim();
-  const n = /^\d{1,3}(\.\d{3})+(,\d{1,2})?$/.test(t) ? parseDecimal(t.replace(/\./g, '')) : parseDecimal(t);
+  const value = text.trim();
+  const n = /^\d{1,3}(\.\d{3})+(,\d{1,2})?$/.test(value) ? parseDecimal(value.replace(/\./g, '')) : parseDecimal(value);
   return Number.isFinite(n) ? n : 0;
 };
 
@@ -123,10 +124,10 @@ export function QuoteEditor({
         calc?.ok ? calc.value.totals.totalPaintable : null,
         shared.materials.map((m) => ({ name: m.name, quantity: Number(m.quantity), unit: m.unit })),
       );
-      if (items.length === 0) setImportError('Projede henüz oda ya da malzeme yok.');
+      if (items.length === 0) setImportError(t('Projede henüz oda ya da malzeme yok.'));
       else setForm((f) => ({ ...f, items: [...f.items.filter((i) => i.description.trim() !== ''), ...items] }));
     } catch {
-      setImportError('Proje bilgileri alınamadı.');
+      setImportError(t('Proje bilgileri alınamadı.'));
     } finally {
       setImporting(false);
     }
@@ -136,13 +137,13 @@ export function QuoteEditor({
 
   return (
     <>
-      <TextField label="Teklif başlığı" value={form.title} maxLength={120} error={errors.title} onChangeText={(v) => set('title', v)} testID="quote-title" />
-      <TextField label="Müşteri adı (isteğe bağlı)" value={form.customerName} maxLength={120} autoCapitalize="words" onChangeText={(v) => set('customerName', v)} />
-      <TextField label="Müşteri telefonu veya adresi (isteğe bağlı)" value={form.customerContact} maxLength={120} onChangeText={(v) => set('customerContact', v)} />
+      <TextField label={t('Teklif başlığı')} value={form.title} maxLength={120} error={errors.title} onChangeText={(v) => set('title', v)} testID="quote-title" />
+      <TextField label={t('Müşteri adı (isteğe bağlı)')} value={form.customerName} maxLength={120} autoCapitalize="words" onChangeText={(v) => set('customerName', v)} />
+      <TextField label={t('Müşteri telefonu veya adresi (isteğe bağlı)')} value={form.customerContact} maxLength={120} onChangeText={(v) => set('customerContact', v)} />
 
-      <AppText variant="heading">Kalemler</AppText>
+      <AppText variant="heading">{t('Kalemler')}</AppText>
       {quote.project_id ? (
-        <Button label="Projeden ölçü ve malzemeleri getir" icon="download" variant="secondary" loading={importing} onPress={importFromProject} />
+        <Button label={t('Projeden ölçü ve malzemeleri getir')} icon="download" variant="secondary" loading={importing} onPress={importFromProject} />
       ) : null}
       {importError ? <Notice icon="information-circle">{importError}</Notice> : null}
       {form.items.map((item, i) => (
@@ -161,16 +162,16 @@ export function QuoteEditor({
         </Notice>
       ) : null}
       <View style={{ flexDirection: 'row', flexWrap: 'wrap', gap: space.sm }}>
-        <Button label="İşçilik ekle" icon="add" variant="ghost" onPress={() => set('items', [...form.items, emptyItem('labor')])} />
-        <Button label="Malzeme ekle" icon="add" variant="ghost" onPress={() => set('items', [...form.items, emptyItem('material')])} />
+        <Button label={t('İşçilik ekle')} icon="add" variant="ghost" onPress={() => set('items', [...form.items, emptyItem('labor')])} />
+        <Button label={t('Malzeme ekle')} icon="add" variant="ghost" onPress={() => set('items', [...form.items, emptyItem('material')])} />
       </View>
 
       <FieldRow>
-        <TextField label="KDV oranı" unit="%" value={form.vatRate} keyboardType="decimal-pad" inputMode="decimal" error={errors.vatRate} onChangeText={(v) => set('vatRate', v)} />
-        <TextField label="İndirim" unit="₺" value={form.discount} keyboardType="decimal-pad" inputMode="decimal" error={errors.discount} onChangeText={(v) => set('discount', v)} />
+        <TextField label={t('KDV oranı')} unit="%" value={form.vatRate} keyboardType="decimal-pad" inputMode="decimal" error={errors.vatRate} onChangeText={(v) => set('vatRate', v)} />
+        <TextField label={t('İndirim')} unit="₺" value={form.discount} keyboardType="decimal-pad" inputMode="decimal" error={errors.discount} onChangeText={(v) => set('discount', v)} />
       </FieldRow>
-      <ChoiceChips label="Teklif geçerlilik süresi" options={[...VALIDITY_OPTIONS]} value={form.validity} onChange={(v) => set('validity', v)} />
-      <TextField label="Notlar (isteğe bağlı)" multiline value={form.notes} maxLength={2000} placeholder="Ödeme şekli, iş süresi, malzemeyi kimin alacağı…" onChangeText={(v) => set('notes', v)} />
+      <ChoiceChips label={t('Teklif geçerlilik süresi')} options={[...VALIDITY_OPTIONS]} value={form.validity} onChange={(v) => set('validity', v)} />
+      <TextField label={t('Notlar (isteğe bağlı)')} multiline value={form.notes} maxLength={2000} placeholder={t('Ödeme şekli, iş süresi, malzemeyi kimin alacağı…')} onChangeText={(v) => set('notes', v)} />
 
       <QuoteTotalsCard items={liveItems} vatRate={parseDecimal(form.vatRate) || 0} discount={priceOf(form.discount)} />
 
@@ -180,28 +181,28 @@ export function QuoteEditor({
         </Notice>
       ) : null}
       <Button
-        label={quote.project_id ? 'Kaydet ve müşteriye gönder' : 'Kaydet ve gönderildi olarak işaretle'}
+        label={quote.project_id ? t('Kaydet ve müşteriye gönder') : t('Kaydet ve gönderildi olarak işaretle')}
         icon="send"
         loading={busy}
         onPress={validated((d) => onSave(d, 'send'))}
       />
       {quote.project_id ? null : (
         <AppText variant="caption" tone="muted">
-          Bu teklif bir projeye bağlı değil. PDF’i oluşturup müşterine kendin gönderebilirsin.
+          {t('Bu teklif bir projeye bağlı değil. PDF’i oluşturup müşterine kendin gönderebilirsin.')}
         </AppText>
       )}
-      <Button label="Taslağı kaydet" icon="save" variant="secondary" disabled={busy} onPress={validated((d) => onSave(d, 'stay'))} />
-      <Button label="PDF önizle ve paylaş" icon="document" variant="secondary" disabled={busy} onPress={validated(onPdf)} />
+      <Button label={t('Taslağı kaydet')} icon="save" variant="secondary" disabled={busy} onPress={validated((d) => onSave(d, 'stay'))} />
+      <Button label={t('PDF önizle ve paylaş')} icon="document" variant="secondary" disabled={busy} onPress={validated(onPdf)} />
       {confirmDelete ? (
         <Card>
-          <AppText variant="bodyStrong">Taslak silinsin mi?</AppText>
+          <AppText variant="bodyStrong">{t('Taslak silinsin mi?')}</AppText>
           <View style={{ flexDirection: 'row', gap: space.sm, flexWrap: 'wrap' }}>
-            <Button label="Vazgeç" variant="secondary" onPress={() => setConfirmDelete(false)} />
-            <Button label="Evet, sil" icon="trash" variant="ghost" onPress={onDelete} />
+            <Button label={t('Vazgeç')} variant="secondary" onPress={() => setConfirmDelete(false)} />
+            <Button label={t('Evet, sil')} icon="trash" variant="ghost" onPress={onDelete} />
           </View>
         </Card>
       ) : (
-        <Button label="Taslağı sil" icon="trash-outline" variant="ghost" disabled={busy} onPress={() => setConfirmDelete(true)} />
+        <Button label={t('Taslağı sil')} icon="trash-outline" variant="ghost" disabled={busy} onPress={() => setConfirmDelete(true)} />
       )}
     </>
   );

@@ -5,14 +5,15 @@ import { StyleSheet, View } from 'react-native';
 import type { SelectableRole } from '@/features/account/api';
 import { writeLocalRoles } from '@/features/account/local-role';
 import { RolePicker } from '@/features/account/role-picker';
+import { msg, t } from '@/i18n';
 import { Gradient, PaintDrops, SectionTitle } from '@/ui/brand';
 import { AppText, Button, Icon, Screen, type IconName } from '@/ui/components';
 import { radius, shadowOf, space, usePalette } from '@/ui/theme';
 
 const PROMISES: { icon: IconName; text: string }[] = [
-  { icon: 'calculator', text: 'Ne kadar boya ve malzeme gerektiğini adım adım hesapla' },
-  { icon: 'color-palette', text: 'Renkleri keşfet, odanın fotoğrafında dene' },
-  { icon: 'construct', text: 'Duvarındaki sorunu anla, doğru iş sırasını öğren' },
+  { icon: 'calculator', text: msg('Ne kadar boya ve malzeme gerektiğini adım adım hesapla') },
+  { icon: 'color-palette', text: msg('Renkleri keşfet, odanın fotoğrafında dene') },
+  { icon: 'construct', text: msg('Duvarındaki sorunu anla, doğru iş sırasını öğren') },
 ];
 
 export default function WelcomeScreen() {
@@ -43,7 +44,7 @@ export default function WelcomeScreen() {
           </AppText>
         </View>
         <AppText variant="display" style={{ color: p.onHero, paddingRight: 72 }}>
-          BoyaCep’e hoş geldin
+          {t('BoyaCep’e hoş geldin')}
         </AppText>
         <View style={{ gap: space.sm, marginTop: space.xs }}>
           {PROMISES.map((item) => (
@@ -52,7 +53,7 @@ export default function WelcomeScreen() {
                 <Icon name={item.icon} size={16} color={p.onHero} />
               </View>
               <AppText variant="small" style={{ color: p.onHero, flex: 1 }}>
-                {item.text}
+                {t(item.text)}
               </AppText>
             </View>
           ))}
@@ -60,11 +61,11 @@ export default function WelcomeScreen() {
       </View>
 
       <View style={{ gap: space.xs }}>
-        <SectionTitle title="Seni tanıyalım" />
-        <AppText tone="muted">Sana uygun ekranları gösterebilmemiz için seç. İkisini birden de seçebilirsin; sonra profilinden değiştirebilirsin.</AppText>
+        <SectionTitle title={t('Seni tanıyalım')} />
+        <AppText tone="muted">{t('Sana uygun ekranları gösterebilmemiz için seç. İkisini birden de seçebilirsin; sonra profilinden değiştirebilirsin.')}</AppText>
       </View>
       <RolePicker selected={roles} onToggle={toggle} />
-      <Button label="Başla" icon="arrow-forward" variant="cta" size="lg" onPress={start} disabled={roles.length === 0} loading={saving} />
+      <Button label={t('Başla')} icon="arrow-forward" variant="cta" size="lg" onPress={start} disabled={roles.length === 0} loading={saving} />
     </Screen>
   );
 }

@@ -1,5 +1,6 @@
 import { Pressable, StyleSheet, View } from 'react-native';
 
+import { msg, t } from '@/i18n';
 import { AppText, Icon, type IconName } from '@/ui/components';
 import { radius, space, usePalette } from '@/ui/theme';
 
@@ -8,14 +9,14 @@ import type { SelectableRole } from './api';
 const OPTIONS: { role: SelectableRole; title: string; text: string; icon: IconName }[] = [
   {
     role: 'homeowner',
-    title: 'Ev sahibiyim',
-    text: 'Evimi boyatmak veya kendim boyamak istiyorum.',
+    title: msg('Ev sahibiyim'),
+    text: msg('Evimi boyatmak veya kendim boyamak istiyorum.'),
     icon: 'home',
   },
   {
     role: 'pro',
-    title: 'Ustayım',
-    text: 'Boya ve tadilat işleri yapıyorum, teklif hazırlıyorum.',
+    title: msg('Ustayım'),
+    text: msg('Boya ve tadilat işleri yapıyorum, teklif hazırlıyorum.'),
     icon: 'construct',
   },
 ];
@@ -37,7 +38,7 @@ export function RolePicker({
             key={o.role}
             accessibilityRole="checkbox"
             accessibilityState={{ checked: on }}
-            accessibilityLabel={o.title}
+            accessibilityLabel={t(o.title)}
             onPress={() => onToggle(o.role)}
             style={[
               styles.option,
@@ -47,9 +48,9 @@ export function RolePicker({
               <Icon name={o.icon} color={on ? p.onPrimary : p.textMuted} size={26} />
             </View>
             <View style={{ flex: 1, gap: 2 }}>
-              <AppText variant="bodyStrong">{o.title}</AppText>
+              <AppText variant="bodyStrong">{t(o.title)}</AppText>
               <AppText variant="small" tone="muted">
-                {o.text}
+                {t(o.text)}
               </AppText>
             </View>
             <Icon name={on ? 'checkmark-circle' : 'ellipse-outline'} color={on ? p.primary : p.border} />

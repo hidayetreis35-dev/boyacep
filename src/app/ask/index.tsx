@@ -7,6 +7,7 @@ import { SignInGate } from '@/features/account/sign-in-gate';
 import { CONSULTATION_STATUS_LABEL, TOPICS, topicLabel, validateQuestion, type QuestionErrors } from '@/features/ask/api';
 import { useAskActions, useMyQuestions } from '@/features/ask/queries';
 import { formatDate } from '@/features/quotes/pdf';
+import { t } from '@/i18n';
 import type { ConsultationTopic } from '@/lib/database.types';
 import {
   AppText,
@@ -48,15 +49,15 @@ function NewQuestion({ onDone }: { onDone: () => void }) {
 
   return (
     <Card>
-      <AppText variant="heading">Yeni soru</AppText>
-      <ChoiceChips label="Konu" options={TOPICS} value={topic} onChange={setTopic} />
-      <TextField label="Başlık" value={subject} maxLength={120} placeholder="Örn. Banyo tavanında kabarma" error={errors.subject} onChangeText={setSubject} testID="ask-subject" />
+      <AppText variant="heading">{t('Yeni soru')}</AppText>
+      <ChoiceChips label={t('Konu')} options={TOPICS} value={topic} onChange={setTopic} />
+      <TextField label={t('Başlık')} value={subject} maxLength={120} placeholder={t('Örn. Banyo tavanında kabarma')} error={errors.subject} onChangeText={setSubject} testID="ask-subject" />
       <TextField
-        label="Sorun"
+        label={t('Sorun')}
         multiline
         value={body}
         maxLength={2000}
-        placeholder="Ne görüyorsun, ne zamandır var, daha önce ne denedin?"
+        placeholder={t('Ne görüyorsun, ne zamandır var, daha önce ne denedin?')}
         error={errors.body}
         onChangeText={setBody}
         testID="ask-body"
@@ -66,7 +67,7 @@ function NewQuestion({ onDone }: { onDone: () => void }) {
           {ask.error.message}
         </Notice>
       ) : null}
-      <Button label="Gönder" icon="send" loading={ask.isPending} onPress={submit} />
+      <Button label={t('Gönder')} icon="send" loading={ask.isPending} onPress={submit} />
     </Card>
   );
 }
@@ -76,14 +77,14 @@ function Questions() {
   const [asking, setAsking] = useState(false);
   return (
     <>
-      {asking ? <NewQuestion onDone={() => setAsking(false)} /> : <Button label="Soru sor" icon="chatbubbles" onPress={() => setAsking(true)} />}
-      <AppText variant="heading">Sorularım</AppText>
+      {asking ? <NewQuestion onDone={() => setAsking(false)} /> : <Button label={t('Soru sor')} icon="chatbubbles" onPress={() => setAsking(true)} />}
+      <AppText variant="heading">{t('Sorularım')}</AppText>
       {questions.isPending ? (
         <LoadingState />
       ) : questions.isError ? (
-        <ErrorState message="Sorular yüklenemedi." onRetry={() => questions.refetch()} />
+        <ErrorState message={t('Sorular yüklenemedi.')} onRetry={() => questions.refetch()} />
       ) : questions.data.length === 0 ? (
-        <AppText tone="muted">Henüz soru sormadın.</AppText>
+        <AppText tone="muted">{t('Henüz soru sormadın.')}</AppText>
       ) : (
         questions.data.map((q) => (
           <ListItem
@@ -92,7 +93,7 @@ function Questions() {
             subtitle={`${topicLabel(q.topic)} · ${formatDate(q.updated_at)}`}
             onPress={() => router.push({ pathname: '/ask/[id]', params: { id: q.id } })}>
             <View style={{ flexDirection: 'row' }}>
-              <Badge label={CONSULTATION_STATUS_LABEL[q.status]} tone={q.status === 'answered' ? 'success' : q.status === 'open' ? 'accent' : 'muted'} />
+              <Badge label={t(CONSULTATION_STATUS_LABEL[q.status])} tone={q.status === 'answered' ? 'success' : q.status === 'open' ? 'accent' : 'muted'} />
             </View>
           </ListItem>
         ))
@@ -106,20 +107,20 @@ export default function AskScreen() {
   return (
     <Screen edges={['bottom']}>
       <Notice icon="people">
-        Sorularını BoyaCep ekibindeki boya ustaları yanıtlar; beta süresince ücretsiz. Yapısal çatlak, büyük nem ya da elektrik gibi durumlarda yerinde bir uzmana danış.
+        {t('Sorularını BoyaCep ekibindeki boya ustaları yanıtlar; beta süresince ücretsiz. Yapısal çatlak, büyük nem ya da elektrik gibi durumlarda yerinde bir uzmana danış.')}
       </Notice>
       <View style={{ gap: space.lg }}>
         {loading ? (
           <LoadingState />
         ) : !db ? (
-          <EmptyState icon="cloud-offline" title="Sunucu bağlı değil" message="Ustaya Sor hesap gerektirir; sunucu bağlantısı kurulunca açılacak." />
+          <EmptyState icon="cloud-offline" title={t('Sunucu bağlı değil')} message={t('Ustaya Sor hesap gerektirir; sunucu bağlantısı kurulunca açılacak.')} />
         ) : !session ? (
           <SignInGate
             feature="ask"
             icon="chatbubbles"
-            title="Ustaya Sor"
-            message="Boya ustalarından yanıt al."
-            benefits={['Sorunu yaz, istersen fotoğraf ekle.', 'Yanıtı bildirim olarak al, sonra yine buradan oku.', 'Beta süresince ücretsiz.']}
+            title={t('Ustaya Sor')}
+            message={t('Boya ustalarından yanıt al.')}
+            benefits={[t('Sorunu yaz, istersen fotoğraf ekle.'), t('Yanıtı bildirim olarak al, sonra yine buradan oku.'), t('Beta süresince ücretsiz.')]}
           />
         ) : (
           <Questions />

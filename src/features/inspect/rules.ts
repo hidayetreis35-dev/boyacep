@@ -1,3 +1,5 @@
+import { msg, t } from '@/i18n';
+
 /**
  * "Duvarını İncele" without AI: the user picks what they see, the app explains
  * the likely cause and the safe order of work. General guidance only.
@@ -18,9 +20,9 @@ export type Symptom = {
 };
 
 export const SEVERITY_LABEL: Record<Severity, string> = {
-  diy: 'Kendin yapabilirsin',
-  careful: 'Dikkatli ol',
-  expert: 'Uzmana danış',
+  diy: msg('Kendin yapabilirsin'),
+  careful: msg('Dikkatli ol'),
+  expert: msg('Uzmana danış'),
 };
 
 const SEVERITY_RANK: Record<Severity, number> = { expert: 0, careful: 1, diy: 2 };
@@ -28,143 +30,143 @@ const SEVERITY_RANK: Record<Severity, number> = { expert: 0, careful: 1, diy: 2 
 export const SYMPTOMS: Symptom[] = [
   {
     id: 'wide_crack',
-    label: 'Geniş çatlak',
-    hint: '2 mm’den geniş, çapraz ya da kapı ve pencere köşelerinden çıkan',
+    label: msg('Geniş çatlak'),
+    hint: msg('2 mm’den geniş, çapraz ya da kapı ve pencere köşelerinden çıkan'),
     severity: 'expert',
-    cause: 'Binadaki oturma ya da taşıyıcı sistemdeki hareket olabilir. Bu bir boya sorunu değildir.',
+    cause: msg('Binadaki oturma ya da taşıyıcı sistemdeki hareket olabilir. Bu bir boya sorunu değildir.'),
     steps: [
-      'Bu duvarı boyamadan önce bir inşaat mühendisine ya da deneyimli bir ustaya göster.',
-      'Çatlağın fotoğrafını çek, yanına tarih ve cetvelle genişliğini not et.',
-      'Birkaç hafta içinde büyüyüp büyümediğini aynı yerden çekilen fotoğraflarla karşılaştır.',
+      msg('Bu duvarı boyamadan önce bir inşaat mühendisine ya da deneyimli bir ustaya göster.'),
+      msg('Çatlağın fotoğrafını çek, yanına tarih ve cetvelle genişliğini not et.'),
+      msg('Birkaç hafta içinde büyüyüp büyümediğini aynı yerden çekilen fotoğraflarla karşılaştır.'),
     ],
   },
   {
     id: 'damp_stain',
-    label: 'Nem lekesi',
-    hint: 'Kahverengi halka, sarı leke ya da ıslak görünen bölge',
+    label: msg('Nem lekesi'),
+    hint: msg('Kahverengi halka, sarı leke ya da ıslak görünen bölge'),
     severity: 'expert',
-    cause: 'Tesisat sızıntısı, çatıdan ya da dış cepheden su alma veya zeminden yükselen nem.',
+    cause: msg('Tesisat sızıntısı, çatıdan ya da dış cepheden su alma veya zeminden yükselen nem.'),
     steps: [
-      'Önce suyun nereden geldiğini bul ve onarılmasını sağla. Kaynak çözülmeden boya tutmaz.',
-      'Duvarın tamamen kurumasını bekle; bu birkaç hafta sürebilir.',
-      'Lekenin geri çıkmaması için leke örtücü (izolasyon) astar sür.',
-      'Ardından iki kat son kat boya uygula.',
+      msg('Önce suyun nereden geldiğini bul ve onarılmasını sağla. Kaynak çözülmeden boya tutmaz.'),
+      msg('Duvarın tamamen kurumasını bekle; bu birkaç hafta sürebilir.'),
+      msg('Lekenin geri çıkmaması için leke örtücü (izolasyon) astar sür.'),
+      msg('Ardından iki kat son kat boya uygula.'),
     ],
-    callExpertIf: 'Suyun kaynağını bulamıyorsan ya da leke büyüyorsa tesisatçı veya yalıtım ustası çağır.',
+    callExpertIf: msg('Suyun kaynağını bulamıyorsan ya da leke büyüyorsa tesisatçı veya yalıtım ustası çağır.'),
     guideSlug: 'sik-yapilan-boya-hatalari',
   },
   {
     id: 'mould',
-    label: 'Küf',
-    hint: 'Siyah ya da yeşil noktalar; çoğunlukla banyo, mutfak ve pencere çevresinde',
+    label: msg('Küf'),
+    hint: msg('Siyah ya da yeşil noktalar; çoğunlukla banyo, mutfak ve pencere çevresinde'),
     severity: 'careful',
-    cause: 'Yoğuşma ve yetersiz havalandırma. Soğuk duvarda biriken nem küfü besler.',
+    cause: msg('Yoğuşma ve yetersiz havalandırma. Soğuk duvarda biriken nem küfü besler.'),
     steps: [
-      'Eldiven ve maske tak, odayı havalandır.',
-      'Küflü yüzeyi küf temizleyici ile temizle; kuru fırçalama yapma, sporları dağıtır.',
-      'Duvarın tamamen kurumasını bekle.',
-      'Küfe dayanıklı (anti-bakteriyel) boya kullan.',
-      'Odayı her gün havalandır; banyoda aspiratör kullan, mobilyaları duvardan biraz uzaklaştır.',
+      msg('Eldiven ve maske tak, odayı havalandır.'),
+      msg('Küflü yüzeyi küf temizleyici ile temizle; kuru fırçalama yapma, sporları dağıtır.'),
+      msg('Duvarın tamamen kurumasını bekle.'),
+      msg('Küfe dayanıklı (anti-bakteriyel) boya kullan.'),
+      msg('Odayı her gün havalandır; banyoda aspiratör kullan, mobilyaları duvardan biraz uzaklaştır.'),
     ],
-    callExpertIf: 'Küf bir metrekareden büyükse, sıvanın içine işlemişse ya da evde solunum hastalığı olan biri varsa uzmana danış.',
+    callExpertIf: msg('Küf bir metrekareden büyükse, sıvanın içine işlemişse ya da evde solunum hastalığı olan biri varsa uzmana danış.'),
     guideSlug: 'boya-oncesi-hazirlik',
   },
   {
     id: 'blistering',
-    label: 'Kabarma',
-    hint: 'Boya balon gibi şişmiş, duvardan ayrılmış',
+    label: msg('Kabarma'),
+    hint: msg('Boya balon gibi şişmiş, duvardan ayrılmış'),
     severity: 'careful',
-    cause: 'Genellikle nem ya da boyanın nemli, tozlu veya kirli yüzeye uygulanması. Çok sıcak havada boyamak da kabartabilir.',
+    cause: msg('Genellikle nem ya da boyanın nemli, tozlu veya kirli yüzeye uygulanması. Çok sıcak havada boyamak da kabartabilir.'),
     steps: [
-      'Kabarcıkları spatula ile kazı, gevşek boyanın hepsini al.',
-      'Nemden kaynaklanıyorsa önce nem nedenini çöz.',
-      'Yüzey kuruyunca zımparala ve tozunu al.',
-      'Açılan yerlere astar sür, sonra boya.',
+      msg('Kabarcıkları spatula ile kazı, gevşek boyanın hepsini al.'),
+      msg('Nemden kaynaklanıyorsa önce nem nedenini çöz.'),
+      msg('Yüzey kuruyunca zımparala ve tozunu al.'),
+      msg('Açılan yerlere astar sür, sonra boya.'),
     ],
-    callExpertIf: 'Kabarma aynı yerde tekrar ediyorsa duvarda nem vardır; nem sorununa bakacak bir usta çağır.',
+    callExpertIf: msg('Kabarma aynı yerde tekrar ediyorsa duvarda nem vardır; nem sorununa bakacak bir usta çağır.'),
     guideSlug: 'sik-yapilan-boya-hatalari',
   },
   {
     id: 'efflorescence',
-    label: 'Beyaz tuzlanma',
-    hint: 'Duvar yüzeyinde beyaz, pudra gibi birikinti',
+    label: msg('Beyaz tuzlanma'),
+    hint: msg('Duvar yüzeyinde beyaz, pudra gibi birikinti'),
     severity: 'careful',
-    cause: 'Duvarın içinden gelen nem, tuzları yüzeye taşır.',
+    cause: msg('Duvarın içinden gelen nem, tuzları yüzeye taşır.'),
     steps: [
-      'Tuzu kuru fırça ile temizle; su ile silme, sorunu büyütür.',
-      'Nemin kaynağını bul ve çöz.',
-      'Tuzlanmaya dayanıklı astar uygula, ardından boya.',
+      msg('Tuzu kuru fırça ile temizle; su ile silme, sorunu büyütür.'),
+      msg('Nemin kaynağını bul ve çöz.'),
+      msg('Tuzlanmaya dayanıklı astar uygula, ardından boya.'),
     ],
-    callExpertIf: 'Tuzlanma zemine yakın yerlerde ve geniş alandaysa yükselen nem olabilir; yalıtım ustasına danış.',
+    callExpertIf: msg('Tuzlanma zemine yakın yerlerde ve geniş alandaysa yükselen nem olabilir; yalıtım ustasına danış.'),
     guideSlug: 'astar-ne-zaman-gerekir',
   },
   {
     id: 'peeling',
-    label: 'Dökülme',
-    hint: 'Boya kat kat ya da pul pul ayrılıyor',
+    label: msg('Dökülme'),
+    hint: msg('Boya kat kat ya da pul pul ayrılıyor'),
     severity: 'diy',
-    cause: 'Astar kullanılmaması, tozlu ya da yağlı yüzey veya yağlı boya üstüne su bazlı boya sürülmesi.',
+    cause: msg('Astar kullanılmaması, tozlu ya da yağlı yüzey veya yağlı boya üstüne su bazlı boya sürülmesi.'),
     steps: [
-      'Gevşek boyayı spatula ile kazı.',
-      'Kenarları zımparala ki geçiş belli olmasın; tozunu al.',
-      'Eski boya yağlı boyaysa uygun bir geçiş astarı kullan.',
-      'Astar kuruyunca iki kat boya.',
+      msg('Gevşek boyayı spatula ile kazı.'),
+      msg('Kenarları zımparala ki geçiş belli olmasın; tozunu al.'),
+      msg('Eski boya yağlı boyaysa uygun bir geçiş astarı kullan.'),
+      msg('Astar kuruyunca iki kat boya.'),
     ],
     guideSlug: 'astar-ne-zaman-gerekir',
   },
   {
     id: 'hairline_crack',
-    label: 'İnce çatlak',
-    hint: 'Saç teli inceliğinde, yüzeysel çatlaklar',
+    label: msg('İnce çatlak'),
+    hint: msg('Saç teli inceliğinde, yüzeysel çatlaklar'),
     severity: 'diy',
-    cause: 'Sıvanın kururken çekmesi ya da eski boyanın yaşlanması. Genelde yapısal değildir.',
+    cause: msg('Sıvanın kururken çekmesi ya da eski boyanın yaşlanması. Genelde yapısal değildir.'),
     steps: [
-      'Çatlağı spatula ucuyla hafifçe aç ve tozunu al.',
-      'Macunla doldur, kuruyunca zımparala.',
-      'Macunlu yerlere astar sür, sonra tüm duvarı boya.',
+      msg('Çatlağı spatula ucuyla hafifçe aç ve tozunu al.'),
+      msg('Macunla doldur, kuruyunca zımparala.'),
+      msg('Macunlu yerlere astar sür, sonra tüm duvarı boya.'),
     ],
-    callExpertIf: 'Çatlak genişliyorsa ya da kapanıp tekrar açılıyorsa "Geniş çatlak" sonucuna bak.',
+    callExpertIf: msg('Çatlak genişliyorsa ya da kapanıp tekrar açılıyorsa "Geniş çatlak" sonucuna bak.'),
     guideSlug: 'macun-ve-zimpara',
   },
   {
     id: 'surface_damage',
-    label: 'Yüzey bozukluğu',
-    hint: 'Delik, göçük, pürüz ya da eski dübel ve çivi yerleri',
+    label: msg('Yüzey bozukluğu'),
+    hint: msg('Delik, göçük, pürüz ya da eski dübel ve çivi yerleri'),
     severity: 'diy',
-    cause: 'Zamanla oluşan darbeler, sökülen raf ve tablolar ya da düzgün yapılmamış eski tamirler.',
+    cause: msg('Zamanla oluşan darbeler, sökülen raf ve tablolar ya da düzgün yapılmamış eski tamirler.'),
     steps: [
-      'Gevşek parçaları ve çıkıntıları spatula ile temizle.',
-      'Delik ve göçükleri macunla doldur; derin yerleri iki seferde doldur.',
-      'Kuruyunca zımparala, elinle yokladığında düz olmalı; tozunu al.',
-      'Macunlu yerlere astar sür, sonra tüm duvarı boya.',
+      msg('Gevşek parçaları ve çıkıntıları spatula ile temizle.'),
+      msg('Delik ve göçükleri macunla doldur; derin yerleri iki seferde doldur.'),
+      msg('Kuruyunca zımparala, elinle yokladığında düz olmalı; tozunu al.'),
+      msg('Macunlu yerlere astar sür, sonra tüm duvarı boya.'),
     ],
     guideSlug: 'macun-ve-zimpara',
   },
   {
     id: 'patchy',
-    label: 'Rulo ya da fırça izi',
-    hint: 'Duvarda parlak ve mat bölgeler, yamalı görüntü',
+    label: msg('Rulo ya da fırça izi'),
+    hint: msg('Duvarda parlak ve mat bölgeler, yamalı görüntü'),
     severity: 'diy',
-    cause: 'Macunlu yerlere astar sürülmemesi, ince kat boya ya da kurumaya başlamış kenara geri dönülmesi.',
+    cause: msg('Macunlu yerlere astar sürülmemesi, ince kat boya ya da kurumaya başlamış kenara geri dönülmesi.'),
     steps: [
-      'Macunlu ve tamir edilmiş yerlere astar sür.',
-      'Duvarı bir köşeden diğerine ara vermeden, ıslak kenarı koruyarak boya.',
-      'İkinci katı ilk kat tam kuruduktan sonra uygula.',
+      msg('Macunlu ve tamir edilmiş yerlere astar sür.'),
+      msg('Duvarı bir köşeden diğerine ara vermeden, ıslak kenarı koruyarak boya.'),
+      msg('İkinci katı ilk kat tam kuruduktan sonra uygula.'),
     ],
     guideSlug: 'duvar-boyama-teknigi',
   },
   {
     id: 'chalking',
-    label: 'Tozlanma',
-    hint: 'Dokununca eline toz boya bulaşıyor (çoğunlukla dış cephe)',
+    label: msg('Tozlanma'),
+    hint: msg('Dokununca eline toz boya bulaşıyor (çoğunlukla dış cephe)'),
     severity: 'diy',
-    cause: 'Güneş ve hava etkisiyle eskiyen boya yüzeyi tozlaşır.',
+    cause: msg('Güneş ve hava etkisiyle eskiyen boya yüzeyi tozlaşır.'),
     steps: [
-      'Yüzeyi fırçala ya da yıka, tamamen kurumasını bekle.',
-      'Tozlanan yüzeyi bağlayan bir astar uygula.',
-      'Dış cephe için uygun boya ile iki kat boya.',
+      msg('Yüzeyi fırçala ya da yıka, tamamen kurumasını bekle.'),
+      msg('Tozlanan yüzeyi bağlayan bir astar uygula.'),
+      msg('Dış cephe için uygun boya ile iki kat boya.'),
     ],
-    callExpertIf: 'Yüksekte çalışman gerekiyorsa iskele ve güvenlik ekipmanı olan bir ustaya yaptır.',
+    callExpertIf: msg('Yüksekte çalışman gerekiyorsa iskele ve güvenlik ekipmanı olan bir ustaya yaptır.'),
     guideSlug: 'dis-cephe-boyasi',
   },
 ];
@@ -181,9 +183,9 @@ export function assess(selected: string[]): { symptoms: Symptom[]; worst: Severi
 export type Place = 'room' | 'wet' | 'exterior';
 
 export const PLACES: { value: Place; label: string; hint: string }[] = [
-  { value: 'room', label: 'Oda ya da salon', hint: 'Yatak odası, salon, koridor' },
-  { value: 'wet', label: 'Banyo ya da mutfak', hint: 'Buharlı ve nemli alanlar' },
-  { value: 'exterior', label: 'Dış cephe', hint: 'Balkon, bahçe duvarı, bina dışı' },
+  { value: 'room', label: msg('Oda ya da salon'), hint: msg('Yatak odası, salon, koridor') },
+  { value: 'wet', label: msg('Banyo ya da mutfak'), hint: msg('Buharlı ve nemli alanlar') },
+  { value: 'exterior', label: msg('Dış cephe'), hint: msg('Balkon, bahçe duvarı, bina dışı') },
 ];
 
 type Task = 'expert' | 'water' | 'dry' | 'protect' | 'mould' | 'salt' | 'wash' | 'clean' | 'scrape' | 'fill' | 'sand' | 'primer' | 'paint';
@@ -206,41 +208,41 @@ const WORK: Record<string, { tasks: Task[]; primer?: Primer }> = {
 const TASK_ORDER: Task[] = ['expert', 'water', 'dry', 'protect', 'mould', 'salt', 'wash', 'clean', 'scrape', 'fill', 'sand', 'primer', 'paint'];
 
 const TASK_TEXT: Record<Exclude<Task, 'primer' | 'paint'>, string> = {
-  expert: 'Çatlağı boyamadan önce bir inşaat mühendisine ya da deneyimli bir ustaya göster.',
-  water: 'Nemin ya da suyun nereden geldiğini bul ve onarılmasını sağla.',
-  dry: 'Duvarın tamamen kurumasını bekle; bu birkaç hafta sürebilir.',
-  protect: 'Eşyaları ve zemini ört, kenarlara maskeleme bandı yapıştır.',
-  mould: 'Eldiven ve maske tak, küfü küf temizleyiciyle temizle; kuru fırçalama.',
-  salt: 'Beyaz tuzu sert, kuru bir fırçayla al; suyla silme.',
-  wash: 'Tozlanan yüzeyi fırçala ya da yıka, kurumasını bekle.',
-  clean: 'Duvarın tozunu al, yağlı ve kirli lekeleri sil.',
-  scrape: 'Kabaran ve gevşeyen boyayı spatulayla kazı.',
-  fill: 'Çatlak, delik ve göçükleri macunla doldur.',
-  sand: 'Kuruyunca zımparala ve tozunu al.',
+  expert: msg('Çatlağı boyamadan önce bir inşaat mühendisine ya da deneyimli bir ustaya göster.'),
+  water: msg('Nemin ya da suyun nereden geldiğini bul ve onarılmasını sağla.'),
+  dry: msg('Duvarın tamamen kurumasını bekle; bu birkaç hafta sürebilir.'),
+  protect: msg('Eşyaları ve zemini ört, kenarlara maskeleme bandı yapıştır.'),
+  mould: msg('Eldiven ve maske tak, küfü küf temizleyiciyle temizle; kuru fırçalama.'),
+  salt: msg('Beyaz tuzu sert, kuru bir fırçayla al; suyla silme.'),
+  wash: msg('Tozlanan yüzeyi fırçala ya da yıka, kurumasını bekle.'),
+  clean: msg('Duvarın tozunu al, yağlı ve kirli lekeleri sil.'),
+  scrape: msg('Kabaran ve gevşeyen boyayı spatulayla kazı.'),
+  fill: msg('Çatlak, delik ve göçükleri macunla doldur.'),
+  sand: msg('Kuruyunca zımparala ve tozunu al.'),
 };
 
 const PRIMER_TEXT: Record<Primer, string> = {
-  stain: 'leke örtücü (izolasyon) astar',
-  salt: 'tuzlanmaya dayanıklı astar',
-  binding: 'tozlanan yüzeyi bağlayan astar',
-  patch: 'kazınan ve macunlanan yerlere astar',
+  stain: msg('leke örtücü (izolasyon) astar'),
+  salt: msg('tuzlanmaya dayanıklı astar'),
+  binding: msg('tozlanan yüzeyi bağlayan astar'),
+  patch: msg('kazınan ve macunlanan yerlere astar'),
 };
 
 const PRIMER_PRODUCT: Record<Primer, string> = {
-  stain: 'Leke örtücü astar',
-  salt: 'Tuzlanma astarı',
-  binding: 'Bağlayıcı astar',
-  patch: 'Astar',
+  stain: msg('Leke örtücü astar'),
+  salt: msg('Tuzlanma astarı'),
+  binding: msg('Bağlayıcı astar'),
+  patch: msg('Astar'),
 };
 
 const MATERIALS: Partial<Record<Task, string[]>> = {
-  protect: ['Örtü naylonu', 'Maskeleme bandı'],
-  mould: ['Küf temizleyici', 'Eldiven ve maske'],
-  salt: ['Sert fırça'],
-  scrape: ['Spatula'],
-  fill: ['Macun'],
-  sand: ['Zımpara kâğıdı'],
-  paint: ['Rulo ve fırça'],
+  protect: [msg('Örtü naylonu'), msg('Maskeleme bandı')],
+  mould: [msg('Küf temizleyici'), msg('Eldiven ve maske')],
+  salt: [msg('Sert fırça')],
+  scrape: [msg('Spatula')],
+  fill: [msg('Macun')],
+  sand: [msg('Zımpara kâğıdı')],
+  paint: [msg('Rulo ve fırça')],
 };
 
 export type PlanStep = { key: Task; text: string };
@@ -248,6 +250,7 @@ export type PlanStep = { key: Task; text: string };
 /**
  * One ordered work plan for everything the user marked, so steps shared by
  * several findings (scraping, primer…) appear once and in the right order.
+ * Steps and materials come back in the current language.
  */
 export function workPlan(selected: string[], place: Place): { steps: PlanStep[]; materials: string[]; blocked: boolean } {
   const { symptoms } = assess(selected);
@@ -256,23 +259,23 @@ export function workPlan(selected: string[], place: Place): { steps: PlanStep[];
   for (const s of symptoms) {
     const work = WORK[s.id];
     if (!work) continue;
-    work.tasks.forEach((t) => tasks.add(t));
+    work.tasks.forEach((value) => tasks.add(value));
     if (work.primer) primers.add(work.primer);
   }
   if (symptoms.length === 0) tasks.add('clean');
   const antiMould = selected.includes('mould') || place === 'wet';
 
-  const steps: PlanStep[] = TASK_ORDER.filter((t) => tasks.has(t)).map((key) => {
-    if (key === 'primer') return { key, text: `Astar sür: ${[...primers].map((p) => PRIMER_TEXT[p]).join(', ')}.` };
+  const steps: PlanStep[] = TASK_ORDER.filter((value) => tasks.has(value)).map((key) => {
+    if (key === 'primer') return { key, text: t('Astar sür: {primers}.', { primers: [...primers].map((p) => t(PRIMER_TEXT[p])).join(', ') }) };
     if (key === 'paint') {
-      const paint = place === 'exterior' ? 'dış cephe boyası' : antiMould ? 'küfe dayanıklı, silinebilir boya' : 'iç cephe boyası';
-      return { key, text: `Astar kuruyunca iki kat ${paint} uygula; her katı ara vermeden, ıslak kenarı koruyarak sür.` };
+      const paint = place === 'exterior' ? t('dış cephe boyası') : antiMould ? t('küfe dayanıklı, silinebilir boya') : t('iç cephe boyası');
+      return { key, text: t('Astar kuruyunca iki kat {paint} uygula; her katı ara vermeden, ıslak kenarı koruyarak sür.', { paint }) };
     }
-    return { key, text: TASK_TEXT[key] };
+    return { key, text: t(TASK_TEXT[key]) };
   });
   const materials = [
     ...steps.flatMap((s) => MATERIALS[s.key] ?? []),
     ...[...primers].map((p) => PRIMER_PRODUCT[p]),
   ];
-  return { steps, materials: [...new Set(materials)], blocked: tasks.has('expert') || tasks.has('water') };
+  return { steps, materials: [...new Set(materials)].map((m) => t(m)), blocked: tasks.has('expert') || tasks.has('water') };
 }

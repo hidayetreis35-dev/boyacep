@@ -4,6 +4,7 @@ import { ScrollView, StyleSheet, View } from 'react-native';
 
 import { useSession } from '@/features/account/session';
 import { useProjects } from '@/features/projects/queries';
+import { t } from '@/i18n';
 import { SectionTitle } from '@/ui/brand';
 import { AppText, Button, Icon, Notice, TextField } from '@/ui/components';
 import { PressableScale } from '@/ui/motion';
@@ -44,7 +45,7 @@ export function SwatchCard({
     <PressableScale
       accessibilityRole="radio"
       accessibilityState={{ selected: !!selected }}
-      accessibilityLabel={colour.name}
+      accessibilityLabel={t(colour.name)}
       onPress={onPress}
       style={[
         styles.swatch,
@@ -62,7 +63,7 @@ export function SwatchCard({
       </View>
       <View style={styles.swatchText}>
         <AppText variant="caption" numberOfLines={1} style={{ fontFamily: fonts.bold, color: p.text }}>
-          {colour.name}
+          {t(colour.name)}
         </AppText>
         <AppText variant="caption" tone="muted" style={{ fontSize: 11 }}>
           {colour.hex}
@@ -110,13 +111,13 @@ export function ColourExplorer({ selected, favourites, onSelect }: { selected: s
   return (
     <View style={{ gap: space.lg }}>
       <TextField
-        label="Renk ara"
+        label={t('Renk ara')}
         value={query}
         onChangeText={setQuery}
-        placeholder="Adaçayı, lacivert ya da #8FB3CF"
+        placeholder={t('Adaçayı, lacivert ya da #8FB3CF')}
         autoCapitalize="none"
         autoCorrect={false}
-        hint={`${COLOURS.length} hazır renk. Boya kataloğundaki herhangi bir HEX kodunu da yazabilirsin.`}
+        hint={t('{count} hazır renk. Boya kataloğundaki herhangi bir HEX kodunu da yazabilirsin.', { count: COLOURS.length })}
         testID="colour-search"
       />
 
@@ -128,34 +129,34 @@ export function ColourExplorer({ selected, favourites, onSelect }: { selected: s
               <View style={{ flex: 1, gap: 2 }}>
                 <AppText variant="bodyStrong">{typedHex}</AppText>
                 <AppText variant="caption" tone="muted">
-                  En yakın hazır renk: {nearest(typedHex).name}
+                  {t('En yakın hazır renk: {name}', { name: t(nearest(typedHex).name) })}
                 </AppText>
               </View>
-              <Button label="Kullan" variant="secondary" onPress={() => onSelect({ hex: typedHex, name: typedHex })} />
+              <Button label={t('Kullan')} variant="secondary" onPress={() => onSelect({ hex: typedHex, name: typedHex })} />
             </View>
           ) : null}
           {results.length > 0 ? (
             <SwatchGrid colours={results} selected={selected} favourites={favourites} onSelect={onSelect} />
           ) : !typedHex ? (
-            <AppText tone="muted">“{query.trim()}” ile eşleşen renk yok. Başka bir ad ya da renk kodu dene.</AppText>
+            <AppText tone="muted">{t('“{query}” ile eşleşen renk yok. Başka bir ad ya da renk kodu dene.', { query: query.trim() })}</AppText>
           ) : null}
         </View>
       ) : (
         <>
           <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={{ gap: space.sm }} accessibilityRole="tablist">
-            {[{ key: 'featured' as Shelf, label: 'Öne çıkanlar', sample: '' }, ...FAMILIES].map((f) => {
+            {[{ key: 'featured' as Shelf, label: t('Öne çıkanlar'), sample: '' }, ...FAMILIES].map((f) => {
               const active = shelf === f.key;
               return (
                 <PressableScale
                   key={f.key}
                   accessibilityRole="tab"
                   accessibilityState={{ selected: active }}
-                  accessibilityLabel={f.label}
+                  accessibilityLabel={t(f.label)}
                   onPress={() => setShelf(f.key)}
                   style={[styles.familyChip, { backgroundColor: active ? p.primary : p.surface, borderColor: active ? p.primary : p.border }]}>
                   {f.sample ? <View style={[styles.familyDot, { backgroundColor: f.sample, borderColor: p.border }]} /> : <Icon name="sparkles" size={14} color={active ? p.onPrimary : p.cta} />}
                   <AppText variant="small" style={{ color: active ? p.onPrimary : p.text, fontFamily: fonts.semibold }}>
-                    {f.label}
+                    {t(f.label)}
                   </AppText>
                 </PressableScale>
               );
@@ -165,13 +166,13 @@ export function ColourExplorer({ selected, favourites, onSelect }: { selected: s
           {shelf === 'featured' ? (
             <View style={{ gap: space.lg }}>
               <View style={{ gap: space.sm }}>
-                <SectionTitle title="Zamansız klasikler" />
+                <SectionTitle title={t('Zamansız klasikler')} />
                 <SwatchRow colours={CLASSICS} selected={selected} favourites={favourites} onSelect={onSelect} />
               </View>
               <View style={{ gap: space.sm }}>
-                <SectionTitle title="2026 trend tonları" />
+                <SectionTitle title={t('2026 trend tonları')} />
                 <AppText variant="caption" tone="muted">
-                  Sıcak toprak tonları, doğadan yeşiller ve derin maviler. Editör seçimidir; satış verisi değildir.
+                  {t('Sıcak toprak tonları, doğadan yeşiller ve derin maviler. Editör seçimidir; satış verisi değildir.')}
                 </AppText>
                 <SwatchRow colours={TRENDS} selected={selected} favourites={favourites} onSelect={onSelect} />
               </View>
@@ -216,10 +217,10 @@ export function SelectedColour({
         <View style={{ flexDirection: 'row', alignItems: 'flex-start', gap: space.sm }}>
           <View style={{ flex: 1, gap: 2 }}>
             <AppText variant="overline" style={{ color: fg, opacity: 0.8 }}>
-              Seçili renk
+              {t('Seçili renk')}
             </AppText>
             <AppText variant="title" style={{ color: fg }}>
-              {colour.name}
+              {t(colour.name)}
             </AppText>
             <AppText variant="caption" style={{ color: fg, opacity: 0.8 }}>
               {facts.caption}
@@ -227,7 +228,7 @@ export function SelectedColour({
           </View>
           <PressableScale
             accessibilityRole="button"
-            accessibilityLabel={favourite ? 'Favorilerden çıkar' : 'Favorilere ekle'}
+            accessibilityLabel={favourite ? t('Favorilerden çıkar') : t('Favorilere ekle')}
             onPress={onToggleFavourite}
             style={[styles.round, { backgroundColor: 'rgba(255,255,255,0.85)' }]}>
             <Icon name={favourite ? 'heart' : 'heart-outline'} size={22} color={favourite ? '#C2367A' : '#141B2D'} />
@@ -241,17 +242,17 @@ export function SelectedColour({
           </View>
           <View style={styles.tag}>
             <AppText variant="caption" style={{ color: '#141B2D' }}>
-              Işık yansıtma ≈ %{reflect}
+              {t('Işık yansıtma ≈ %{reflect}', { reflect })}
             </AppText>
           </View>
           <View style={styles.tag}>
             <AppText variant="caption" style={{ color: '#141B2D' }}>
-              {TEMPERATURE_LABEL[facts.temperature]}
+              {t(TEMPERATURE_LABEL[facts.temperature])}
             </AppText>
           </View>
           <View style={styles.tag}>
             <AppText variant="caption" style={{ color: '#141B2D' }}>
-              {reflect >= 60 ? 'Ferah, ışığı açar' : reflect >= 30 ? 'Dengeli' : 'Derin, sıcak etki'}
+              {reflect >= 60 ? t('Ferah, ışığı açar') : reflect >= 30 ? t('Dengeli') : t('Derin, sıcak etki')}
             </AppText>
           </View>
         </View>
@@ -259,16 +260,16 @@ export function SelectedColour({
 
       <View style={{ flexDirection: 'row', gap: space.sm }}>
         <View style={{ flex: 1 }}>
-          <Button label="Duvarda dene" icon="camera" variant="cta" onPress={onTryOnWall} />
+          <Button label={t('Duvarda dene')} icon="camera" variant="cta" onPress={onTryOnWall} />
         </View>
         <View style={{ flex: 1 }}>
-          <Button label={comparing ? 'Karşılaştırmada' : 'Karşılaştır'} icon={comparing ? 'checkmark' : 'git-compare'} variant="secondary" onPress={onToggleCompare} />
+          <Button label={comparing ? t('Karşılaştırmada') : t('Karşılaştır')} icon={comparing ? 'checkmark' : 'git-compare'} variant="secondary" onPress={onToggleCompare} />
         </View>
       </View>
 
       <SaveToProject colour={colour} />
 
-      <SectionTitle title="Uyumlu kombinasyonlar" />
+      <SectionTitle title={t('Uyumlu kombinasyonlar')} />
       {harmonies(colour.hex).map((h) => (
         <View key={h.key} style={[styles.harmony, { backgroundColor: p.surface, borderColor: p.border }, shadowOf(p)]}>
           <View style={styles.harmonyStrip}>
@@ -276,11 +277,11 @@ export function SelectedColour({
               <PressableScale
                 key={c.hex}
                 accessibilityRole="button"
-                accessibilityLabel={`${h.title}: ${c.name}`}
+                accessibilityLabel={`${h.title}: ${t(c.name)}`}
                 onPress={() => onSelect(c)}
                 style={[styles.harmonyBlock, { backgroundColor: c.hex }]}>
                 <AppText variant="caption" numberOfLines={1} style={{ color: ink(c.hex), fontFamily: fonts.bold }}>
-                  {c.name}
+                  {t(c.name)}
                 </AppText>
               </PressableScale>
             ))}
@@ -311,12 +312,12 @@ function SaveToProject({ colour }: { colour: PickedColour }) {
 
   if (!db) return null;
   if (!session) {
-    return <Button label="Projeye kaydetmek için giriş yap" icon="log-in" variant="ghost" onPress={() => router.push('/sign-in')} />;
+    return <Button label={t('Projeye kaydetmek için giriş yap')} icon="log-in" variant="ghost" onPress={() => router.push('/sign-in')} />;
   }
   if (!open) {
     return (
       <Button
-        label="Projeye kaydet"
+        label={t('Projeye kaydet')}
         icon="bookmark"
         variant="ghost"
         onPress={() => {
@@ -330,11 +331,11 @@ function SaveToProject({ colour }: { colour: PickedColour }) {
   const list = projects.data ?? [];
   return (
     <View style={[styles.save, { backgroundColor: p.surface, borderColor: p.border }]}>
-      <AppText variant="bodyStrong">“{colour.name}” hangi projeye?</AppText>
-      <TextField label="Nereye? (isteğe bağlı)" value={surface} onChangeText={setSurface} placeholder="Salon duvarı, tavan…" maxLength={60} />
-      {projects.isPending ? <AppText tone="muted">Projeler yükleniyor…</AppText> : null}
+      <AppText variant="bodyStrong">{t('“{name}” hangi projeye?', { name: t(colour.name) })}</AppText>
+      <TextField label={t('Nereye? (isteğe bağlı)')} value={surface} onChangeText={setSurface} placeholder={t('Salon duvarı, tavan…')} maxLength={60} />
+      {projects.isPending ? <AppText tone="muted">{t('Projeler yükleniyor…')}</AppText> : null}
       {list.length === 0 && !projects.isPending ? (
-        <AppText tone="muted">Henüz projen yok. Önce Projelerim’den bir proje oluştur.</AppText>
+        <AppText tone="muted">{t('Henüz projen yok. Önce Projelerim’den bir proje oluştur.')}</AppText>
       ) : null}
       <View style={{ flexDirection: 'row', flexWrap: 'wrap', gap: space.sm }}>
         {list.map((project) => (
@@ -354,7 +355,7 @@ function SaveToProject({ colour }: { colour: PickedColour }) {
       </View>
       {savedTo ? (
         <Notice tone="success" icon="checkmark-circle">
-          “{colour.name}” {savedTo} projesine kaydedildi.
+          {t('“{name}” {savedTo} projesine kaydedildi.', { name: t(colour.name), savedTo })}
         </Notice>
       ) : null}
       {add.isError ? (
@@ -362,7 +363,7 @@ function SaveToProject({ colour }: { colour: PickedColour }) {
           {add.error.message}
         </Notice>
       ) : null}
-      <Button label="Kapat" variant="ghost" onPress={() => setOpen(false)} />
+      <Button label={t('Kapat')} variant="ghost" onPress={() => setOpen(false)} />
     </View>
   );
 }
@@ -379,19 +380,19 @@ export function CompareColours({ hexes, onRemove, onSelect }: { hexes: string[];
             <View key={hex} style={{ flex: 1, gap: space.xs }}>
               <PressableScale
                 accessibilityRole="button"
-                accessibilityLabel={`${c.name} seç`}
+                accessibilityLabel={t('{name} seç', { name: t(c.name) })}
                 onPress={() => onSelect(c)}
                 style={[styles.compareSwatch, { backgroundColor: hex, borderColor: p.border }]}>
                 <PressableScale
                   accessibilityRole="button"
-                  accessibilityLabel={`${c.name} karşılaştırmadan çıkar`}
+                  accessibilityLabel={t('{name} karşılaştırmadan çıkar', { name: t(c.name) })}
                   onPress={() => onRemove(hex)}
                   style={[styles.round, { width: 30, height: 30, backgroundColor: 'rgba(255,255,255,0.85)', alignSelf: 'flex-end' }]}>
                   <Icon name="close" size={16} color="#141B2D" />
                 </PressableScale>
               </PressableScale>
               <AppText variant="small" numberOfLines={1} style={{ fontFamily: fonts.bold }}>
-                {c.name}
+                {t(c.name)}
               </AppText>
               <AppText variant="caption" tone="muted">
                 {hex} · ≈%{lrv(hex)}
@@ -401,7 +402,7 @@ export function CompareColours({ hexes, onRemove, onSelect }: { hexes: string[];
         })}
       </View>
       <AppText variant="caption" tone="muted">
-        Yüzde, rengin ışığı ne kadar yansıttığını gösterir (yaklaşık). Yüksek değerler odayı daha aydınlık gösterir.
+        {t('Yüzde, rengin ışığı ne kadar yansıttığını gösterir (yaklaşık). Yüksek değerler odayı daha aydınlık gösterir.')}
       </AppText>
     </View>
   );

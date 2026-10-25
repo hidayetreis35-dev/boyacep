@@ -6,6 +6,7 @@ import { useSharedProject, useSharedProjects } from '@/features/sharing/queries'
 import { buildSurvey } from '@/features/survey/model';
 import { useInspections, useShareSurvey } from '@/features/survey/queries';
 import { SurveyView } from '@/features/survey/survey-view';
+import { t } from '@/i18n';
 import { Button, EmptyState, ErrorState, LoadingState, Notice, Screen } from '@/ui/components';
 
 /** The survey file as a painter who joined the project sees it (no budget or costs). */
@@ -23,7 +24,7 @@ export default function SharedSurveyScreen() {
     return (
       <Screen edges={['bottom']}>
         <ErrorState
-          message="Keşif dosyası yüklenemedi."
+          message={t('Keşif dosyası yüklenemedi.')}
           onRetry={() => {
             list.refetch();
             data.refetch();
@@ -37,7 +38,7 @@ export default function SharedSurveyScreen() {
   if (!meta) {
     return (
       <Screen edges={['bottom']}>
-        <EmptyState icon="lock-closed" title="Bu projeye erişimin yok" message="Ev sahibi paylaşımı kaldırmış olabilir. Yeni bir kod isteyebilirsin." />
+        <EmptyState icon="lock-closed" title={t('Bu projeye erişimin yok')} message={t('Ev sahibi paylaşımı kaldırmış olabilir. Yeni bir kod isteyebilirsin.')} />
       </Screen>
     );
   }
@@ -53,9 +54,9 @@ export default function SharedSurveyScreen() {
 
   return (
     <Screen edges={['bottom']}>
-      <Stack.Screen options={{ title: 'Keşif dosyası' }} />
+      <Stack.Screen options={{ title: t('Keşif dosyası') }} />
       <SurveyView model={model} />
-      <Button label="PDF olarak paylaş" icon="document" variant="secondary" loading={share.isPending} onPress={() => share.mutate(model)} />
+      <Button label={t('PDF olarak paylaş')} icon="document" variant="secondary" loading={share.isPending} onPress={() => share.mutate(model)} />
       {share.isError ? (
         <Notice tone="danger" icon="alert-circle">
           {share.error.message}

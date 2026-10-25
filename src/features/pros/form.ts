@@ -1,22 +1,23 @@
+import { msg, t } from '@/i18n';
 import type { ProProfileRow, ProSpecialty, VerificationStatus } from '@/lib/database.types';
 
 export const SPECIALTIES: { value: ProSpecialty; label: string }[] = [
-  { value: 'interior', label: 'İç cephe' },
-  { value: 'exterior', label: 'Dış cephe' },
-  { value: 'ceiling', label: 'Tavan' },
-  { value: 'decorative', label: 'Dekoratif boya' },
-  { value: 'insulation', label: 'Mantolama, yalıtım' },
-  { value: 'plaster', label: 'Sıva, alçı' },
-  { value: 'repair', label: 'Tamirat' },
+  { value: 'interior', label: msg('İç cephe') },
+  { value: 'exterior', label: msg('Dış cephe') },
+  { value: 'ceiling', label: msg('Tavan') },
+  { value: 'decorative', label: msg('Dekoratif boya') },
+  { value: 'insulation', label: msg('Mantolama, yalıtım') },
+  { value: 'plaster', label: msg('Sıva, alçı') },
+  { value: 'repair', label: msg('Tamirat') },
 ];
 
-export const specialtyLabel = (s: ProSpecialty) => SPECIALTIES.find((x) => x.value === s)?.label ?? s;
+export const specialtyLabel = (s: ProSpecialty) => t(SPECIALTIES.find((x) => x.value === s)?.label ?? s);
 
 export const VERIFICATION_LABEL: Record<VerificationStatus, string> = {
-  unverified: 'Doğrulanmadı',
-  pending: 'Doğrulama bekleniyor',
-  verified: 'Doğrulanmış usta',
-  rejected: 'Doğrulama reddedildi',
+  unverified: msg('Doğrulanmadı'),
+  pending: msg('Doğrulama bekleniyor'),
+  verified: msg('Doğrulanmış usta'),
+  rejected: msg('Doğrulama reddedildi'),
 };
 
 export type ProForm = {
@@ -72,13 +73,13 @@ export function validateProForm(form: ProForm): { record: ProRecord } | { errors
   const city = form.city.trim();
   const years = form.yearsExperience.trim();
 
-  if (fullName.length < 2 || fullName.length > 80) errors.fullName = 'Adını ve soyadını yaz.';
-  if (phone && !/^\+?[0-9 ()-]{7,20}$/.test(phone)) errors.phone = 'Telefon numarası geçersiz. Örnek: 0555 123 45 67';
-  if (!phone && form.showPhone) errors.phone = 'Telefonunu göstermek için numaranı yaz.';
-  if (city.length < 2 || city.length > 60) errors.city = 'Çalıştığın ili yaz.';
-  if (form.specialties.length === 0) errors.specialties = 'En az bir uzmanlık seç.';
-  if (years && (!/^\d{1,2}$/.test(years) || Number(years) > 70)) errors.yearsExperience = '0 ile 70 arasında bir sayı gir.';
-  if (form.bio.length > 1000) errors.bio = 'En fazla 1000 karakter.';
+  if (fullName.length < 2 || fullName.length > 80) errors.fullName = t('Adını ve soyadını yaz.');
+  if (phone && !/^\+?[0-9 ()-]{7,20}$/.test(phone)) errors.phone = t('Telefon numarası geçersiz. Örnek: 0555 123 45 67');
+  if (!phone && form.showPhone) errors.phone = t('Telefonunu göstermek için numaranı yaz.');
+  if (city.length < 2 || city.length > 60) errors.city = t('Çalıştığın ili yaz.');
+  if (form.specialties.length === 0) errors.specialties = t('En az bir uzmanlık seç.');
+  if (years && (!/^\d{1,2}$/.test(years) || Number(years) > 70)) errors.yearsExperience = t('0 ile 70 arasında bir sayı gir.');
+  if (form.bio.length > 1000) errors.bio = t('En fazla 1000 karakter.');
 
   if (Object.keys(errors).length > 0) return { errors };
   return {

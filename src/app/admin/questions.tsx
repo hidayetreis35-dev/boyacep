@@ -5,6 +5,7 @@ import { useIsAdmin } from '@/features/admin/api';
 import { topicLabel } from '@/features/ask/api';
 import { useOpenQuestions } from '@/features/ask/queries';
 import { formatDate } from '@/features/quotes/pdf';
+import { t } from '@/i18n';
 import { EmptyState, ErrorState, ListItem, LoadingState, Screen } from '@/ui/components';
 
 export default function AdminQuestionsScreen() {
@@ -16,7 +17,7 @@ export default function AdminQuestionsScreen() {
   if (!db || !session || !admin.isAdmin) {
     return (
       <Screen edges={['bottom']}>
-        <EmptyState icon="lock-closed" title="Yetkin yok" message="Bu sayfayı yalnızca BoyaCep yöneticileri açabilir." />
+        <EmptyState icon="lock-closed" title={t('Yetkin yok')} message={t('Bu sayfayı yalnızca BoyaCep yöneticileri açabilir.')} />
       </Screen>
     );
   }
@@ -25,9 +26,9 @@ export default function AdminQuestionsScreen() {
       {questions.isPending ? (
         <LoadingState />
       ) : questions.isError ? (
-        <ErrorState message="Sorular yüklenemedi." onRetry={() => questions.refetch()} />
+        <ErrorState message={t('Sorular yüklenemedi.')} onRetry={() => questions.refetch()} />
       ) : questions.data.length === 0 ? (
-        <EmptyState icon="checkmark-done" title="Bekleyen soru yok" message="Yeni sorular burada görünecek." />
+        <EmptyState icon="checkmark-done" title={t('Bekleyen soru yok')} message={t('Yeni sorular burada görünecek.')} />
       ) : (
         questions.data.map((q) => (
           <ListItem

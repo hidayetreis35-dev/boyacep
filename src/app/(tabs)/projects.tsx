@@ -9,6 +9,7 @@ import { FREE_PROJECT_LIMIT } from '@/features/projects/limits';
 import { STATUS_LABEL } from '@/features/projects/mapping';
 import { useCreateProject, useProjects } from '@/features/projects/queries';
 import { formatDate } from '@/features/quotes/pdf';
+import { t } from '@/i18n';
 import type { ProjectRow } from '@/lib/database.types';
 import {
   AppText,
@@ -40,7 +41,7 @@ function ProjectCard({ project }: { project: ProjectRow }) {
       <View style={{ flex: 1, gap: 4 }}>
         <AppText variant="bodyStrong">{project.title}</AppText>
         <View style={{ flexDirection: 'row', alignItems: 'center', gap: space.sm, flexWrap: 'wrap' }}>
-          <Badge label={STATUS_LABEL[project.status]} tone={done ? 'success' : 'primary'} />
+          <Badge label={t(STATUS_LABEL[project.status])} tone={done ? 'success' : 'primary'} />
           <AppText variant="caption" tone="muted">
             {formatDate(project.updated_at)}
           </AppText>
@@ -63,14 +64,14 @@ function NewProject({ count }: { count: number }) {
       <>
         <Notice icon="lock-closed">
           {plan.data?.pro
-            ? `Pro planında en fazla ${limit} proje oluşturabilirsin. Yer açmak için eski bir projeyi silebilirsin.`
-            : `Ücretsiz sürümde en fazla ${limit} proje oluşturabilirsin. Daha fazlası Pro ile gelecek; şimdilik eski bir projeyi silebilirsin.`}
+            ? t('Pro planında en fazla {limit} proje oluşturabilirsin. Yer açmak için eski bir projeyi silebilirsin.', { limit })
+            : t('Ücretsiz sürümde en fazla {limit} proje oluşturabilirsin. Daha fazlası Pro ile gelecek; şimdilik eski bir projeyi silebilirsin.', { limit })}
         </Notice>
-        <Button label="Planları gör" icon="star" variant="ghost" onPress={() => router.push('/plans')} />
+        <Button label={t('Planları gör')} icon="star" variant="ghost" onPress={() => router.push('/plans')} />
       </>
     );
   }
-  if (!open) return <Button label="Yeni proje" icon="add" variant="cta" size="lg" onPress={() => setOpen(true)} />;
+  if (!open) return <Button label={t('Yeni proje')} icon="add" variant="cta" size="lg" onPress={() => setOpen(true)} />;
 
   const submit = () => {
     if (!title.trim()) return;
@@ -86,8 +87,8 @@ function NewProject({ count }: { count: number }) {
   return (
     <Card>
       <TextField
-        label="Proje adı"
-        placeholder="Örn. Salon ve koridor"
+        label={t('Proje adı')}
+        placeholder={t('Örn. Salon ve koridor')}
         value={title}
         onChangeText={setTitle}
         maxLength={120}
@@ -97,15 +98,15 @@ function NewProject({ count }: { count: number }) {
       />
       {create.isError ? (
         <Notice tone="danger" icon="alert-circle">
-          Proje oluşturulamadı: {create.error.message}
+          {t('Proje oluşturulamadı: {message}', { message: create.error.message })}
         </Notice>
       ) : null}
       <View style={{ flexDirection: 'row', gap: space.sm }}>
         <View style={{ flex: 1 }}>
-          <Button label="Vazgeç" variant="ghost" onPress={() => setOpen(false)} />
+          <Button label={t('Vazgeç')} variant="ghost" onPress={() => setOpen(false)} />
         </View>
         <View style={{ flex: 1 }}>
-          <Button label="Oluştur" onPress={submit} loading={create.isPending} disabled={!title.trim()} />
+          <Button label={t('Oluştur')} onPress={submit} loading={create.isPending} disabled={!title.trim()} />
         </View>
       </View>
     </Card>
@@ -114,8 +115,8 @@ function NewProject({ count }: { count: number }) {
 
 function ProjectList() {
   const projects = useProjects();
-  if (projects.isPending) return <LoadingState label="Projeler yükleniyor…" />;
-  if (projects.isError) return <ErrorState message="Projeler yüklenemedi. İnternet bağlantını kontrol et." onRetry={() => projects.refetch()} />;
+  if (projects.isPending) return <LoadingState label={t('Projeler yükleniyor…')} />;
+  if (projects.isError) return <ErrorState message={t('Projeler yüklenemedi. İnternet bağlantını kontrol et.')} onRetry={() => projects.refetch()} />;
 
   return (
     <View style={{ gap: space.md }}>
@@ -123,8 +124,8 @@ function ProjectList() {
       {projects.data.length === 0 ? (
         <EmptyState
           icon="folder-open"
-          title="Henüz projen yok"
-          message="Bir proje oluştur, odalarını ekle; boya ve malzeme ihtiyacın otomatik hesaplansın."
+          title={t('Henüz projen yok')}
+          message={t('Bir proje oluştur, odalarını ekle; boya ve malzeme ihtiyacın otomatik hesaplansın.')}
         />
       ) : (
         projects.data.map((project) => <ProjectCard key={project.id} project={project} />)
@@ -138,8 +139,8 @@ export default function ProjectsScreen() {
   return (
     <Screen>
       <View style={{ gap: 2 }}>
-        <AppText variant="title">Projelerim</AppText>
-        <AppText tone="muted">Odaların, renklerin ve bütçen tek yerde.</AppText>
+        <AppText variant="title">{t('Projelerim')}</AppText>
+        <AppText tone="muted">{t('Odaların, renklerin ve bütçen tek yerde.')}</AppText>
       </View>
       {loading ? (
         <LoadingState />
@@ -150,20 +151,20 @@ export default function ProjectsScreen() {
           <SignInGate
             feature="projects"
             icon="albums"
-            title="Projelerini kaydet"
-            message="Evinin boya işini tek yerde topla."
+            title={t('Projelerini kaydet')}
+            message={t('Evinin boya işini tek yerde topla.')}
             benefits={[
-              'Odalarını ve ölçülerini bir kez gir, hesap hep hazır olsun.',
-              'Seçtiğin renkleri, fotoğrafları ve bütçeni sakla.',
-              'Projeni bir ustayla paylaş, teklif al.',
+              t('Odalarını ve ölçülerini bir kez gir, hesap hep hazır olsun.'),
+              t('Seçtiğin renkleri, fotoğrafları ve bütçeni sakla.'),
+              t('Projeni bir ustayla paylaş, teklif al.'),
             ]}
           />
         ) : (
           <EmptyState
             icon="folder-open"
-            title="Projelerini kaydet"
-            message="Proje kaydetme, hesap sistemi bağlanınca açılacak. Şimdilik Ne Kadar Boya? ile hesap yapabilirsin."
-            action={<Button label="Ne Kadar Boya?" icon="calculator" variant="secondary" onPress={() => router.push('/calculate')} />}
+            title={t('Projelerini kaydet')}
+            message={t('Proje kaydetme, hesap sistemi bağlanınca açılacak. Şimdilik Ne Kadar Boya? ile hesap yapabilirsin.')}
+            action={<Button label={t('Ne Kadar Boya?')} icon="calculator" variant="secondary" onPress={() => router.push('/calculate')} />}
           />
         )
       )}

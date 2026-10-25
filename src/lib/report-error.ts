@@ -3,6 +3,8 @@ import { Platform } from 'react-native';
 
 import { supabase } from './supabase';
 
+import { t } from '@/i18n';
+
 /**
  * Sends a crash report for signed-in users. Never throws: reporting must not
  * cause a second error. Messages are trimmed to the database limits.
@@ -15,7 +17,7 @@ export async function reportError(error: unknown, screen = ''): Promise<void> {
     const err = error instanceof Error ? error : new Error(String(error));
     const platform = Platform.OS === 'ios' || Platform.OS === 'android' || Platform.OS === 'web' ? Platform.OS : '';
     await supabase.from('client_errors').insert({
-      message: (err.message || err.name || 'Bilinmeyen hata').slice(0, 500),
+      message: (err.message || err.name || t('Bilinmeyen hata')).slice(0, 500),
       stack: (err.stack ?? '').slice(0, 4000),
       screen: screen.slice(0, 200),
       platform,

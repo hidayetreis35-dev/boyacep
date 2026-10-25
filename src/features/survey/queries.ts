@@ -2,6 +2,7 @@ import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 
 import { useSession } from '@/features/account/session';
 import { shareQuotePdf } from '@/features/quotes/export';
+import { t } from '@/i18n';
 
 import { addInspection, listInspections, removeInspection, saveSnapshot, type InspectionRecord } from './api';
 import type { SurveyModel } from './model';
@@ -45,9 +46,9 @@ export function useShareSurvey(projectId: string, { snapshot }: { snapshot: bool
         await saveSnapshot(db, projectId, model.snapshot).catch(() => false);
       }
       try {
-        await shareQuotePdf(surveyHtml(model), `Keşif dosyası - ${model.title}`);
+        await shareQuotePdf(surveyHtml(model), t('Keşif dosyası - {title}', { title: model.title }));
       } catch {
-        throw new Error('PDF hazırlanamadı. Tekrar dene.');
+        throw new Error(t('PDF hazırlanamadı. Tekrar dene.'));
       }
     },
   });

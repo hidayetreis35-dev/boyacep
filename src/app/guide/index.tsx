@@ -3,6 +3,7 @@ import { StyleSheet, View } from 'react-native';
 
 import { useSession } from '@/features/account/session';
 import { categoryLabel, GUIDE_CATEGORIES, useGuides, type GuideListItem } from '@/features/guide/api';
+import { t } from '@/i18n';
 import type { GuideCategory } from '@/lib/database.types';
 import { FeatureHeader, IconBubble, SectionTitle } from '@/ui/brand';
 import { AppText, EmptyState, ErrorState, Icon, LoadingState, Screen, type IconName } from '@/ui/components';
@@ -40,7 +41,7 @@ function GuideCard({ guide }: { guide: GuideListItem }) {
         <View style={{ flexDirection: 'row', alignItems: 'center', gap: 4, marginTop: 2 }}>
           <Icon name="time-outline" size={14} color={p.textMuted} />
           <AppText variant="caption" tone="muted">
-            {guide.reading_minutes} dk okuma
+            {t('{reading_minutes} dk okuma', { reading_minutes: guide.reading_minutes })}
           </AppText>
         </View>
       </View>
@@ -56,21 +57,21 @@ export default function GuideIndexScreen() {
   if (!db) {
     return (
       <Screen edges={['bottom']}>
-        <EmptyState icon="cloud-offline" title="Rehber şu an açılamıyor" message="Rehber içerikleri sunucudan gelir; sunucu bağlantısı kurulunca burada görünecek." />
+        <EmptyState icon="cloud-offline" title={t('Rehber şu an açılamıyor')} message={t('Rehber içerikleri sunucudan gelir; sunucu bağlantısı kurulunca burada görünecek.')} />
       </Screen>
     );
   }
-  if (guides.isPending) return <Screen edges={['bottom']}><LoadingState label="Rehber yükleniyor…" /></Screen>;
+  if (guides.isPending) return <Screen edges={['bottom']}><LoadingState label={t('Rehber yükleniyor…')} /></Screen>;
   if (guides.isError) {
-    return <Screen edges={['bottom']}><ErrorState message="Rehber yüklenemedi. İnternet bağlantını kontrol et." onRetry={() => guides.refetch()} /></Screen>;
+    return <Screen edges={['bottom']}><ErrorState message={t('Rehber yüklenemedi. İnternet bağlantını kontrol et.')} onRetry={() => guides.refetch()} /></Screen>;
   }
   if (guides.data.length === 0) {
-    return <Screen edges={['bottom']}><EmptyState icon="book" title="Henüz yazı yok" message="Rehber yazıları yakında eklenecek." /></Screen>;
+    return <Screen edges={['bottom']}><EmptyState icon="book" title={t('Henüz yazı yok')} message={t('Rehber yazıları yakında eklenecek.')} /></Screen>;
   }
 
   return (
     <Screen edges={['bottom']}>
-      <FeatureHeader feature="guide" icon="book" title="Boya Rehberi" subtitle="Ustaların bildiklerini adım adım öğren." />
+      <FeatureHeader feature="guide" icon="book" title={t('Boya Rehberi')} subtitle={t('Ustaların bildiklerini adım adım öğren.')} />
       {GUIDE_CATEGORIES.map(({ value }) => {
         const items = guides.data.filter((g) => g.category === value);
         if (items.length === 0) return null;

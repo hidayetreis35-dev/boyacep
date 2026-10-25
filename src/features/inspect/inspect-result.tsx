@@ -1,6 +1,7 @@
 import { router } from 'expo-router';
 import { StyleSheet, View } from 'react-native';
 
+import { t } from '@/i18n';
 import { Disclosure, Gradient, SectionTitle } from '@/ui/brand';
 import { AppText, Badge, Button, Card, Icon, Notice, type IconName } from '@/ui/components';
 import { fonts, radius, space, useFeatureColour, usePalette } from '@/ui/theme';
@@ -23,8 +24,8 @@ type Verdict = { title: string; text: string; icon: IconName; from: string; to: 
 function verdictOf(worst: Severity | null, blocked: boolean): Verdict {
   if (worst === 'expert' || blocked) {
     return {
-      title: 'Önce bir uzmana göster',
-      text: 'İşaretlediklerinden en az biri boyayla çözülmez. Nedeni giderilmeden yapılan boya kısa sürede bozulur.',
+      title: t('Önce bir uzmana göster'),
+      text: t('İşaretlediklerinden en az biri boyayla çözülmez. Nedeni giderilmeden yapılan boya kısa sürede bozulur.'),
       icon: 'alert-circle',
       from: '#B42318',
       to: '#5E2B3A',
@@ -32,8 +33,8 @@ function verdictOf(worst: Severity | null, blocked: boolean): Verdict {
   }
   if (worst === 'careful') {
     return {
-      title: 'Hazırlık gerekiyor',
-      text: 'Önce nedeni çöz, sonra boyaya geç. Aşağıdaki sırayı izle.',
+      title: t('Hazırlık gerekiyor'),
+      text: t('Önce nedeni çöz, sonra boyaya geç. Aşağıdaki sırayı izle.'),
       icon: 'warning',
       from: VERDICT_SHADES.indigo,
       to: '#2E3C9E',
@@ -41,16 +42,16 @@ function verdictOf(worst: Severity | null, blocked: boolean): Verdict {
   }
   if (worst === 'diy') {
     return {
-      title: 'Biraz hazırlıkla boyanır',
-      text: 'Aşağıdaki sırayı izlersen bu işi kendin yapabilirsin.',
+      title: t('Biraz hazırlıkla boyanır'),
+      text: t('Aşağıdaki sırayı izlersen bu işi kendin yapabilirsin.'),
       icon: 'construct',
       from: VERDICT_SHADES.indigo,
       to: VERDICT_SHADES.teal,
     };
   }
   return {
-    title: 'Boyaya hazır görünüyor',
-    text: 'İşaretlediğin bir sorun yok. Temel hazırlıkla boyayabilirsin.',
+    title: t('Boyaya hazır görünüyor'),
+    text: t('İşaretlediğin bir sorun yok. Temel hazırlıkla boyayabilirsin.'),
     icon: 'checkmark-circle',
     from: VERDICT_SHADES.teal,
     to: '#0B5F6B',
@@ -59,28 +60,28 @@ function verdictOf(worst: Severity | null, blocked: boolean): Verdict {
 
 function Finding({ symptom }: { symptom: Symptom }) {
   return (
-    <Disclosure title={symptom.label}>
+    <Disclosure title={t(symptom.label)}>
       <View style={{ gap: space.sm }}>
-        <Badge label={SEVERITY_LABEL[symptom.severity]} tone={SEVERITY_TONE[symptom.severity]} />
-        <AppText variant="bodyStrong">Olası neden</AppText>
-        <AppText>{symptom.cause}</AppText>
-        <AppText variant="bodyStrong">Ne yapmalı?</AppText>
+        <Badge label={t(SEVERITY_LABEL[symptom.severity])} tone={SEVERITY_TONE[symptom.severity]} />
+        <AppText variant="bodyStrong">{t('Olası neden')}</AppText>
+        <AppText>{t(symptom.cause)}</AppText>
+        <AppText variant="bodyStrong">{t('Ne yapmalı?')}</AppText>
         {symptom.steps.map((step, i) => (
           <View key={i} style={{ flexDirection: 'row', gap: space.sm }}>
             <AppText variant="bodyStrong" tone="primary" style={{ minWidth: 20 }}>
               {i + 1}.
             </AppText>
-            <AppText style={{ flex: 1 }}>{step}</AppText>
+            <AppText style={{ flex: 1 }}>{t(step)}</AppText>
           </View>
         ))}
         {symptom.callExpertIf ? (
           <Notice tone="accent" icon="warning">
-            {symptom.callExpertIf}
+            {t(symptom.callExpertIf)}
           </Notice>
         ) : null}
         {symptom.guideSlug ? (
           <Button
-            label="İlgili rehberi oku"
+            label={t('İlgili rehberi oku')}
             icon="book"
             variant="secondary"
             onPress={() => router.push({ pathname: '/guide/[slug]', params: { slug: symptom.guideSlug! } })}
@@ -119,7 +120,7 @@ export function InspectResult({
         <View style={{ flexDirection: 'row', alignItems: 'center', gap: space.sm }}>
           <Icon name={verdict.icon} size={22} color="#FFFFFF" />
           <AppText variant="overline" style={{ color: '#FFFFFF', opacity: 0.9 }}>
-            {symptoms.length > 0 ? `${symptoms.length} bulgu` : 'Sorun işaretlenmedi'}
+            {symptoms.length > 0 ? t('{count} bulgu', { count: symptoms.length }) : t('Sorun işaretlenmedi')}
           </AppText>
         </View>
         <AppText variant="title" style={{ color: '#FFFFFF', fontSize: 26, lineHeight: 32 }} testID="inspect-verdict">
@@ -131,7 +132,7 @@ export function InspectResult({
             {symptoms.map((s) => (
               <View key={s.id} style={[styles.chip, { backgroundColor: 'rgba(255,255,255,0.18)' }]}>
                 <AppText variant="small" style={{ color: '#FFFFFF', fontFamily: fonts.semibold }}>
-                  {s.label}
+                  {t(s.label)}
                 </AppText>
               </View>
             ))}
@@ -141,12 +142,12 @@ export function InspectResult({
 
       {photo && spots.length > 0 ? (
         <View style={{ gap: space.sm }}>
-          <SectionTitle title="İşaretlediğin yerler" />
+          <SectionTitle title={t('İşaretlediğin yerler')} />
           <SpotPhoto uri={photo.uri} aspect={photo.width / photo.height} spots={spots} marking={false} maxHeight={240} />
         </View>
       ) : null}
 
-      <SectionTitle title="İş sırası" />
+      <SectionTitle title={t('İş sırası')} />
       <Card>
         {plan.steps.map((s, i) => (
           <View key={s.key} style={styles.step}>
@@ -160,7 +161,7 @@ export function InspectResult({
         ))}
       </Card>
 
-      <SectionTitle title="Gerekecekler" />
+      <SectionTitle title={t('Gerekecekler')} />
       <View style={styles.chips}>
         {plan.materials.map((m) => (
           <View key={m} style={[styles.chip, { backgroundColor: p.surfaceMuted }]}>
@@ -173,7 +174,7 @@ export function InspectResult({
 
       {symptoms.length > 0 ? (
         <View style={{ gap: space.sm }}>
-          <SectionTitle title="Bulgular ve nedenleri" />
+          <SectionTitle title={t('Bulgular ve nedenleri')} />
           {symptoms.map((s) => (
             <Finding key={s.id} symptom={s} />
           ))}
@@ -182,17 +183,16 @@ export function InspectResult({
 
       <View style={{ gap: space.sm }}>
         <SaveInspection symptoms={symptoms.map((s) => s.id)} place={place} />
-        <Button label="Ne kadar boya gerekir?" icon="color-fill" variant="cta" size="lg" onPress={() => router.push('/calculate')} />
-        <Button label="Bir ustaya sor" icon="chatbubbles" variant="secondary" onPress={() => router.push('/ask')} />
+        <Button label={t('Ne kadar boya gerekir?')} icon="color-fill" variant="cta" size="lg" onPress={() => router.push('/calculate')} />
+        <Button label={t('Bir ustaya sor')} icon="chatbubbles" variant="secondary" onPress={() => router.push('/ask')} />
         <View style={{ flexDirection: 'row', gap: space.sm, flexWrap: 'wrap' }}>
-          <Button label="Cevapları düzenle" icon="create" variant="ghost" onPress={onEdit} />
-          <Button label="Yeniden incele" icon="refresh" variant="ghost" onPress={onRestart} />
+          <Button label={t('Cevapları düzenle')} icon="create" variant="ghost" onPress={onEdit} />
+          <Button label={t('Yeniden incele')} icon="refresh" variant="ghost" onPress={onRestart} />
         </View>
       </View>
 
       <Notice icon="information-circle">
-        Bu bir teşhis değildir. BoyaCep fotoğrafını otomatik olarak incelemez; senin işaretlediğin belirtilere göre genel bilgi verir. Emin olmadığın
-        durumlarda bir ustaya göster.
+        {t('Bu bir teşhis değildir. BoyaCep fotoğrafını otomatik olarak incelemez; senin işaretlediğin belirtilere göre genel bilgi verir. Emin olmadığın durumlarda bir ustaya göster.')}
       </Notice>
     </View>
   );

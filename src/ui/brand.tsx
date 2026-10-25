@@ -6,6 +6,8 @@ import { AppText, Icon, type IconName } from './components';
 import { PressableScale } from './motion';
 import { fonts, radius, shadowOf, space, useFeatureColour, usePalette, type FeatureKey } from './theme';
 
+import { t } from '@/i18n';
+
 /** Diagonal gradient that fills its parent. Put it first inside a View with overflow hidden. */
 export function Gradient({ from, to, style }: { from: string; to: string; style?: StyleProp<ViewStyle> }) {
   const id = useId().replace(/:/g, '');
@@ -246,7 +248,7 @@ export function StepProgress({ step, total, label, feature = 'calculate' }: { st
     <View style={{ gap: space.sm }} accessibilityRole="progressbar" accessibilityValue={{ min: 1, max: total, now: step }}>
       <View style={{ flexDirection: 'row', alignItems: 'center', gap: space.sm }}>
         <AppText variant="overline" style={{ color: f.ink }}>
-          Adım {step} / {total}
+          {t('Adım {step} / {total}', { step, total })}
         </AppText>
         <AppText variant="small" tone="muted" style={{ flex: 1 }} numberOfLines={1}>
           {label}
@@ -336,7 +338,7 @@ export function Disclosure({ title, children, initiallyOpen = false }: { title: 
   );
 }
 
-/** Segmented tabs inside a screen. */
+/** Segmented tabs inside a screen. Labels go through t(), so constant lists can pass msg() text. */
 export function Segmented<T extends string>({
   options,
   value,
@@ -356,12 +358,12 @@ export function Segmented<T extends string>({
             key={o.value}
             accessibilityRole="tab"
             accessibilityState={{ selected: active }}
-            accessibilityLabel={o.label}
+            accessibilityLabel={t(o.label)}
             onPress={() => onChange(o.value)}
             style={[styles.segment, active && [{ backgroundColor: p.surface }, shadowOf(p)]]}>
             {o.icon ? <Icon name={o.icon} size={16} color={active ? p.text : p.textMuted} /> : null}
             <AppText variant="small" numberOfLines={1} style={{ color: active ? p.text : p.textMuted, fontFamily: active ? fonts.bold : fonts.medium }}>
-              {o.label}
+              {t(o.label)}
             </AppText>
           </PressableScale>
         );
@@ -374,7 +376,7 @@ export function Segmented<T extends string>({
 export function WizardNav({
   onBack,
   onNext,
-  nextLabel = 'Devam',
+  nextLabel = t('Devam'),
   nextIcon = 'arrow-forward',
   nextDisabled,
 }: {
@@ -390,7 +392,7 @@ export function WizardNav({
       {onBack ? (
         <PressableScale
           accessibilityRole="button"
-          accessibilityLabel="Geri"
+          accessibilityLabel={t('Geri')}
           onPress={onBack}
           style={[styles.backBtn, { backgroundColor: p.surfaceMuted }]}>
           <Icon name="arrow-back" color={p.text} />

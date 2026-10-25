@@ -1,20 +1,21 @@
+import { msg, t } from '@/i18n';
 import type { ConsultationMessageRow, ConsultationRow, ConsultationTopic } from '@/lib/database.types';
 import type { DbClient } from '@/lib/supabase';
 
 export const TOPICS: { value: ConsultationTopic; label: string }[] = [
-  { value: 'problem', label: 'Duvarda sorun' },
-  { value: 'paint_choice', label: 'Boya seçimi' },
-  { value: 'preparation', label: 'Hazırlık' },
-  { value: 'cost', label: 'Maliyet' },
-  { value: 'other', label: 'Diğer' },
+  { value: 'problem', label: msg('Duvarda sorun') },
+  { value: 'paint_choice', label: msg('Boya seçimi') },
+  { value: 'preparation', label: msg('Hazırlık') },
+  { value: 'cost', label: msg('Maliyet') },
+  { value: 'other', label: msg('Diğer') },
 ];
 
-export const topicLabel = (t: ConsultationTopic) => TOPICS.find((x) => x.value === t)?.label ?? t;
+export const topicLabel = (topic: ConsultationTopic) => t(TOPICS.find((x) => x.value === topic)?.label ?? topic);
 
 export const CONSULTATION_STATUS_LABEL: Record<ConsultationRow['status'], string> = {
-  open: 'Yanıt bekleniyor',
-  answered: 'Yanıtlandı',
-  closed: 'Kapandı',
+  open: msg('Yanıt bekleniyor'),
+  answered: msg('Yanıtlandı'),
+  closed: msg('Kapandı'),
 };
 
 export type QuestionErrors = Partial<Record<'subject' | 'body', string>>;
@@ -23,17 +24,17 @@ export function validateQuestion(subject: string, body: string): QuestionErrors 
   const errors: QuestionErrors = {};
   const s = subject.trim();
   const b = body.trim();
-  if (s.length < 3) errors.subject = 'Kısaca konuyu yaz (en az 3 harf).';
-  else if (s.length > 120) errors.subject = 'Konu en fazla 120 karakter olabilir.';
-  if (b.length < 10) errors.body = 'Sorunu biraz daha anlat (en az 10 harf).';
-  else if (b.length > 2000) errors.body = 'En fazla 2000 karakter.';
+  if (s.length < 3) errors.subject = t('Kısaca konuyu yaz (en az 3 harf).');
+  else if (s.length > 120) errors.subject = t('Konu en fazla 120 karakter olabilir.');
+  if (b.length < 10) errors.body = t('Sorunu biraz daha anlat (en az 10 harf).');
+  else if (b.length > 2000) errors.body = t('En fazla 2000 karakter.');
   return errors;
 }
 
 function askErrorMessage(message: string): string {
-  if (message.includes('daily question limit')) return 'Bugün en fazla 5 soru sorabilirsin. Yarın tekrar dene.';
-  if (message.includes('consultation is closed')) return 'Bu soru kapandı. Yeni bir soru açabilirsin.';
-  return 'Gönderilemedi. İnternet bağlantını kontrol et.';
+  if (message.includes('daily question limit')) return t('Bugün en fazla 5 soru sorabilirsin. Yarın tekrar dene.');
+  if (message.includes('consultation is closed')) return t('Bu soru kapandı. Yeni bir soru açabilirsin.');
+  return t('Gönderilemedi. İnternet bağlantını kontrol et.');
 }
 
 /** Mine for users; every question for the team (RLS decides). */
@@ -78,5 +79,5 @@ export async function sendMessage(db: DbClient, consultationId: string, body: st
 
 export async function closeConsultation(db: DbClient, id: string): Promise<void> {
   const { error } = await db.from('consultations').update({ status: 'closed' }).eq('id', id);
-  if (error) throw new Error('Kapatılamadı.');
+  if (error) throw new Error(t('Kapatılamadı.'));
 }

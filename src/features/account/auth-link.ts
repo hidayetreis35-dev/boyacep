@@ -1,3 +1,4 @@
+import { t } from '@/i18n';
 import type { DbClient } from '@/lib/supabase';
 
 import { authErrorMessage } from './api';
@@ -59,7 +60,7 @@ export function parseAuthInput(raw: string): AuthInput | null {
 /** Signs in with a pasted code or link. */
 export async function completeSignIn(db: DbClient, email: string, raw: string): Promise<void> {
   const parsed = parseAuthInput(raw);
-  if (!parsed) throw new Error('E-postadaki kodu ya da giriş bağlantısını yapıştırın.');
+  if (!parsed) throw new Error(t('E-postadaki kodu ya da giriş bağlantısını yapıştırın.'));
   if (parsed.kind === 'error') throw new Error(parsed.message);
   const { error } =
     parsed.kind === 'code'

@@ -1,6 +1,7 @@
 import { useQuery } from '@tanstack/react-query';
 
 import { useAccount, useSession } from '@/features/account/session';
+import { t } from '@/i18n';
 import type { AdminStats, ClientErrorRow, GuideArticleRow, GuideCategory } from '@/lib/database.types';
 import type { DbClient } from '@/lib/supabase';
 
@@ -101,14 +102,14 @@ export function validateGuideForm(form: GuideForm): { record: GuideRecord } | { 
   const minutes = Number(form.readingMinutes.trim());
 
   if (!/^[a-z0-9]+(-[a-z0-9]+)*$/.test(slug) || slug.length > 80) {
-    errors.slug = 'Sadece küçük harf, rakam ve tire kullan (ör. tavan-boyama).';
+    errors.slug = t('Sadece küçük harf, rakam ve tire kullan (ör. tavan-boyama).');
   }
-  if (title.length === 0) errors.title = 'Başlık gerekli.';
-  else if (title.length > 140) errors.title = 'Başlık en fazla 140 karakter olabilir.';
-  if (form.summary.length > 300) errors.summary = 'Özet en fazla 300 karakter olabilir.';
-  if (form.body.length > 20000) errors.body = 'Yazı en fazla 20.000 karakter olabilir.';
-  if (form.published && form.body.trim().length === 0) errors.body = 'Boş bir yazı yayınlanamaz.';
-  if (!Number.isInteger(minutes) || minutes < 1 || minutes > 60) errors.readingMinutes = '1 ile 60 arasında bir sayı gir.';
+  if (title.length === 0) errors.title = t('Başlık gerekli.');
+  else if (title.length > 140) errors.title = t('Başlık en fazla 140 karakter olabilir.');
+  if (form.summary.length > 300) errors.summary = t('Özet en fazla 300 karakter olabilir.');
+  if (form.body.length > 20000) errors.body = t('Yazı en fazla 20.000 karakter olabilir.');
+  if (form.published && form.body.trim().length === 0) errors.body = t('Boş bir yazı yayınlanamaz.');
+  if (!Number.isInteger(minutes) || minutes < 1 || minutes > 60) errors.readingMinutes = t('1 ile 60 arasında bir sayı gir.');
 
   if (Object.keys(errors).length > 0) return { errors };
   return {
@@ -126,10 +127,10 @@ export function validateGuideForm(form: GuideForm): { record: GuideRecord } | { 
 
 function saveErrorMessage(message: string): string {
   if (message.includes('duplicate key') || message.includes('guide_articles_slug_key')) {
-    return 'Bu adres (slug) başka bir yazıda kullanılıyor. Farklı bir adres yaz.';
+    return t('Bu adres (slug) başka bir yazıda kullanılıyor. Farklı bir adres yaz.');
   }
-  if (message.includes('row-level security')) return 'Bu işlem için yönetici yetkisi gerekiyor.';
-  return 'Kaydedilemedi. İnternet bağlantını kontrol edip tekrar dene.';
+  if (message.includes('row-level security')) return t('Bu işlem için yönetici yetkisi gerekiyor.');
+  return t('Kaydedilemedi. İnternet bağlantını kontrol edip tekrar dene.');
 }
 
 /**

@@ -1,6 +1,7 @@
 import { useState } from 'react';
 import { Image, Pressable, View, type GestureResponderEvent } from 'react-native';
 
+import { t } from '@/i18n';
 import { AppText } from '@/ui/components';
 import { fonts, radius, useFeatureColour, usePalette } from '@/ui/theme';
 
@@ -54,7 +55,7 @@ export function SpotPhoto({
           onPress={onPress}
           disabled={!marking}
           accessibilityRole={marking ? 'button' : 'image'}
-          accessibilityLabel={marking ? 'Fotoğraf: sorunlu yere dokun' : `Duvar fotoğrafı, ${spots.length} işaret`}
+          accessibilityLabel={marking ? t('Fotoğraf: sorunlu yere dokun') : t('Duvar fotoğrafı, {count} işaret', { count: spots.length })}
           style={{ width, height, borderRadius: radius.lg, overflow: 'hidden', backgroundColor: p.surfaceMuted }}>
           <Image source={{ uri }} style={{ width, height }} resizeMode="cover" />
           {spots.map(([x, y], i) => (

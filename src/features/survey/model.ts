@@ -7,12 +7,15 @@ import {
 } from '@/engine';
 import { assess, PLACES, workPlan, type Severity } from '@/features/inspect/rules';
 import { roomToInput, type RoomWithOpenings } from '@/features/projects/mapping';
+import { t } from '@/i18n';
 import type { InspectionResultRow, Json, ProjectColourRow } from '@/lib/database.types';
 
 /**
  * Akıllı Keşif Dosyası: everything a painter needs to quote without a site
  * visit, in one place. Numbers come from the calculation engine; findings come
  * from the rule-based wall inspection. Nothing here is guessed by AI.
+ * Finding texts are in the current language; engine output (materials,
+ * assumptions) is translated where it is shown.
  */
 
 export type SurveyRoom = {
@@ -64,7 +67,7 @@ export type SurveyModel = {
 const SEVERITY_RANK: Record<Severity, number> = { expert: 0, careful: 1, diy: 2 };
 const rank = (s: Severity | null) => (s === null ? 3 : SEVERITY_RANK[s]);
 
-const placeLabel = (place: InspectionResultRow['place']) => PLACES.find((p) => p.value === place)?.label ?? place;
+const placeLabel = (place: InspectionResultRow['place']) => t(PLACES.find((p) => p.value === place)?.label ?? place);
 
 /** Drops undefined fields so the value is plain JSON. */
 const toJson = (value: unknown): Json => JSON.parse(JSON.stringify(value)) as Json;
@@ -76,7 +79,7 @@ export function toFinding(row: InspectionResultRow): SurveyFinding {
     id: row.id,
     title: row.location ?? placeLabel(row.place),
     placeLabel: placeLabel(row.place),
-    symptoms: symptoms.map((s) => ({ id: s.id, label: s.label, severity: s.severity })),
+    symptoms: symptoms.map((s) => ({ id: s.id, label: t(s.label), severity: s.severity })),
     worst,
     blocked: plan.blocked,
     steps: plan.steps.map((s) => s.text),
@@ -126,7 +129,7 @@ export function buildSurvey(args: {
     totals: ok?.totals ?? null,
     materials: ok?.materials ?? [],
     assumptions: ok?.assumptions ?? [],
-    calculationError: calc && !calc.ok ? (calc.issues[0]?.message ?? 'Bir odanın ölçüleri hatalı.') : null,
+    calculationError: calc && !calc.ok ? (calc.issues[0] ? t(calc.issues[0].message) : t('Bir odanın ölçüleri hatalı.')) : null,
     colours: args.colours,
     findings,
     photoCount: args.photoCount,

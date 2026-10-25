@@ -1,5 +1,6 @@
 import { listMaterials } from '@/features/materials/api';
 import { getRooms } from '@/features/projects/api';
+import { msg, t } from '@/i18n';
 import type { ProjectInviteRow, ProjectMaterialRow, ProjectMember, SharedProject } from '@/lib/database.types';
 import type { DbClient } from '@/lib/supabase';
 
@@ -19,15 +20,15 @@ export function isInviteActive(
   return invite.revoked_at === null && new Date(invite.expires_at) > now && invite.uses < invite.max_uses;
 }
 
-export const INVITE_NOT_FOUND = 'Kod bulunamadı ya da süresi doldu. Ev sahibinden yeni bir kod iste.';
+export const INVITE_NOT_FOUND = msg('Kod bulunamadı ya da süresi doldu. Ev sahibinden yeni bir kod iste.');
 
 export function redeemErrorMessage(message: string): string {
-  if (message.includes('only painters')) return 'Paylaşılan projeye katılmak için usta rolünün açık olması gerekir.';
-  if (message.includes('not found or expired')) return INVITE_NOT_FOUND;
-  if (message.includes('used up')) return 'Bu kodun katılım sınırı doldu. Ev sahibinden yeni bir kod iste.';
-  if (message.includes('too many attempts')) return 'Çok fazla yanlış kod denendi. Bir saat sonra tekrar dene.';
-  if (message.includes('your own project')) return 'Bu senin kendi projen.';
-  return 'Katılınamadı. İnternet bağlantını kontrol et.';
+  if (message.includes('only painters')) return t('Paylaşılan projeye katılmak için usta rolünün açık olması gerekir.');
+  if (message.includes('not found or expired')) return t(INVITE_NOT_FOUND);
+  if (message.includes('used up')) return t('Bu kodun katılım sınırı doldu. Ev sahibinden yeni bir kod iste.');
+  if (message.includes('too many attempts')) return t('Çok fazla yanlış kod denendi. Bir saat sonra tekrar dene.');
+  if (message.includes('your own project')) return t('Bu senin kendi projen.');
+  return t('Katılınamadı. İnternet bağlantını kontrol et.');
 }
 
 export async function listInvites(db: DbClient, projectId: string): Promise<ProjectInviteRow[]> {
@@ -42,13 +43,13 @@ export async function listInvites(db: DbClient, projectId: string): Promise<Proj
 
 export async function createInvite(db: DbClient, projectId: string): Promise<ProjectInviteRow> {
   const { data, error } = await db.from('project_invites').insert({ project_id: projectId }).select('*').single();
-  if (error) throw new Error('Paylaşım kodu oluşturulamadı.');
+  if (error) throw new Error(t('Paylaşım kodu oluşturulamadı.'));
   return data;
 }
 
 export async function revokeInvite(db: DbClient, inviteId: string): Promise<void> {
   const { error } = await db.from('project_invites').update({ revoked_at: new Date().toISOString() }).eq('id', inviteId);
-  if (error) throw new Error('Kod iptal edilemedi.');
+  if (error) throw new Error(t('Kod iptal edilemedi.'));
 }
 
 export async function listMembers(db: DbClient, projectId: string): Promise<ProjectMember[]> {
@@ -59,13 +60,13 @@ export async function listMembers(db: DbClient, projectId: string): Promise<Proj
 
 export async function removeMember(db: DbClient, projectId: string, userId: string): Promise<void> {
   const { error } = await db.from('project_members').delete().eq('project_id', projectId).eq('user_id', userId);
-  if (error) throw new Error('Erişim kaldırılamadı.');
+  if (error) throw new Error(t('Erişim kaldırılamadı.'));
 }
 
 export async function redeemInvite(db: DbClient, code: string): Promise<string> {
   const { data, error } = await db.rpc('redeem_project_invite', { invite_code: code });
   if (error) throw new Error(redeemErrorMessage(error.message));
-  if (!data) throw new Error(INVITE_NOT_FOUND);
+  if (!data) throw new Error(t(INVITE_NOT_FOUND));
   return data;
 }
 

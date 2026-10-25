@@ -1,6 +1,7 @@
 import { useState } from 'react';
 import { ScrollView, StyleSheet, View } from 'react-native';
 
+import { msg, t } from '@/i18n';
 import type { PhotoSurface, WallOutline } from '@/lib/database.types';
 import { Segmented } from '@/ui/brand';
 import { AppText, Button, ChoiceChips, Icon, Notice } from '@/ui/components';
@@ -15,13 +16,14 @@ import type { SelectMode } from './photo-stage-types';
 import { DEFAULT_TOLERANCE, MAX_SEEDS, TOLERANCES, toleranceKeyOf, type ToleranceKey } from './recolour';
 
 const STRENGTHS = [
-  { value: 'light', label: 'Hafif', amount: 0.55 },
-  { value: 'medium', label: 'Orta', amount: 0.8 },
-  { value: 'strong', label: 'Tam', amount: 1 },
+  { value: 'light', label: msg('Hafif'), amount: 0.55 },
+  { value: 'medium', label: msg('Orta'), amount: 0.8 },
+  { value: 'strong', label: msg('Tam'), amount: 1 },
 ] as const;
 type Strength = (typeof STRENGTHS)[number]['value'];
 
-const SURFACE_KINDS = ['Duvar', 'Tavan', 'Dolap', 'Kapı', 'Diğer'] as const;
+/** New surfaces are named in the current language ("Duvar 2", "Wall 2"); the name is saved with the photo. */
+const SURFACE_KINDS = [msg('Duvar'), msg('Tavan'), msg('Dolap'), msg('Kapı'), msg('Diğer')] as const;
 
 /** A tap while picking: a corner, a spot to include, or (tap mode) a spot to keep out. */
 type Tap = { point: [number, number]; remove: boolean };
@@ -64,17 +66,17 @@ export function ColourStudio({
   const p = usePalette();
   const [surfaces, setSurfaces] = useState<PhotoSurface[]>(initialSurfaces ?? []);
   const [active, setActive] = useState(0);
-  const [drawing, setDrawing] = useState<string | null>(initialSurfaces?.length ? null : 'Duvar');
+  const [drawing, setDrawing] = useState<string | null>(initialSurfaces?.length ? null : t('Duvar'));
   const [taps, setTaps] = useState<Tap[]>([]);
   const [mode, setMode] = useState<SelectMode>('tap');
   const [removing, setRemoving] = useState(false);
   const [toleranceKey, setToleranceKey] = useState<ToleranceKey>('medium');
-  const tolerance = TOLERANCES.find((t) => t.value === toleranceKey)?.tolerance ?? DEFAULT_TOLERANCE;
+  const tolerance = TOLERANCES.find((option) => option.value === toleranceKey)?.tolerance ?? DEFAULT_TOLERANCE;
   const [strength, setStrength] = useState<Strength>('strong');
   const [view, setView] = useState<'after' | 'before'>('after');
   const [choosingKind, setChoosingKind] = useState(false);
-  const draft: WallOutline = taps.filter((t) => !t.remove).map((t) => t.point);
-  const excludes: WallOutline = taps.filter((t) => t.remove).map((t) => t.point);
+  const draft: WallOutline = taps.filter((value) => !value.remove).map((value) => value.point);
+  const excludes: WallOutline = taps.filter((value) => value.remove).map((value) => value.point);
   const usable = mode === 'tap' ? draft.length > 0 : isUsableOutline(draft);
   const editingExisting = drawing !== null && active < surfaces.length && surfaces[active].label === drawing;
 
@@ -106,7 +108,7 @@ export function ColourStudio({
   const addPoint = (point: [number, number]) => {
     const remove = mode === 'tap' && removing;
     const limit = mode === 'tap' ? MAX_SEEDS : MAX_OUTLINE_POINTS;
-    setTaps((list) => (list.filter((t) => t.remove === remove).length >= limit ? list : [...list, { point, remove }]));
+    setTaps((list) => (list.filter((value) => value.remove === remove).length >= limit ? list : [...list, { point, remove }]));
   };
 
   const finishDrawing = () => {
@@ -143,16 +145,16 @@ export function ColourStudio({
         <>
           <Segmented
             options={[
-              { value: 'tap', label: 'Dokun-seç', icon: 'finger-print' },
-              { value: 'corners', label: 'Köşeleri çiz', icon: 'git-commit' },
+              { value: 'tap', label: t('Dokun-seç'), icon: 'finger-print' },
+              { value: 'corners', label: t('Köşeleri çiz'), icon: 'git-commit' },
             ]}
             value={mode}
             onChange={switchMode}
           />
           <Notice icon="hand-left">
             {mode === 'tap'
-              ? `“${drawing}” üzerine dokun. Seçim köşelerde ve eşyaların kenarında durur. Eksik kalan yere tekrar dokun; tavan ya da bir eşya da seçildiyse “Çıkar”a geç ve oraya dokun.`
-              : `“${drawing}” için köşelere sırayla dokun. En az 3 nokta gerekir. Kapı, pencere ve eşyaların dışından geç.`}
+              ? t('“{surface}” üzerine dokun. Seçim köşelerde ve eşyaların kenarında durur. Eksik kalan yere tekrar dokun; tavan ya da bir eşya da seçildiyse “Çıkar”a geç ve oraya dokun.', { surface: t(drawing) })
+              : t('“{surface}” için köşelere sırayla dokun. En az 3 nokta gerekir. Kapı, pencere ve eşyaların dışından geç.', { surface: t(drawing) })}
           </Notice>
         </>
       ) : null}
@@ -172,8 +174,8 @@ export function ColourStudio({
       {drawing && mode === 'tap' ? (
         <Segmented
           options={[
-            { value: 'add', label: 'Ekle', icon: 'add-circle' },
-            { value: 'remove', label: 'Çıkar', icon: 'remove-circle' },
+            { value: 'add', label: t('Ekle'), icon: 'add-circle' },
+            { value: 'remove', label: t('Çıkar'), icon: 'remove-circle' },
           ]}
           value={removing ? 'remove' : 'add'}
           onChange={(v) => setRemoving(v === 'remove')}
@@ -182,7 +184,7 @@ export function ColourStudio({
 
       {drawing && mode === 'tap' ? (
         <ChoiceChips
-          label="Seçim genişliği"
+          label={t('Seçim genişliği')}
           options={TOLERANCES.map(({ value, label }) => ({ value, label }))}
           value={toleranceKey}
           onChange={setToleranceKey}
@@ -191,9 +193,9 @@ export function ColourStudio({
 
       {drawing ? (
         <View style={{ flexDirection: 'row', gap: space.sm, flexWrap: 'wrap' }}>
-          <Button label="Geri al" icon="arrow-undo" variant="secondary" disabled={taps.length === 0} onPress={() => setTaps((t) => t.slice(0, -1))} />
+          <Button label={t('Geri al')} icon="arrow-undo" variant="secondary" disabled={taps.length === 0} onPress={() => setTaps((value) => value.slice(0, -1))} />
           <Button
-            label="Temizle"
+            label={t('Temizle')}
             icon="close"
             variant="ghost"
             disabled={taps.length === 0}
@@ -202,9 +204,9 @@ export function ColourStudio({
               setRemoving(false);
             }}
           />
-          <Button label="Yüzeyi boya" icon="color-fill" variant="cta" disabled={!usable} onPress={finishDrawing} />
+          <Button label={t('Yüzeyi boya')} icon="color-fill" variant="cta" disabled={!usable} onPress={finishDrawing} />
           {surfaces.length > 0 ? <Button
-              label="Vazgeç"
+              label={t('Vazgeç')}
               variant="ghost"
               onPress={() => {
                 setDrawing(null);
@@ -218,8 +220,8 @@ export function ColourStudio({
         <>
           <Segmented
             options={[
-              { value: 'after', label: 'Sonra', icon: 'color-fill' },
-              { value: 'before', label: 'Önce', icon: 'image' },
+              { value: 'after', label: t('Sonra'), icon: 'color-fill' },
+              { value: 'before', label: t('Önce'), icon: 'image' },
             ]}
             value={view}
             onChange={setView}
@@ -227,7 +229,7 @@ export function ColourStudio({
 
           <View style={{ gap: space.sm }}>
             <AppText variant="small" style={{ fontFamily: fonts.semibold }}>
-              Yüzeyler
+              {t('Yüzeyler')}
             </AppText>
             <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={{ gap: space.sm }}>
               {surfaces.map((s, i) => (
@@ -235,24 +237,24 @@ export function ColourStudio({
                   key={`${s.label}-${i}`}
                   accessibilityRole="radio"
                   accessibilityState={{ selected: i === active }}
-                  accessibilityLabel={s.label}
+                  accessibilityLabel={t(s.label)}
                   onPress={() => setActive(i)}
                   style={[styles.surfaceChip, { backgroundColor: i === active ? p.primary : p.surface, borderColor: i === active ? p.primary : p.border }]}>
                   <View style={[styles.dot, { backgroundColor: s.hex ?? 'transparent', borderColor: p.border }]} />
                   <AppText variant="small" style={{ color: i === active ? p.onPrimary : p.text, fontFamily: fonts.semibold }}>
-                    {s.label}
+                    {t(s.label)}
                   </AppText>
                 </PressableScale>
               ))}
               {surfaces.length < MAX_SURFACES ? (
                 <PressableScale
                   accessibilityRole="button"
-                  accessibilityLabel="Yüzey ekle"
+                  accessibilityLabel={t('Yüzey ekle')}
                   onPress={() => setChoosingKind((v) => !v)}
                   style={[styles.surfaceChip, { backgroundColor: p.accentSoft, borderColor: 'transparent' }]}>
                   <Icon name="add" size={18} color={p.accent} />
                   <AppText variant="small" style={{ color: p.accent, fontFamily: fonts.semibold }}>
-                    Yüzey ekle
+                    {t('Yüzey ekle')}
                   </AppText>
                 </PressableScale>
               ) : null}
@@ -260,7 +262,7 @@ export function ColourStudio({
             {choosingKind ? (
               <View style={{ flexDirection: 'row', flexWrap: 'wrap', gap: space.sm }}>
                 {SURFACE_KINDS.map((k) => (
-                  <Button key={k} label={k} variant="secondary" onPress={() => startDrawing(nextLabel(k, surfaces), surfaces.length)} />
+                  <Button key={k} label={t(k)} variant="secondary" onPress={() => startDrawing(nextLabel(t(k), surfaces), surfaces.length)} />
                 ))}
               </View>
             ) : null}
@@ -269,7 +271,10 @@ export function ColourStudio({
           {surfaces[active] ? (
             <View style={{ gap: space.sm }}>
               <AppText variant="small" style={{ fontFamily: fonts.semibold }}>
-                “{surfaces[active].label}” için renk: {surfaces[active].hex ? toPicked(surfaces[active].hex!).name : 'yok'}
+                {t('“{surface}” için renk: {colour}', {
+                  surface: t(surfaces[active].label),
+                  colour: surfaces[active].hex ? t(toPicked(surfaces[active].hex!).name) : t('yok'),
+                })}
               </AppText>
               <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={{ gap: space.sm }} accessibilityRole="radiogroup">
                 {strip.map((hex) => {
@@ -280,34 +285,34 @@ export function ColourStudio({
                       key={hex}
                       accessibilityRole="radio"
                       accessibilityState={{ selected }}
-                      accessibilityLabel={c.name}
+                      accessibilityLabel={t(c.name)}
                       onPress={() => applyColour(c)}
                       style={[styles.quick, { backgroundColor: hex, borderColor: selected ? p.text : p.border, borderWidth: selected ? 3 : StyleSheet.hairlineWidth }]}
                     />
                   );
                 })}
               </ScrollView>
-              {onBrowse ? <Button label="Tüm renklere göz at" icon="color-palette" variant="ghost" onPress={onBrowse} /> : null}
+              {onBrowse ? <Button label={t('Tüm renklere göz at')} icon="color-palette" variant="ghost" onPress={onBrowse} /> : null}
             </View>
           ) : null}
 
-          <ChoiceChips label="Renk yoğunluğu" options={STRENGTHS.map(({ value, label }) => ({ value, label }))} value={strength} onChange={setStrength} />
+          <ChoiceChips label={t('Renk yoğunluğu')} options={STRENGTHS.map(({ value, label }) => ({ value, label }))} value={strength} onChange={setStrength} />
 
           <View style={{ flexDirection: 'row', gap: space.sm, flexWrap: 'wrap' }}>
             {surfaces[active] ? (
               <>
-                <Button label="Seçimi düzenle" icon="create" variant="secondary" onPress={() => startDrawing(surfaces[active].label, active)} />
-                <Button label="Yüzeyi sil" icon="trash" variant="ghost" onPress={removeActive} />
+                <Button label={t('Seçimi düzenle')} icon="create" variant="secondary" onPress={() => startDrawing(surfaces[active].label, active)} />
+                <Button label={t('Yüzeyi sil')} icon="trash" variant="ghost" onPress={removeActive} />
               </>
             ) : null}
-            {onChangePhoto ? <Button label="Başka fotoğraf" icon="images" variant="ghost" onPress={onChangePhoto} /> : null}
+            {onChangePhoto ? <Button label={t('Başka fotoğraf')} icon="images" variant="ghost" onPress={onChangePhoto} /> : null}
           </View>
         </>
       )}
 
       {onSaveSurfaces ? (
         <>
-          <Button label="Projeye kaydet" icon="save" loading={saving} disabled={!!drawing} onPress={() => onSaveSurfaces(surfaces)} />
+          <Button label={t('Projeye kaydet')} icon="save" loading={saving} disabled={!!drawing} onPress={() => onSaveSurfaces(surfaces)} />
           {saveError ? (
             <Notice tone="danger" icon="alert-circle">
               {saveError}
@@ -317,7 +322,7 @@ export function ColourStudio({
       ) : null}
 
       <Notice icon="information-circle">
-        Bu bir önizlemedir: renk, fotoğraftaki ışık, gölge ve doku korunarak uygulanır. Yine de gerçek renk odanın ışığına, ekran ayarına ve boyanın parlaklığına göre farklı görünebilir. Karar vermeden önce renk kartına bak ya da küçük bir alana deneme yap.
+        {t('Bu bir önizlemedir: renk, fotoğraftaki ışık, gölge ve doku korunarak uygulanır. Yine de gerçek renk odanın ışığına, ekran ayarına ve boyanın parlaklığına göre farklı görünebilir. Karar vermeden önce renk kartına bak ya da küçük bir alana deneme yap.')}
       </Notice>
     </View>
   );

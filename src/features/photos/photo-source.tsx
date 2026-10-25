@@ -1,6 +1,7 @@
 import { useState } from 'react';
 import { View } from 'react-native';
 
+import { t } from '@/i18n';
 import { Button, Notice } from '@/ui/components';
 import { space } from '@/ui/theme';
 
@@ -19,12 +20,12 @@ export function PhotoSourceButtons({ onPicked, busy }: { onPicked: (photo: Picke
       else if (result.reason === 'permission') {
         setMessage(
           source === 'camera'
-            ? 'Kamera izni verilmedi. Telefonun ayarlarından BoyaCep için kamera iznini açabilirsin.'
-            : 'Galeri izni verilmedi. Telefonun ayarlarından BoyaCep için fotoğraf iznini açabilirsin.',
+            ? t('Kamera izni verilmedi. Telefonun ayarlarından BoyaCep için kamera iznini açabilirsin.')
+            : t('Galeri izni verilmedi. Telefonun ayarlarından BoyaCep için fotoğraf iznini açabilirsin.'),
         );
       }
     } catch {
-      setMessage('Fotoğraf açılamadı. Başka bir fotoğraf dene.');
+      setMessage(t('Fotoğraf açılamadı. Başka bir fotoğraf dene.'));
     } finally {
       setPicking(false);
     }
@@ -32,8 +33,8 @@ export function PhotoSourceButtons({ onPicked, busy }: { onPicked: (photo: Picke
 
   return (
     <View style={{ gap: space.sm }}>
-      <Button label="Fotoğraf çek" icon="camera" loading={picking || busy} onPress={() => pick('camera')} />
-      <Button label="Galeriden seç" icon="images" variant="secondary" disabled={picking || busy} onPress={() => pick('library')} />
+      <Button label={t('Fotoğraf çek')} icon="camera" loading={picking || busy} onPress={() => pick('camera')} />
+      <Button label={t('Galeriden seç')} icon="images" variant="secondary" disabled={picking || busy} onPress={() => pick('library')} />
       {message ? (
         <Notice tone="danger" icon="alert-circle">
           {message}

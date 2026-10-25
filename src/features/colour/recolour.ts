@@ -9,6 +9,7 @@
  *   average, so shadows and texture survive the new colour.
  */
 
+import { msg } from '@/i18n';
 import type { WallOutline } from '@/lib/database.types';
 
 export type Lab = [number, number, number];
@@ -17,9 +18,9 @@ export type Lab = [number, number, number];
 export type TapSelection = { seeds: WallOutline; tolerance: number; excludes?: WallOutline };
 
 export const TOLERANCES = [
-  { value: 'narrow', label: 'Dar', tolerance: 9 },
-  { value: 'medium', label: 'Orta', tolerance: 15 },
-  { value: 'wide', label: 'Geniş', tolerance: 24 },
+  { value: 'narrow', label: msg('Dar'), tolerance: 9 },
+  { value: 'medium', label: msg('Orta'), tolerance: 15 },
+  { value: 'wide', label: msg('Geniş'), tolerance: 24 },
 ] as const;
 export type ToleranceKey = (typeof TOLERANCES)[number]['value'];
 export const DEFAULT_TOLERANCE = 15;
@@ -27,7 +28,7 @@ export const DEFAULT_TOLERANCE = 15;
 /** The named step closest to a stored tolerance. */
 export function toleranceKeyOf(tolerance: number): ToleranceKey {
   let best: (typeof TOLERANCES)[number] = TOLERANCES[0];
-  for (const t of TOLERANCES) if (Math.abs(t.tolerance - tolerance) < Math.abs(best.tolerance - tolerance)) best = t;
+  for (const value of TOLERANCES) if (Math.abs(value.tolerance - tolerance) < Math.abs(best.tolerance - tolerance)) best = value;
   return best.value;
 }
 export const MAX_SEEDS = 8;
@@ -52,8 +53,8 @@ const fromLinear = (v: number) => {
 const XN = 0.95047;
 const YN = 1;
 const ZN = 1.08883;
-const f = (t: number) => (t > 216 / 24389 ? Math.cbrt(t) : ((24389 / 27) * t + 16) / 116);
-const fInv = (t: number) => (t ** 3 > 216 / 24389 ? t ** 3 : (116 * t - 16) / (24389 / 27));
+const f = (value: number) => (value > 216 / 24389 ? Math.cbrt(value) : ((24389 / 27) * value + 16) / 116);
+const fInv = (value: number) => (value ** 3 > 216 / 24389 ? value ** 3 : (116 * value - 16) / (24389 / 27));
 
 export function rgbToLab(r: number, g: number, b: number): Lab {
   const lr = toLinear(r);
@@ -506,8 +507,8 @@ export function selectRegion(img: LabImage, selection: TapSelection): Uint8Array
         if (nx < 0 || ny < 0 || nx >= width || ny >= height) continue;
         const j = ny * width + nx;
         if (mask[j] || keepOut[j] || edges[j] > FADE_EDGE || stepDistance(lab, i, j) > FADE_EDGE * 2) continue;
-        const t = tolerances[o];
-        const byColour = 1 - (seedDistance(smooth, j, refs[o]) - t) / (t * FADE_RANGE);
+        const value = tolerances[o];
+        const byColour = 1 - (seedDistance(smooth, j, refs[o]) - value) / (value * FADE_RANGE);
         const alpha = Math.round(255 * Math.min(1, byColour) * (1 - step / (FADE_PIXELS + 1)));
         if (alpha < 1) continue;
         mask[j] = Math.min(254, alpha);

@@ -1,3 +1,4 @@
+import { t } from '@/i18n';
 import type { CalculationRow, InspectionPlace, InspectionResultRow } from '@/lib/database.types';
 import type { DbClient } from '@/lib/supabase';
 
@@ -6,8 +7,8 @@ import { stableStringify, type SurveyModel } from './model';
 export type InspectionRecord = { project_id: string; place: InspectionPlace; symptoms: string[]; location: string | null };
 
 export function inspectionError(message: string): string {
-  if (message.includes('limit')) return 'Bir projeye en fazla 30 inceleme kaydedebilirsin. Eskilerden birini sil.';
-  return 'İnceleme kaydedilemedi. İnternet bağlantını kontrol et.';
+  if (message.includes('limit')) return t('Bir projeye en fazla 30 inceleme kaydedebilirsin. Eskilerden birini sil.');
+  return t('İnceleme kaydedilemedi. İnternet bağlantını kontrol et.');
 }
 
 export async function listInspections(db: DbClient, projectId: string): Promise<InspectionResultRow[]> {
@@ -23,7 +24,7 @@ export async function addInspection(db: DbClient, record: InspectionRecord): Pro
 
 export async function removeInspection(db: DbClient, id: string): Promise<void> {
   const { error } = await db.from('inspection_results').delete().eq('id', id);
-  if (error) throw new Error('İnceleme silinemedi. İnternet bağlantını kontrol et.');
+  if (error) throw new Error(t('İnceleme silinemedi. İnternet bağlantını kontrol et.'));
 }
 
 /** The newest calculation snapshot of a project, if one was shared. */

@@ -1,6 +1,8 @@
 import { COLOURS, type CatalogColour, type FamilyKey } from './catalogue';
 import { luminance } from './palette';
 
+import { t } from '@/i18n';
+
 type Rgb = [number, number, number];
 type Hsl = [number, number, number];
 
@@ -87,9 +89,9 @@ export function harmonies(base: string): Harmony[] {
   const neutral = [snap(l > 0.6 ? '#4A4C4E' : '#F1EDE4', ['whites', 'creams', 'greys', 'darks']), snap('#CBBBA4', ['beiges', 'greys'])];
 
   return [
-    { key: 'tonal', title: 'Ton sür ton', hint: 'Aynı rengin açığı ve koyusu; sakin ve bütünlüklü.', colours: [tonal[0], self, tonal[1]] },
-    { key: 'analogous', title: 'Komşu renkler', hint: 'Renk çemberinde yan yana; doğal ve uyumlu.', colours: [analogous[0], self, analogous[1]] },
-    { key: 'accent', title: 'Zıt vurgu', hint: 'Tek duvarda ya da aksesuarda canlı karşıtlık.', colours: [self, accent[0]] },
-    { key: 'neutral', title: 'Nötr eşlik', hint: 'Tavan, kapı ve süpürgelik için güvenli eşler.', colours: [self, ...neutral] },
+    { key: 'tonal', title: t('Ton sür ton'), hint: t('Aynı rengin açığı ve koyusu; sakin ve bütünlüklü.'), colours: [tonal[0], self, tonal[1]] },
+    { key: 'analogous', title: t('Komşu renkler'), hint: t('Renk çemberinde yan yana; doğal ve uyumlu.'), colours: [analogous[0], self, analogous[1]] },
+    { key: 'accent', title: t('Zıt vurgu'), hint: t('Tek duvarda ya da aksesuarda canlı karşıtlık.'), colours: [self, accent[0]] },
+    { key: 'neutral', title: t('Nötr eşlik'), hint: t('Tavan, kapı ve süpürgelik için güvenli eşler.'), colours: [self, ...neutral] },
   ];
 }

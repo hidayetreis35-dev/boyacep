@@ -1,3 +1,4 @@
+import { msg } from '@/i18n';
 import type { MyPlan } from '@/lib/database.types';
 import type { DbClient } from '@/lib/supabase';
 
@@ -9,13 +10,13 @@ export async function getMyPlan(db: DbClient): Promise<MyPlan | null> {
 
 export const PLAN_FEATURES = {
   pro: {
-    title: 'BoyaCep Pro',
-    price: 'Tek seferlik ödeme',
-    features: ['50 proje (ücretsizde 3)', 'Proje başına 100 fotoğraf (ücretsizde 20)', 'Gelişmiş renk karşılaştırma (yakında)', 'Fotoğrafla yapay zekâ incelemesi (yakında)'],
+    title: msg('BoyaCep Pro'),
+    price: msg('Tek seferlik ödeme'),
+    features: [msg('50 proje (ücretsizde 3)'), msg('Proje başına 100 fotoğraf (ücretsizde 20)'), msg('Gelişmiş renk karşılaştırma (yakında)'), msg('Fotoğrafla yapay zekâ incelemesi (yakında)')],
   },
   usta_pro: {
-    title: 'Usta Pro',
-    price: 'Aylık abonelik',
-    features: ['Sınırsız teklif ve PDF', 'Müşteri listesi ve iş takvimi (yakında)', 'Gelir-gider takibi (yakında)', 'Teklifte işletme logosu (yakında)'],
+    title: msg('Usta Pro'),
+    price: msg('Aylık abonelik'),
+    features: [msg('Sınırsız teklif ve PDF'), msg('Müşteri listesi ve iş takvimi (yakında)'), msg('Gelir-gider takibi (yakında)'), msg('Teklifte işletme logosu (yakında)')],
   },
 } as const;

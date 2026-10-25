@@ -3,6 +3,7 @@ import { StyleSheet, View } from 'react-native';
 import { useSession } from '@/features/account/session';
 import { PLAN_FEATURES } from '@/features/plans/api';
 import { useMyPlan } from '@/features/plans/queries';
+import { t } from '@/i18n';
 import { FeatureHeader, IconBubble } from '@/ui/brand';
 import { AppText, Badge, Card, ErrorState, Icon, LoadingState, Notice, Row, Screen, type IconName } from '@/ui/components';
 import { radius, shadowOf, space, useFeatureColour, usePalette, type FeatureKey } from '@/ui/theme';
@@ -26,19 +27,19 @@ function PlanCard({
         <IconBubble icon={icon} feature={feature} />
         <View style={{ flex: 1, gap: 2 }}>
           <AppText variant="heading" style={{ color: f.ink }}>
-            {plan.title}
+            {t(plan.title)}
           </AppText>
           <AppText variant="small" style={{ color: f.ink, opacity: 0.85 }}>
-            {plan.price}
+            {t(plan.price)}
           </AppText>
         </View>
-        {active ? <Badge label="Aktif" tone="success" /> : null}
+        {active ? <Badge label={t('Aktif')} tone="success" /> : null}
       </View>
       <View style={{ gap: space.sm, padding: space.lg }}>
         {plan.features.map((item) => (
           <View key={item} style={{ flexDirection: 'row', gap: space.sm, alignItems: 'flex-start' }}>
             <Icon name="checkmark-circle" size={20} color={f.base} />
-            <AppText style={{ flex: 1 }}>{item}</AppText>
+            <AppText style={{ flex: 1 }}>{t(item)}</AppText>
           </View>
         ))}
       </View>
@@ -51,23 +52,23 @@ export default function PlansScreen() {
   const plan = useMyPlan();
   return (
     <Screen edges={['bottom']}>
-      <FeatureHeader feature="projects" icon="star" title="Planlar" subtitle="Ücretsiz başla, ihtiyacın olunca yükselt." />
+      <FeatureHeader feature="projects" icon="star" title={t('Planlar')} subtitle={t('Ücretsiz başla, ihtiyacın olunca yükselt.')} />
       {session ? (
         plan.isPending ? (
           <LoadingState />
         ) : plan.isError ? (
-          <ErrorState message="Plan bilgin yüklenemedi." onRetry={() => plan.refetch()} />
+          <ErrorState message={t('Plan bilgin yüklenemedi.')} onRetry={() => plan.refetch()} />
         ) : plan.data ? (
           <Card>
-            <Row label="Planın" value={plan.data.pro ? 'Pro' : 'Ücretsiz'} strong />
-            <Row label="Projeler" value={`${plan.data.projects_used} / ${plan.data.project_limit}`} />
+            <Row label={t('Planın')} value={plan.data.pro ? 'Pro' : t('Ücretsiz')} strong />
+            <Row label={t('Projeler')} value={`${plan.data.projects_used} / ${plan.data.project_limit}`} />
           </Card>
         ) : null
       ) : null}
       <PlanCard plan={PLAN_FEATURES.pro} active={!!plan.data?.pro} feature="color" icon="home" />
       <PlanCard plan={PLAN_FEATURES.usta_pro} active={!!plan.data?.usta_pro} feature="cost" icon="construct" />
       <Notice icon="time">
-        Satın alma henüz açık değil. Kapalı beta süresince boya hesabı, rehberler ve teklifler ücretsiz. Fiyatlar beta sonunda belli olacak.
+        {t('Satın alma henüz açık değil. Kapalı beta süresince boya hesabı, rehberler ve teklifler ücretsiz. Fiyatlar beta sonunda belli olacak.')}
       </Notice>
     </Screen>
   );

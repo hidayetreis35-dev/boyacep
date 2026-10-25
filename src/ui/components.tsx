@@ -31,6 +31,8 @@ import { SafeAreaView } from 'react-native-safe-area-context';
 import { PressableScale } from './motion';
 import { MAX_CONTENT_WIDTH, MIN_TOUCH, fonts, radius, shadowOf, space, type, usePalette, type Palette, type TypeVariant } from './theme';
 
+import { t } from '@/i18n';
+
 export type IconName = ComponentProps<typeof Ionicons>['name'];
 
 type Tone = 'muted' | 'primary' | 'danger' | 'success' | 'accent';
@@ -256,7 +258,7 @@ export function NumberField(props: FieldProps) {
   return <TextField keyboardType="decimal-pad" inputMode="decimal" {...props} />;
 }
 
-/** Single choice from a small set, shown as chips. */
+/** Single choice from a small set, shown as chips. Labels go through t(), so constant lists can pass msg() text. */
 export function ChoiceChips<T extends string>({
   label,
   options,
@@ -293,7 +295,7 @@ export function ChoiceChips<T extends string>({
                 },
               ]}>
               <AppText variant="small" style={{ color: selected ? p.onPrimary : p.text, fontFamily: fonts.semibold }}>
-                {o.label}
+                {t(o.label)}
               </AppText>
             </Pressable>
           );
@@ -346,11 +348,11 @@ export function Stepper({
       <AppText variant="bodyStrong" style={{ flex: 1 }}>
         {label}
       </AppText>
-      {btn('remove', value - 1, `${label} azalt`)}
+      {btn('remove', value - 1, t('{label} azalt', { label }))}
       <AppText variant="heading" style={{ minWidth: 32, textAlign: 'center' }} accessibilityLiveRegion="polite">
         {value}
       </AppText>
-      {btn('add', value + 1, `${label} artır`)}
+      {btn('add', value + 1, t('{label} artır', { label }))}
     </View>
   );
 }
@@ -408,7 +410,7 @@ export function EmptyState({ icon, title, message, action }: { icon: IconName; t
   );
 }
 
-export function LoadingState({ label = 'Yükleniyor…' }: { label?: string }) {
+export function LoadingState({ label = t('Yükleniyor…') }: { label?: string }) {
   const p = usePalette();
   return (
     <View style={styles.empty} accessibilityRole="progressbar" accessibilityLabel={label}>
@@ -422,9 +424,9 @@ export function ErrorState({ message, onRetry }: { message: string; onRetry?: ()
   return (
     <EmptyState
       icon="cloud-offline"
-      title="Bir sorun oluştu"
+      title={t('Bir sorun oluştu')}
       message={message}
-      action={onRetry ? <Button label="Tekrar dene" icon="refresh" variant="secondary" onPress={onRetry} /> : undefined}
+      action={onRetry ? <Button label={t('Tekrar dene')} icon="refresh" variant="secondary" onPress={onRetry} /> : undefined}
     />
   );
 }

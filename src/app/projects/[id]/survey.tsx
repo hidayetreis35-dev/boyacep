@@ -6,6 +6,7 @@ import { useProject } from '@/features/projects/queries';
 import { buildSurvey, isEmptySurvey } from '@/features/survey/model';
 import { useInspectionActions, useInspections, useShareSurvey } from '@/features/survey/queries';
 import { SurveyView } from '@/features/survey/survey-view';
+import { t } from '@/i18n';
 import { Button, EmptyState, ErrorState, LoadingState, Notice, Screen } from '@/ui/components';
 
 /** The homeowner's survey file: rooms, quantities, colours and wall inspections in one place. */
@@ -23,7 +24,7 @@ export default function SurveyScreen() {
     return (
       <Screen edges={['bottom']}>
         <ErrorState
-          message="Keşif dosyası yüklenemedi."
+          message={t('Keşif dosyası yüklenemedi.')}
           onRetry={() => {
             project.refetch();
             inspections.refetch();
@@ -40,17 +41,17 @@ export default function SurveyScreen() {
     inspections: inspections.data,
     photoCount: photos.data?.length ?? 0,
   });
-  const addInspection = <Button label="Duvar incelemesi ekle" icon="search" variant="secondary" onPress={() => router.push('/inspect')} />;
+  const addInspection = <Button label={t('Duvar incelemesi ekle')} icon="search" variant="secondary" onPress={() => router.push('/inspect')} />;
 
   if (isEmptySurvey(model)) {
     return (
       <Screen edges={['bottom']}>
         <EmptyState
           icon="document-text"
-          title="Keşif dosyan henüz boş"
-          message="Oda ekle, duvarını incele ve renk seç; dosya kendiliğinden dolar. Ustalar bu dosyayla yerinde ölçü almadan teklif hazırlayabilir."
+          title={t('Keşif dosyan henüz boş')}
+          message={t('Oda ekle, duvarını incele ve renk seç; dosya kendiliğinden dolar. Ustalar bu dosyayla yerinde ölçü almadan teklif hazırlayabilir.')}
         />
-        <Button label="Oda ekle" icon="add" onPress={() => router.push({ pathname: '/projects/[id]/room', params: { id } })} />
+        <Button label={t('Oda ekle')} icon="add" onPress={() => router.push({ pathname: '/projects/[id]/room', params: { id } })} />
         {addInspection}
       </Screen>
     );
@@ -61,7 +62,7 @@ export default function SurveyScreen() {
       <SurveyView model={model} onRemoveFinding={(fid) => remove.mutate({ id: fid, projectId: id })} removingId={remove.isPending ? remove.variables?.id : null} />
       {colours.isError ? (
         <Notice tone="accent" icon="warning">
-          Renkler yüklenemedi; dosyada renkler eksik görünüyor.
+          {t('Renkler yüklenemedi; dosyada renkler eksik görünüyor.')}
         </Notice>
       ) : null}
       {remove.isError ? (
@@ -69,13 +70,13 @@ export default function SurveyScreen() {
           {remove.error.message}
         </Notice>
       ) : null}
-      <Button label="PDF olarak paylaş" icon="document" variant="cta" size="lg" loading={share.isPending} onPress={() => share.mutate(model)} />
+      <Button label={t('PDF olarak paylaş')} icon="document" variant="cta" size="lg" loading={share.isPending} onPress={() => share.mutate(model)} />
       {share.isError ? (
         <Notice tone="danger" icon="alert-circle">
           {share.error.message}
         </Notice>
       ) : null}
-      <Button label="Ustayla paylaş" icon="share-social" variant="secondary" onPress={() => router.push({ pathname: '/projects/[id]/share', params: { id } })} />
+      <Button label={t('Ustayla paylaş')} icon="share-social" variant="secondary" onPress={() => router.push({ pathname: '/projects/[id]/share', params: { id } })} />
       {addInspection}
     </Screen>
   );

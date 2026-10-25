@@ -13,3 +13,6 @@ jest.mock('@react-native-async-storage/async-storage', () =>
 
 // Skia draws with a native (or WebAssembly) engine that Jest does not load.
 jest.mock('./src/features/colour/photo-stage', () => require('./src/features/colour/photo-stage.mock'));
+
+// Tests read the Turkish source text, whatever language the machine uses.
+jest.mock('./src/i18n/device', () => ({ deviceLocale: () => 'tr' }));

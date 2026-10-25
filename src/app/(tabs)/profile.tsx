@@ -16,6 +16,7 @@ import { readLocalRoles, writeLocalRoles } from '@/features/account/local-role';
 import { PrivacyActions } from '@/features/account/privacy-actions';
 import { RolePicker } from '@/features/account/role-picker';
 import { useAccount, useSession } from '@/features/account/session';
+import { t } from '@/i18n';
 import {
   AppText,
   Button,
@@ -46,17 +47,17 @@ function GuestProfile({ hasBackend }: { hasBackend: boolean }) {
   return (
     <>
       <Card>
-        <AppText variant="heading">Hesabın yok</AppText>
+        <AppText variant="heading">{t('Hesabın yok')}</AppText>
         <AppText tone="muted">
           {hasBackend
-            ? 'Projelerini kaydetmek ve her cihazdan görmek için giriş yap.'
-            : 'Hesap sistemi henüz bağlı değil. Ne Kadar Boya? hesapsız çalışıyor.'}
+            ? t('Projelerini kaydetmek ve her cihazdan görmek için giriş yap.')
+            : t('Hesap sistemi henüz bağlı değil. Ne Kadar Boya? hesapsız çalışıyor.')}
         </AppText>
-        {hasBackend ? <Button label="Giriş yap / Hesap aç" icon="log-in" onPress={() => router.push('/sign-in')} /> : null}
+        {hasBackend ? <Button label={t('Giriş yap / Hesap aç')} icon="log-in" onPress={() => router.push('/sign-in')} /> : null}
       </Card>
-      <AppText variant="heading">Rolün</AppText>
+      <AppText variant="heading">{t('Rolün')}</AppText>
       <RolePicker selected={roles} onToggle={toggle} />
-      <Button label="Gizlilik bilgileri" icon="shield-checkmark" variant="ghost" onPress={() => router.push('/privacy')} />
+      <Button label={t('Gizlilik bilgileri')} icon="shield-checkmark" variant="ghost" onPress={() => router.push('/privacy')} />
     </>
   );
 }
@@ -66,9 +67,9 @@ function NameEditor({ initial, onSave }: { initial: string; onSave: (name: strin
   const [busy, setBusy] = useState(false);
   return (
     <>
-      <TextField label="Adın" value={name} onChangeText={setName} maxLength={80} autoCapitalize="words" testID="display-name" />
+      <TextField label={t('Adın')} value={name} onChangeText={setName} maxLength={80} autoCapitalize="words" testID="display-name" />
       <Button
-        label="Adı kaydet"
+        label={t('Adı kaydet')}
         variant="secondary"
         loading={busy}
         disabled={name.trim() === initial.trim()}
@@ -91,7 +92,7 @@ function AccountProfile() {
 
   if (account.isPending) return <LoadingState />;
   if (account.isError || !db || !session) {
-    return <ErrorState message="Profil yüklenemedi. İnternet bağlantını kontrol et." onRetry={() => account.refetch()} />;
+    return <ErrorState message={t('Profil yüklenemedi. İnternet bağlantını kontrol et.')} onRetry={() => account.refetch()} />;
   }
 
   const userId = session.user.id;
@@ -105,7 +106,7 @@ function AccountProfile() {
       await task();
       await queryClient.invalidateQueries({ queryKey: ['account', userId] });
     } catch (e) {
-      setError(e instanceof Error ? e.message : 'Kaydedilemedi.');
+      setError(e instanceof Error ? e.message : t('Kaydedilemedi.'));
     } finally {
       setBusy(false);
     }
@@ -114,7 +115,7 @@ function AccountProfile() {
   const toggleRole = (role: SelectableRole) =>
     run(async () => {
       if (selectable.includes(role)) {
-        if (selectable.length === 1) throw new Error('En az bir rolün olmalı.');
+        if (selectable.length === 1) throw new Error(t('En az bir rolün olmalı.'));
         if (account.data.profile.active_role === role) {
           await setActiveRole(db, userId, selectable.find((r) => r !== role)!);
         }
@@ -139,20 +140,20 @@ function AccountProfile() {
         />
       </Card>
 
-      <AppText variant="heading">Rollerin</AppText>
+      <AppText variant="heading">{t('Rollerin')}</AppText>
       <RolePicker selected={selectable} onToggle={toggleRole} />
       {selectable.length > 1 ? (
         <ChoiceChips
-          label="Uygulama hangi rolle açılsın?"
-          options={selectable.map((r) => ({ value: r, label: ROLE_LABEL[r] }))}
+          label={t('Uygulama hangi rolle açılsın?')}
+          options={selectable.map((r) => ({ value: r, label: t(ROLE_LABEL[r]) }))}
           value={(account.data.profile.active_role as SelectableRole | null) ?? selectable[0]}
           onChange={(r) => run(() => setActiveRole(db, userId, r))}
         />
       ) : null}
 
-      <Button label="Planlar" icon="star" variant="ghost" onPress={() => router.push('/plans')} />
+      <Button label={t('Planlar')} icon="star" variant="ghost" onPress={() => router.push('/plans')} />
       {roles.includes('admin') ? (
-        <Button label="Yönetim paneli" icon="settings" variant="secondary" onPress={() => router.push('/admin')} />
+        <Button label={t('Yönetim paneli')} icon="settings" variant="secondary" onPress={() => router.push('/admin')} />
       ) : null}
 
       {error ? (
@@ -161,7 +162,7 @@ function AccountProfile() {
         </Notice>
       ) : null}
 
-      <Button label="Çıkış yap" icon="log-out" variant="ghost" loading={busy} onPress={() => run(() => signOut(db))} />
+      <Button label={t('Çıkış yap')} icon="log-out" variant="ghost" loading={busy} onPress={() => run(() => signOut(db))} />
       <PrivacyActions db={db} userId={userId} />
     </>
   );
@@ -171,7 +172,7 @@ export default function ProfileScreen() {
   const { db, session, loading } = useSession();
   return (
     <Screen>
-      <AppText variant="title">Profil</AppText>
+      <AppText variant="title">{t('Profil')}</AppText>
       <View style={{ gap: space.lg }}>
         {loading ? <LoadingState /> : session ? <AccountProfile /> : <GuestProfile hasBackend={!!db} />}
       </View>

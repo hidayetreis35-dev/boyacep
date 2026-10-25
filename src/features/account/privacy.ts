@@ -3,16 +3,18 @@ import * as Sharing from 'expo-sharing';
 import { Platform } from 'react-native';
 
 import { PHOTO_BUCKET } from '@/features/photos/api';
+import { msg, t } from '@/i18n';
 import type { Json } from '@/lib/database.types';
 import type { DbClient } from '@/lib/supabase';
 
 import { writeLocalRoles } from './local-role';
 
-/** The confirmation word for account deletion; typed by the user. */
-export const DELETE_CONFIRMATION = 'SİL';
+/** The confirmation word for account deletion, typed by the user: the Turkish word or the one shown in their language. */
+export const DELETE_CONFIRMATION = msg('SİL');
 
 export function isDeleteConfirmed(input: string): boolean {
-  return input.trim().toLocaleUpperCase('tr') === DELETE_CONFIRMATION;
+  const word = input.trim();
+  return word.toLocaleUpperCase('tr') === DELETE_CONFIRMATION || word.toUpperCase() === t(DELETE_CONFIRMATION);
 }
 
 export function exportFileName(date = new Date()): string {
@@ -21,7 +23,7 @@ export function exportFileName(date = new Date()): string {
 
 export async function fetchMyData(db: DbClient): Promise<Json> {
   const { data, error } = await db.rpc('export_my_data_v2');
-  if (error || data === null) throw new Error('Veriler hazırlanamadı. İnternet bağlantını kontrol et.');
+  if (error || data === null) throw new Error(t('Veriler hazırlanamadı. İnternet bağlantını kontrol et.'));
   return data;
 }
 
@@ -51,16 +53,16 @@ export async function saveExport(data: Json): Promise<void> {
  */
 export async function deleteMyAccount(db: DbClient, userId: string): Promise<void> {
   const { data: photos, error } = await db.from('project_photos').select('storage_path').eq('owner_id', userId);
-  if (error) throw new Error('Hesap silinemedi. İnternet bağlantını kontrol et.');
+  if (error) throw new Error(t('Hesap silinemedi. İnternet bağlantını kontrol et.'));
   const paths = photos.map((p) => p.storage_path);
   for (let i = 0; i < paths.length; i += 100) {
     const removed = await db.storage.from(PHOTO_BUCKET).remove(paths.slice(i, i + 100));
-    if (removed.error) throw new Error('Fotoğraflar silinemedi; hesap silinmedi. Tekrar dene.');
+    if (removed.error) throw new Error(t('Fotoğraflar silinemedi; hesap silinmedi. Tekrar dene.'));
   }
   const { error: deleteError } = await db.rpc('delete_my_account');
   if (deleteError) {
-    if (deleteError.message.includes('admins must')) throw new Error('Yönetici hesapları önce başka bir yönetici tarafından yetkisiz bırakılmalı.');
-    throw new Error('Hesap silinemedi. İnternet bağlantını kontrol et.');
+    if (deleteError.message.includes('admins must')) throw new Error(t('Yönetici hesapları önce başka bir yönetici tarafından yetkisiz bırakılmalı.'));
+    throw new Error(t('Hesap silinemedi. İnternet bağlantını kontrol et.'));
   }
   await writeLocalRoles([]);
   // The session belongs to a deleted user now; drop it on this device only.

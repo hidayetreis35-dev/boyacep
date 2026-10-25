@@ -2,6 +2,7 @@ import { View } from 'react-native';
 
 import { QUOTE_KIND_LABEL, lineTotal, quoteTotals, type QuoteItemKind } from '@/engine';
 import { VERIFICATION_LABEL } from '@/features/pros/form';
+import { t } from '@/i18n';
 import type { ProCard, QuoteItemRow, QuoteRow } from '@/lib/database.types';
 import { formatMoney, formatNumber } from '@/lib/number';
 import { AppText, Badge, Card, Row } from '@/ui/components';
@@ -13,16 +14,16 @@ import { formatDate } from './pdf';
 const KIND_ORDER: QuoteItemKind[] = ['labor', 'material', 'other'];
 
 export function QuoteTotalsCard({ items, vatRate, discount }: { items: { kind: QuoteItemKind; quantity: number; unitPrice: number }[]; vatRate: number; discount: number }) {
-  const t = quoteTotals(items, vatRate, discount);
+  const totals = quoteTotals(items, vatRate, discount);
   return (
     <Card>
-      {KIND_ORDER.filter((k) => t.byKind[k] > 0).map((k) => (
-        <Row key={k} label={QUOTE_KIND_LABEL[k]} value={formatMoney(t.byKind[k])} />
+      {KIND_ORDER.filter((k) => totals.byKind[k] > 0).map((k) => (
+        <Row key={k} label={t(QUOTE_KIND_LABEL[k])} value={formatMoney(totals.byKind[k])} />
       ))}
-      <Row label="Ara toplam" value={formatMoney(t.subtotal)} />
-      {t.discount > 0 ? <Row label="İndirim" value={`-${formatMoney(t.discount)}`} /> : null}
-      <Row label={`KDV (%${formatNumber(vatRate, 2)})`} value={formatMoney(t.vat)} />
-      <Row label="Genel toplam" value={formatMoney(t.total)} strong />
+      <Row label={t('Ara toplam')} value={formatMoney(totals.subtotal)} />
+      {totals.discount > 0 ? <Row label={t('İndirim')} value={`-${formatMoney(totals.discount)}`} /> : null}
+      <Row label={`KDV (%${formatNumber(vatRate, 2)})`} value={formatMoney(totals.vat)} />
+      <Row label={t('Genel toplam')} value={formatMoney(totals.total)} strong />
     </Card>
   );
 }
@@ -34,16 +35,16 @@ export function QuoteView({ quote, items, pro, showPro }: { quote: QuoteRow; ite
       <Card>
         <View style={{ flexDirection: 'row', gap: space.sm, flexWrap: 'wrap' }}>
           <Badge
-            label={QUOTE_STATUS_LABEL[quote.status]}
+            label={t(QUOTE_STATUS_LABEL[quote.status])}
             tone={quote.status === 'accepted' ? 'success' : quote.status === 'sent' ? 'primary' : 'muted'}
           />
-          <Badge label={`Teklif No: ${quote.number}`} />
+          <Badge label={t('Teklif No: {number}', { number: quote.number })} />
         </View>
         <AppText variant="heading">{quote.title}</AppText>
-        {quote.sent_at ? <Row label="Gönderildi" value={formatDate(quote.sent_at)} /> : null}
-        {quote.valid_until ? <Row label="Geçerlilik" value={formatDate(quote.valid_until)} /> : null}
-        {quote.responded_at ? <Row label="Yanıt" value={formatDate(quote.responded_at)} /> : null}
-        {quote.customer_name ? <Row label="Müşteri" value={quote.customer_name} /> : null}
+        {quote.sent_at ? <Row label={t('Gönderildi')} value={formatDate(quote.sent_at)} /> : null}
+        {quote.valid_until ? <Row label={t('Geçerlilik')} value={formatDate(quote.valid_until)} /> : null}
+        {quote.responded_at ? <Row label={t('Yanıt')} value={formatDate(quote.responded_at)} /> : null}
+        {quote.customer_name ? <Row label={t('Müşteri')} value={quote.customer_name} /> : null}
       </Card>
 
       {showPro && pro ? (
@@ -52,9 +53,9 @@ export function QuoteView({ quote, items, pro, showPro }: { quote: QuoteRow; ite
           {pro.business_name ? <AppText tone="muted">{pro.full_name}</AppText> : null}
           <AppText tone="muted">{pro.city}</AppText>
           <View style={{ flexDirection: 'row' }}>
-            <Badge label={VERIFICATION_LABEL[pro.verification_status]} tone={pro.verification_status === 'verified' ? 'success' : 'muted'} />
+            <Badge label={t(VERIFICATION_LABEL[pro.verification_status])} tone={pro.verification_status === 'verified' ? 'success' : 'muted'} />
           </View>
-          {pro.show_phone && pro.phone ? <Row label="Telefon" value={pro.phone} /> : null}
+          {pro.show_phone && pro.phone ? <Row label={t('Telefon')} value={pro.phone} /> : null}
         </Card>
       ) : null}
 
@@ -63,7 +64,7 @@ export function QuoteView({ quote, items, pro, showPro }: { quote: QuoteRow; ite
         if (group.length === 0) return null;
         return (
           <View key={kind} style={{ gap: space.sm }}>
-            <AppText variant="heading">{QUOTE_KIND_LABEL[kind]}</AppText>
+            <AppText variant="heading">{t(QUOTE_KIND_LABEL[kind])}</AppText>
             <Card>
               {group.map((i) => (
                 <View key={i.id} style={{ gap: 2 }}>
@@ -87,7 +88,7 @@ export function QuoteView({ quote, items, pro, showPro }: { quote: QuoteRow; ite
 
       {quote.notes ? (
         <Card>
-          <AppText variant="bodyStrong">Notlar</AppText>
+          <AppText variant="bodyStrong">{t('Notlar')}</AppText>
           <AppText>{quote.notes}</AppText>
         </Card>
       ) : null}

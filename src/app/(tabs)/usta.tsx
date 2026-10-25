@@ -15,6 +15,7 @@ import { useCreateQuote, useMyQuotes } from '@/features/quotes/queries';
 import { normaliseInviteCode } from '@/features/sharing/api';
 import { useRedeemInvite, useSharedProjects } from '@/features/sharing/queries';
 import { formatDate } from '@/features/quotes/pdf';
+import { t } from '@/i18n';
 import {
   AppText,
   Badge,
@@ -46,7 +47,7 @@ function BecomePro() {
       if (!local.includes('pro')) await writeLocalRoles([...local, 'pro']);
       await queryClient.invalidateQueries({ queryKey: ['account', session.user.id] });
     } catch {
-      setError('Usta rolü açılamadı. İnternet bağlantını kontrol et.');
+      setError(t('Usta rolü açılamadı. İnternet bağlantını kontrol et.'));
     } finally {
       setBusy(false);
     }
@@ -54,11 +55,11 @@ function BecomePro() {
   return (
     <EmptyState
       icon="construct"
-      title="Usta musun?"
-      message="Usta rolünü açınca profilini oluşturabilir, ev sahiplerinin paylaştığı projeleri görebilir ve PDF teklif hazırlayabilirsin."
+      title={t('Usta musun?')}
+      message={t('Usta rolünü açınca profilini oluşturabilir, ev sahiplerinin paylaştığı projeleri görebilir ve PDF teklif hazırlayabilirsin.')}
       action={
         <View style={{ gap: space.sm, alignSelf: 'stretch' }}>
-          <Button label="Usta rolünü aç" icon="construct" loading={busy} onPress={enable} />
+          <Button label={t('Usta rolünü aç')} icon="construct" loading={busy} onPress={enable} />
           {error ? (
             <Notice tone="danger" icon="alert-circle">
               {error}
@@ -73,13 +74,13 @@ function BecomePro() {
 function ProfileCard() {
   const profile = useMyProProfile();
   if (profile.isPending) return <LoadingState />;
-  if (profile.isError) return <ErrorState message="Usta profili yüklenemedi." onRetry={() => profile.refetch()} />;
+  if (profile.isError) return <ErrorState message={t('Usta profili yüklenemedi.')} onRetry={() => profile.refetch()} />;
   if (!profile.data) {
     return (
       <Card>
-        <AppText variant="heading">Usta profilini oluştur</AppText>
-        <AppText tone="muted">Adın, çalıştığın bölge ve uzmanlıkların tekliflerinde ve müşterilerinin ekranında görünür.</AppText>
-        <Button label="Profili oluştur" icon="person-add" onPress={() => router.push('/usta/profile')} />
+        <AppText variant="heading">{t('Usta profilini oluştur')}</AppText>
+        <AppText tone="muted">{t('Adın, çalıştığın bölge ve uzmanlıkların tekliflerinde ve müşterilerinin ekranında görünür.')}</AppText>
+        <Button label={t('Profili oluştur')} icon="person-add" onPress={() => router.push('/usta/profile')} />
       </Card>
     );
   }
@@ -88,10 +89,10 @@ function ProfileCard() {
     <ListItem
       title={p.business_name || p.full_name}
       subtitle={`${p.city} · ${p.specialties.map(specialtyLabel).join(', ')}`}
-      accessibilityLabel="Usta profilini düzenle"
+      accessibilityLabel={t('Usta profilini düzenle')}
       onPress={() => router.push('/usta/profile')}>
       <View style={{ flexDirection: 'row' }}>
-        <Badge label={VERIFICATION_LABEL[p.verification_status]} tone={p.verification_status === 'verified' ? 'success' : 'muted'} />
+        <Badge label={t(VERIFICATION_LABEL[p.verification_status])} tone={p.verification_status === 'verified' ? 'success' : 'muted'} />
       </View>
     </ListItem>
   );
@@ -104,7 +105,7 @@ function JoinProject() {
   const join = () => {
     const normalised = normaliseInviteCode(code);
     if (!normalised) {
-      setError('Kod 8 karakterdir. Örnek: BOYA-2345');
+      setError(t('Kod 8 karakterdir. Örnek: BOYA-2345'));
       return;
     }
     setError(undefined);
@@ -117,10 +118,10 @@ function JoinProject() {
   };
   return (
     <Card>
-      <AppText variant="heading">Paylaşım kodu gir</AppText>
-      <AppText tone="muted">Ev sahibi projesini seninle paylaşınca sana bir kod verir.</AppText>
+      <AppText variant="heading">{t('Paylaşım kodu gir')}</AppText>
+      <AppText tone="muted">{t('Ev sahibi projesini seninle paylaşınca sana bir kod verir.')}</AppText>
       <TextField
-        label="Kod"
+        label={t('Kod')}
         value={code}
         placeholder="BOYA-2345"
         autoCapitalize="characters"
@@ -131,7 +132,7 @@ function JoinProject() {
         onSubmitEditing={join}
         testID="invite-code"
       />
-      <Button label="Projeye katıl" icon="enter" loading={redeem.isPending} onPress={join} />
+      <Button label={t('Projeye katıl')} icon="enter" loading={redeem.isPending} onPress={join} />
     </Card>
   );
 }
@@ -140,19 +141,19 @@ function SharedProjects() {
   const shared = useSharedProjects();
   return (
     <View style={{ gap: space.sm }}>
-      <AppText variant="heading">Paylaşılan projeler</AppText>
+      <AppText variant="heading">{t('Paylaşılan projeler')}</AppText>
       {shared.isPending ? (
         <LoadingState />
       ) : shared.isError ? (
-        <ErrorState message="Projeler yüklenemedi." onRetry={() => shared.refetch()} />
+        <ErrorState message={t('Projeler yüklenemedi.')} onRetry={() => shared.refetch()} />
       ) : shared.data.length === 0 ? (
-        <AppText tone="muted">Henüz seninle paylaşılan bir proje yok.</AppText>
+        <AppText tone="muted">{t('Henüz seninle paylaşılan bir proje yok.')}</AppText>
       ) : (
         shared.data.map((p) => (
           <ListItem
             key={p.id}
             title={p.title}
-            subtitle={`${p.owner_name} · ${STATUS_LABEL[p.status]}`}
+            subtitle={`${p.owner_name} · ${t(STATUS_LABEL[p.status])}`}
             onPress={() => router.push({ pathname: '/usta/project/[id]', params: { id: p.id } })}
           />
         ))
@@ -166,14 +167,14 @@ function Quotes() {
   const create = useCreateQuote();
   return (
     <View style={{ gap: space.sm }}>
-      <AppText variant="heading">Tekliflerim</AppText>
+      <AppText variant="heading">{t('Tekliflerim')}</AppText>
       <Button
-        label="Yeni teklif"
+        label={t('Yeni teklif')}
         icon="add"
         variant="secondary"
         loading={create.isPending}
         onPress={() =>
-          create.mutate({ title: 'Boya işçiliği teklifi' }, { onSuccess: (q) => router.push({ pathname: '/quotes/[id]', params: { id: q.id } }) })
+          create.mutate({ title: t('Boya işçiliği teklifi') }, { onSuccess: (q) => router.push({ pathname: '/quotes/[id]', params: { id: q.id } }) })
         }
       />
       {create.isError ? (
@@ -184,9 +185,9 @@ function Quotes() {
       {quotes.isPending ? (
         <LoadingState />
       ) : quotes.isError ? (
-        <ErrorState message="Teklifler yüklenemedi." onRetry={() => quotes.refetch()} />
+        <ErrorState message={t('Teklifler yüklenemedi.')} onRetry={() => quotes.refetch()} />
       ) : quotes.data.length === 0 ? (
-        <AppText tone="muted">Henüz teklif yok. Paylaşılan bir projeden ya da buradan teklif hazırlayabilirsin.</AppText>
+        <AppText tone="muted">{t('Henüz teklif yok. Paylaşılan bir projeden ya da buradan teklif hazırlayabilirsin.')}</AppText>
       ) : (
         quotes.data.map((q) => (
           <ListItem
@@ -196,7 +197,7 @@ function Quotes() {
             onPress={() => router.push({ pathname: '/quotes/[id]', params: { id: q.id } })}>
             <View style={{ flexDirection: 'row' }}>
               <Badge
-                label={QUOTE_STATUS_LABEL[q.status]}
+                label={t(QUOTE_STATUS_LABEL[q.status])}
                 tone={q.status === 'accepted' ? 'success' : q.status === 'sent' ? 'primary' : 'muted'}
               />
             </View>
@@ -214,23 +215,23 @@ export default function UstaScreen() {
   let body;
   if (loading) body = <LoadingState />;
   else if (!db) {
-    body = <EmptyState icon="cloud-offline" title="Sunucu bağlı değil" message="Usta araçları hesap gerektirir; sunucu bağlantısı kurulunca açılacak." />;
+    body = <EmptyState icon="cloud-offline" title={t('Sunucu bağlı değil')} message={t('Usta araçları hesap gerektirir; sunucu bağlantısı kurulunca açılacak.')} />;
   } else if (!session) {
     body = (
       <SignInGate
         feature="cost"
         icon="construct"
-        title="Usta araçları"
-        message="Boya ustaları için teklif ve iş takibi."
+        title={t('Usta araçları')}
+        message={t('Boya ustaları için teklif ve iş takibi.')}
         benefits={[
-          'Ev sahibinin paylaştığı ölçüleri ve malzeme listesini gör.',
-          'Dakikalar içinde PDF teklif hazırla ve gönder.',
-          'Usta profilinle güven ver.',
+          t('Ev sahibinin paylaştığı ölçüleri ve malzeme listesini gör.'),
+          t('Dakikalar içinde PDF teklif hazırla ve gönder.'),
+          t('Usta profilinle güven ver.'),
         ]}
       />
     );
   } else if (account.isPending) body = <LoadingState />;
-  else if (account.isError) body = <ErrorState message="Hesap yüklenemedi." onRetry={() => account.refetch()} />;
+  else if (account.isError) body = <ErrorState message={t('Hesap yüklenemedi.')} onRetry={() => account.refetch()} />;
   else if (!account.data.roles.includes('pro')) body = <BecomePro />;
   else {
     body = (
@@ -245,7 +246,7 @@ export default function UstaScreen() {
 
   return (
     <Screen>
-      <AppText variant="title">Usta</AppText>
+      <AppText variant="title">{t('Usta')}</AppText>
       <View style={{ gap: space.lg }}>{body}</View>
     </Screen>
   );

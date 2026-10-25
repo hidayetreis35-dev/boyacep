@@ -19,6 +19,7 @@ import {
 } from '@/features/materials/queries';
 import { roomToInput } from '@/features/projects/mapping';
 import { useProject } from '@/features/projects/queries';
+import { msg, t } from '@/i18n';
 import type { ProjectCostRow } from '@/lib/database.types';
 import { formatMoney, formatNumber, parseDecimal } from '@/lib/number';
 import {
@@ -39,9 +40,9 @@ import {
 import { space, usePalette } from '@/ui/theme';
 
 const COST_KIND_OPTIONS: { value: ProjectCostRow['kind']; label: string }[] = [
-  { value: 'labor', label: 'İşçilik' },
-  { value: 'transport', label: 'Ulaşım' },
-  { value: 'other', label: 'Diğer' },
+  { value: 'labor', label: msg('İşçilik') },
+  { value: 'transport', label: msg('Ulaşım') },
+  { value: 'other', label: msg('Diğer') },
 ];
 
 function AddMaterial({ projectId }: { projectId: string }) {
@@ -49,16 +50,16 @@ function AddMaterial({ projectId }: { projectId: string }) {
   const [name, setName] = useState('');
   const [quantity, setQuantity] = useState('1');
   const add = useAddMaterial(projectId);
-  if (!open) return <Button label="Kalem ekle" icon="add" variant="ghost" onPress={() => setOpen(true)} />;
+  if (!open) return <Button label={t('Kalem ekle')} icon="add" variant="ghost" onPress={() => setOpen(true)} />;
   const q = parseDecimal(quantity);
   const valid = name.trim().length > 0 && Number.isFinite(q);
   return (
     <View style={{ gap: space.sm }}>
-      <TextField label="Malzeme adı" placeholder="Örn. Silikon" value={name} onChangeText={setName} maxLength={120} />
-      <NumberField label="Miktar" unit="adet" value={quantity} onChangeText={setQuantity} />
-      {add.isError ? <Notice tone="danger" icon="alert-circle">Eklenemedi: {add.error.message}</Notice> : null}
+      <TextField label={t('Malzeme adı')} placeholder={t('Örn. Silikon')} value={name} onChangeText={setName} maxLength={120} />
+      <NumberField label={t('Miktar')} unit="adet" value={quantity} onChangeText={setQuantity} />
+      {add.isError ? <Notice tone="danger" icon="alert-circle">{t('Eklenemedi: {message}', { message: add.error.message })}</Notice> : null}
       <Button
-        label="Ekle"
+        label={t('Ekle')}
         disabled={!valid}
         loading={add.isPending}
         onPress={() =>
@@ -85,25 +86,25 @@ function AddCost({ projectId }: { projectId: string }) {
   const [source, setSource] = useState<'estimate' | 'store'>('estimate');
   const add = useAddCost(projectId);
   const value = parseDecimal(amount);
-  const fallbackLabel = COST_KIND_OPTIONS.find((o) => o.value === kind)!.label;
+  const fallbackLabel = t(COST_KIND_OPTIONS.find((o) => o.value === kind)!.label);
   return (
     <View style={{ gap: space.sm }}>
-      <ChoiceChips label="Gider türü" options={COST_KIND_OPTIONS} value={kind} onChange={setKind} />
+      <ChoiceChips label={t('Gider türü')} options={COST_KIND_OPTIONS} value={kind} onChange={setKind} />
       <FieldRow>
-        <TextField label="Açıklama" placeholder={fallbackLabel} value={label} onChangeText={setLabel} maxLength={120} />
-        <NumberField label="Tutar" unit="₺" value={amount} onChangeText={setAmount} testID="cost-amount" />
+        <TextField label={t('Açıklama')} placeholder={fallbackLabel} value={label} onChangeText={setLabel} maxLength={120} />
+        <NumberField label={t('Tutar')} unit="₺" value={amount} onChangeText={setAmount} testID="cost-amount" />
       </FieldRow>
       <ChoiceChips
         options={[
-          { value: 'estimate' as const, label: 'Tahmini' },
-          { value: 'store' as const, label: 'Kesin (teklif / fatura)' },
+          { value: 'estimate' as const, label: t('Tahmini') },
+          { value: 'store' as const, label: t('Kesin (teklif / fatura)') },
         ]}
         value={source}
         onChange={setSource}
       />
-      {add.isError ? <Notice tone="danger" icon="alert-circle">Eklenemedi: {add.error.message}</Notice> : null}
+      {add.isError ? <Notice tone="danger" icon="alert-circle">{t('Eklenemedi: {message}', { message: add.error.message })}</Notice> : null}
       <Button
-        label="Gider ekle"
+        label={t('Gider ekle')}
         icon="add"
         variant="secondary"
         disabled={!Number.isFinite(value)}
@@ -132,17 +133,17 @@ function Budget({ projectId, budget }: { projectId: string; budget: number | nul
   const invalid = value !== null && !Number.isFinite(value);
   return (
     <Card>
-      <AppText variant="heading">Bütçe</AppText>
+      <AppText variant="heading">{t('Bütçe')}</AppText>
       <NumberField
-        label="Bu iş için ayırdığın tutar"
+        label={t('Bu iş için ayırdığın tutar')}
         unit="₺"
         value={text}
         onChangeText={setText}
-        error={invalid ? 'Tutarı sayı olarak yazın.' : undefined}
+        error={invalid ? t('Tutarı sayı olarak yazın.') : undefined}
         testID="budget"
       />
       {text !== initial ? (
-        <Button label="Bütçeyi kaydet" variant="secondary" disabled={invalid} loading={save.isPending} onPress={() => save.mutate(value)} />
+        <Button label={t('Bütçeyi kaydet')} variant="secondary" disabled={invalid} loading={save.isPending} onPress={() => save.mutate(value)} />
       ) : null}
     </Card>
   );
@@ -168,7 +169,7 @@ export default function CostScreen() {
       materials.refetch();
       costs.refetch();
     };
-    return <Screen edges={['bottom']}><ErrorState message="Malzeme ve maliyet bilgileri yüklenemedi." onRetry={retry} /></Screen>;
+    return <Screen edges={['bottom']}><ErrorState message={t('Malzeme ve maliyet bilgileri yüklenemedi.')} onRetry={retry} /></Screen>;
   }
 
   const { rooms } = project.data;
@@ -191,25 +192,25 @@ export default function CostScreen() {
 
   return (
     <Screen edges={['bottom']}>
-      <Stack.Screen options={{ title: 'Malzeme ve maliyet' }} />
+      <Stack.Screen options={{ title: t('Malzeme ve maliyet') }} />
       <CostSummaryCard summary={summary} />
 
       <Card>
-        <AppText variant="heading">Malzeme listesi</AppText>
+        <AppText variant="heading">{t('Malzeme listesi')}</AppText>
         {rooms.length === 0 ? (
-          <Notice icon="cube">Önce projeye oda ekle; malzeme listesi ölçülerden otomatik çıkar.</Notice>
+          <Notice icon="cube">{t('Önce projeye oda ekle; malzeme listesi ölçülerden otomatik çıkar.')}</Notice>
         ) : (
           <Button
-            label={materials.data.some((m) => m.from_calculation) ? 'Ölçülerden yeniden oluştur' : 'Ölçülerden oluştur'}
+            label={materials.data.some((m) => m.from_calculation) ? t('Ölçülerden yeniden oluştur') : t('Ölçülerden oluştur')}
             icon="refresh"
             variant="secondary"
             loading={sync.isPending}
             onPress={regenerate}
           />
         )}
-        {sync.isError ? <Notice tone="danger" icon="alert-circle">Liste oluşturulamadı: {sync.error.message}</Notice> : null}
+        {sync.isError ? <Notice tone="danger" icon="alert-circle">{t('Liste oluşturulamadı: {message}', { message: sync.error.message })}</Notice> : null}
         {materials.data.length === 0 ? (
-          <EmptyState icon="list" title="Liste boş" message="Ölçülerden oluşturabilir veya kendin kalem ekleyebilirsin." />
+          <EmptyState icon="list" title={t('Liste boş')} message={t('Ölçülerden oluşturabilir veya kendin kalem ekleyebilirsin.')} />
         ) : (
           materials.data.map((m) => (
             <MaterialRow
@@ -221,21 +222,21 @@ export default function CostScreen() {
             />
           ))
         )}
-        {update.isError ? <Notice tone="danger" icon="alert-circle">Kaydedilemedi: {update.error.message}</Notice> : null}
+        {update.isError ? <Notice tone="danger" icon="alert-circle">{t('Kaydedilemedi: {message}', { message: update.error.message })}</Notice> : null}
         <AddMaterial projectId={id} />
         <AppText variant="caption" tone="muted">
-          Ölçülerden yeniden oluşturunca hesapla gelen kalemler güncellenir; girdiğin fiyatlar ve kendi eklediğin kalemler korunur.
+          {t('Ölçülerden yeniden oluşturunca hesapla gelen kalemler güncellenir; girdiğin fiyatlar ve kendi eklediğin kalemler korunur.')}
         </AppText>
       </Card>
 
       <Card>
-        <AppText variant="heading">İşçilik ve diğer giderler</AppText>
+        <AppText variant="heading">{t('İşçilik ve diğer giderler')}</AppText>
         {costs.data.map((c) => (
           <View key={c.id} style={{ flexDirection: 'row', alignItems: 'center', gap: space.sm }}>
             <View style={{ flex: 1 }}>
-              <AppText variant="bodyStrong">{c.label}</AppText>
+              <AppText variant="bodyStrong">{t(c.label)}</AppText>
               <AppText variant="caption" tone="muted">
-                {COST_KIND_OPTIONS.find((o) => o.value === c.kind)?.label} · {c.price_source === 'store' ? 'Kesin' : 'Tahmini'}
+                {t(COST_KIND_OPTIONS.find((o) => o.value === c.kind)?.label ?? c.kind)} · {c.price_source === 'store' ? t('Kesin') : t('Tahmini')}
               </AppText>
             </View>
             <AppText variant="bodyStrong">{formatMoney(Number(c.amount))}</AppText>
@@ -253,7 +254,7 @@ export default function CostScreen() {
 
       <Budget key={String(budget)} projectId={id} budget={budget} />
       <Notice>
-        “Tahmini” tutarlar senin ya da uygulamanın varsayımıdır. “Mağaza fiyatı” ve “Kesin” sadece senin kontrol ettiğin fiyatlardır.
+        {t('“Tahmini” tutarlar senin ya da uygulamanın varsayımıdır. “Mağaza fiyatı” ve “Kesin” sadece senin kontrol ettiğin fiyatlardır.')}
       </Notice>
     </Screen>
   );

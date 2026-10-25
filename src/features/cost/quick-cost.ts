@@ -1,20 +1,21 @@
 import { summarizeCost, type CostSummary, type ExtraCost, type PricedMaterial, type PriceSource } from '@/engine';
+import { msg } from '@/i18n';
 import { parseDecimal } from '@/lib/number';
 
 /** Who does the work decides which lines are asked for. */
 export type WhoPaints = 'self' | 'pro';
 
 export const WHO_OPTIONS: { value: WhoPaints; label: string; hint: string }[] = [
-  { value: 'self', label: 'Kendim boyayacağım', hint: 'Sadece malzeme' },
-  { value: 'pro', label: 'Usta boyayacak', hint: 'Malzeme ve işçilik' },
+  { value: 'self', label: msg('Kendim boyayacağım'), hint: msg('Sadece malzeme') },
+  { value: 'pro', label: msg('Usta boyayacak'), hint: msg('Malzeme ve işçilik') },
 ];
 
 /** Optional extras the user can switch on. */
 export type ExtraKind = 'transport' | 'protection' | 'cleaning';
 export const EXTRA_OPTIONS: { value: ExtraKind; label: string }[] = [
-  { value: 'transport', label: 'Taşıma / nakliye' },
-  { value: 'protection', label: 'Eşya koruma' },
-  { value: 'cleaning', label: 'İş sonu temizlik' },
+  { value: 'transport', label: msg('Taşıma / nakliye') },
+  { value: 'protection', label: msg('Eşya koruma') },
+  { value: 'cleaning', label: msg('İş sonu temizlik') },
 ];
 
 export type Price = { amount: string; source: PriceSource };

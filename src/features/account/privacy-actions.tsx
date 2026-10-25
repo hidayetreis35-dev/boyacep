@@ -3,6 +3,7 @@ import { router } from 'expo-router';
 import { useState } from 'react';
 import { View } from 'react-native';
 
+import { t } from '@/i18n';
 import type { DbClient } from '@/lib/supabase';
 import { AppText, Button, Card, Notice, TextField } from '@/ui/components';
 import { space } from '@/ui/theme';
@@ -25,7 +26,7 @@ export function PrivacyActions({ db, userId }: { db: DbClient; userId: string })
     try {
       await saveExport(await fetchMyData(db));
     } catch (e) {
-      setExportError(e instanceof Error ? e.message : 'Veriler indirilemedi.');
+      setExportError(e instanceof Error ? e.message : t('Veriler indirilemedi.'));
     } finally {
       setExporting(false);
     }
@@ -39,30 +40,30 @@ export function PrivacyActions({ db, userId }: { db: DbClient; userId: string })
       queryClient.clear();
       router.replace('/welcome');
     } catch (e) {
-      setDeleteError(e instanceof Error ? e.message : 'Hesap silinemedi.');
+      setDeleteError(e instanceof Error ? e.message : t('Hesap silinemedi.'));
       setDeleting(false);
     }
   };
 
   return (
     <>
-      <AppText variant="heading">Gizlilik ve verilerin</AppText>
-      <Button label="Verilerimi indir" icon="download" variant="secondary" loading={exporting} onPress={exportData} />
+      <AppText variant="heading">{t('Gizlilik ve verilerin')}</AppText>
+      <Button label={t('Verilerimi indir')} icon="download" variant="secondary" loading={exporting} onPress={exportData} />
       {exportError ? (
         <Notice tone="danger" icon="alert-circle">
           {exportError}
         </Notice>
       ) : null}
-      <Button label="Gizlilik bilgileri" icon="shield-checkmark" variant="ghost" onPress={() => router.push('/privacy')} />
+      <Button label={t('Gizlilik bilgileri')} icon="shield-checkmark" variant="ghost" onPress={() => router.push('/privacy')} />
 
       {deleteOpen ? (
         <Card>
-          <AppText variant="bodyStrong">Hesabın kalıcı olarak silinsin mi?</AppText>
+          <AppText variant="bodyStrong">{t('Hesabın kalıcı olarak silinsin mi?')}</AppText>
           <AppText tone="muted">
-            Projelerin, odaların, malzeme listelerin, fotoğrafların, usta profilin ve tekliflerin silinir. Bu işlem geri alınamaz. İstersen önce verilerini indir.
+            {t('Projelerin, odaların, malzeme listelerin, fotoğrafların, usta profilin ve tekliflerin silinir. Bu işlem geri alınamaz. İstersen önce verilerini indir.')}
           </AppText>
           <TextField
-            label={`Onaylamak için ${DELETE_CONFIRMATION} yaz`}
+            label={t('Onaylamak için {word} yaz', { word: t(DELETE_CONFIRMATION) })}
             value={confirmText}
             autoCapitalize="characters"
             autoCorrect={false}
@@ -75,12 +76,12 @@ export function PrivacyActions({ db, userId }: { db: DbClient; userId: string })
             </Notice>
           ) : null}
           <View style={{ flexDirection: 'row', gap: space.sm, flexWrap: 'wrap' }}>
-            <Button label="Vazgeç" variant="secondary" disabled={deleting} onPress={() => { setDeleteOpen(false); setConfirmText(''); }} />
-            <Button label="Hesabımı sil" icon="trash" loading={deleting} disabled={!isDeleteConfirmed(confirmText)} onPress={remove} />
+            <Button label={t('Vazgeç')} variant="secondary" disabled={deleting} onPress={() => { setDeleteOpen(false); setConfirmText(''); }} />
+            <Button label={t('Hesabımı sil')} icon="trash" loading={deleting} disabled={!isDeleteConfirmed(confirmText)} onPress={remove} />
           </View>
         </Card>
       ) : (
-        <Button label="Hesabımı sil" icon="trash-outline" variant="ghost" onPress={() => setDeleteOpen(true)} />
+        <Button label={t('Hesabımı sil')} icon="trash-outline" variant="ghost" onPress={() => setDeleteOpen(true)} />
       )}
     </>
   );

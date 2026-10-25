@@ -1,6 +1,7 @@
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 
 import { useSession } from '@/features/account/session';
+import { t } from '@/i18n';
 import type { ProjectColourRow } from '@/lib/database.types';
 import type { DbClient } from '@/lib/supabase';
 
@@ -11,9 +12,9 @@ export async function listProjectColours(db: DbClient, projectId: string): Promi
 }
 
 export function projectColourError(message: string): string {
-  if (message.includes('duplicate') || message.includes('unique')) return 'Bu renk projede zaten kayıtlı.';
-  if (message.includes('limit')) return 'Bir projeye en fazla 24 renk kaydedebilirsin.';
-  return 'Renk kaydedilemedi. İnternet bağlantını kontrol et.';
+  if (message.includes('duplicate') || message.includes('unique')) return t('Bu renk projede zaten kayıtlı.');
+  if (message.includes('limit')) return t('Bir projeye en fazla 24 renk kaydedebilirsin.');
+  return t('Renk kaydedilemedi. İnternet bağlantını kontrol et.');
 }
 
 export async function addProjectColour(
@@ -26,7 +27,7 @@ export async function addProjectColour(
 
 export async function removeProjectColour(db: DbClient, id: string): Promise<void> {
   const { error } = await db.from('project_colours').delete().eq('id', id);
-  if (error) throw new Error('Renk silinemedi. İnternet bağlantını kontrol et.');
+  if (error) throw new Error(t('Renk silinemedi. İnternet bağlantını kontrol et.'));
 }
 
 const key = (projectId: string) => ['project-colours', projectId] as const;

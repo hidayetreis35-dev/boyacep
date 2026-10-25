@@ -1,3 +1,4 @@
+import { t } from '@/i18n';
 import type { PhotoSurface, WallOutline } from '@/lib/database.types';
 
 import { DEFAULT_TOLERANCE, MAX_SEEDS, MAX_TOLERANCE, MIN_TOLERANCE } from './recolour';
@@ -57,7 +58,7 @@ export const MAX_SURFACES = 6;
 export function parseSurfaces(value: unknown): PhotoSurface[] {
   if (!Array.isArray(value) || value.length === 0) return [];
   const single = parseOutline(value);
-  if (single) return isUsableOutline(single) ? [{ label: 'Duvar', points: single, hex: null }] : [];
+  if (single) return isUsableOutline(single) ? [{ label: t('Duvar'), points: single, hex: null }] : [];
   const out: PhotoSurface[] = [];
   for (const item of value.slice(0, MAX_SURFACES)) {
     if (!item || typeof item !== 'object') continue;
@@ -67,7 +68,7 @@ export function parseSurfaces(value: unknown): PhotoSurface[] {
     const picked = taps && taps.length > 0 && taps.length <= MAX_SEEDS;
     if (!picked && !isUsableOutline(outline)) continue;
     const surface: PhotoSurface = {
-      label: typeof label === 'string' && label.trim() ? label.trim().slice(0, 40) : 'Yüzey',
+      label: typeof label === 'string' && label.trim() ? label.trim().slice(0, 40) : t('Yüzey'),
       points: picked ? [] : outline!,
       hex: typeof hex === 'string' && /^#[0-9A-F]{6}$/.test(hex) ? hex : null,
     };

@@ -14,6 +14,8 @@ import { COLOURS, familyLabel, type CatalogColour, type FamilyKey } from './cata
 import { harmonies, hexToRgb, lrv, nearest } from './harmony';
 import { hexToLab, type Lab } from './recolour';
 
+import { msg, t } from '@/i18n';
+
 export type Temperature = 'warm' | 'cool' | 'neutral';
 export type Depth = 'light' | 'mid' | 'deep';
 
@@ -40,12 +42,12 @@ export type ColourRecord = {
 };
 
 export const BOYACEP_SOURCE: ColourSource = {
-  name: 'BoyaCep genel renk kataloğu',
-  licence: 'BoyaCep’e ait; genel ton adlarıdır, marka ürün kodu değildir',
+  name: msg('BoyaCep genel renk kataloğu'),
+  licence: msg('BoyaCep’e ait; genel ton adlarıdır, marka ürün kodu değildir'),
 };
 
-export const TEMPERATURE_LABEL: Record<Temperature, string> = { warm: 'Sıcak ton', cool: 'Soğuk ton', neutral: 'Nötr' };
-export const DEPTH_LABEL: Record<Depth, string> = { light: 'Açık', mid: 'Orta', deep: 'Koyu' };
+export const TEMPERATURE_LABEL: Record<Temperature, string> = { warm: msg('Sıcak ton'), cool: msg('Soğuk ton'), neutral: msg('Nötr') };
+export const DEPTH_LABEL: Record<Depth, string> = { light: msg('Açık'), mid: msg('Orta'), deep: msg('Koyu') };
 
 /**
  * Warm or cool from the Lab hue angle. Low-chroma greys and whites are
@@ -94,7 +96,7 @@ export function colourFacts(hex: string): { temperature: Temperature; depth: Dep
   return {
     temperature: temperatureOf(lab),
     depth: depthOf(lab),
-    caption: record ? colourCaption(record) : 'Kendi girdiğin renk kodu',
+    caption: record ? colourCaption(record) : t('Kendi girdiğin renk kodu'),
   };
 }
 
@@ -127,17 +129,17 @@ export const BRAND_CATALOGUES: BrandCatalogue[] = [];
 /** Problems that keep a brand catalogue out of the app. Empty means it can be used. */
 export function brandCatalogueProblems(catalogue: BrandCatalogue): string[] {
   const problems: string[] = [];
-  if (!catalogue.brand.trim()) problems.push('Marka adı yok.');
-  if (!catalogue.source.name.trim() || !catalogue.source.licence.trim()) problems.push('Kaynak ya da lisans/izin bilgisi yok.');
-  if (!/^\d{4}-\d{2}-\d{2}$/.test(catalogue.checkedOn)) problems.push('Kontrol tarihi yok.');
+  if (!catalogue.brand.trim()) problems.push(t('Marka adı yok.'));
+  if (!catalogue.source.name.trim() || !catalogue.source.licence.trim()) problems.push(t('Kaynak ya da lisans/izin bilgisi yok.'));
+  if (!/^\d{4}-\d{2}-\d{2}$/.test(catalogue.checkedOn)) problems.push(t('Kontrol tarihi yok.'));
   const codes = new Set<string>();
   catalogue.colours.forEach((c, i) => {
-    const where = `${i + 1}. renk`;
-    if (!c.productCode.trim()) problems.push(`${where}: ürün kodu yok.`);
-    else if (codes.has(c.productCode)) problems.push(`${where}: ürün kodu tekrar ediyor (${c.productCode}).`);
+    const n = i + 1;
+    if (!c.productCode.trim()) problems.push(t('{n}. renk: ürün kodu yok.', { n }));
+    else if (codes.has(c.productCode)) problems.push(t('{n}. renk: ürün kodu tekrar ediyor ({code}).', { n, code: c.productCode }));
     codes.add(c.productCode);
-    if (!/^#[0-9A-F]{6}$/.test(c.hex)) problems.push(`${where}: renk kodu #RRGGBB biçiminde değil.`);
-    if (!c.name.trim()) problems.push(`${where}: ad yok.`);
+    if (!/^#[0-9A-F]{6}$/.test(c.hex)) problems.push(t('{n}. renk: renk kodu #RRGGBB biçiminde değil.', { n }));
+    if (!c.name.trim()) problems.push(t('{n}. renk: ad yok.', { n }));
   });
   return problems;
 }
@@ -157,5 +159,5 @@ export function brandRecords(
 
 /** How a colour is labelled: brand colours with their code, generic ones clearly as generic. */
 export function colourCaption(record: Pick<ColourRecord, 'brand' | 'productCode'>): string {
-  return record.brand && record.productCode ? `${record.brand} · ${record.productCode}` : 'Genel ton · marka kodu değildir';
+  return record.brand && record.productCode ? `${record.brand} · ${record.productCode}` : t('Genel ton · marka kodu değildir');
 }

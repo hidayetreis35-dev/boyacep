@@ -1,6 +1,7 @@
 import { router } from 'expo-router';
 import { StyleSheet, View } from 'react-native';
 
+import { t } from '@/i18n';
 import { IconBubble } from '@/ui/brand';
 import { AppText, Button, Icon, type IconName } from '@/ui/components';
 import { radius, shadowOf, space, useFeatureColour, usePalette, type FeatureKey } from '@/ui/theme';
@@ -43,9 +44,9 @@ export function SignInGate({
           </View>
         ))}
         <View style={{ marginTop: space.sm, gap: space.xs }}>
-          <Button label="Giriş yap" icon="log-in" variant="cta" size="lg" onPress={() => router.push('/sign-in')} />
+          <Button label={t('Giriş yap')} icon="log-in" variant="cta" size="lg" onPress={() => router.push('/sign-in')} />
           <AppText variant="caption" tone="muted" style={{ textAlign: 'center' }}>
-            Şifre yok: e-postana gelen bağlantıyla girersin. Hesabın yoksa kendiliğinden açılır.
+            {t('Şifre yok: e-postana gelen bağlantıyla girersin. Hesabın yoksa kendiliğinden açılır.')}
           </AppText>
         </View>
       </View>

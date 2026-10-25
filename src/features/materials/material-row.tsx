@@ -1,6 +1,7 @@
 import { useState } from 'react';
 import { Pressable, View } from 'react-native';
 
+import { msg, t } from '@/i18n';
 import type { ProjectMaterialRow } from '@/lib/database.types';
 import { formatMoney, formatNumber, parseDecimal } from '@/lib/number';
 import { AppText, Button, ChoiceChips, FieldRow, Icon, NumberField, TextField } from '@/ui/components';
@@ -9,8 +10,8 @@ import { radius, space, usePalette } from '@/ui/theme';
 import type { MaterialPatch } from './api';
 
 export const PRICE_SOURCE_OPTIONS = [
-  { value: 'estimate' as const, label: 'Tahmini' },
-  { value: 'store' as const, label: 'Mağaza fiyatı' },
+  { value: 'estimate' as const, label: msg('Tahmini') },
+  { value: 'store' as const, label: msg('Mağaza fiyatı') },
 ];
 
 function moneyText(n: number | null): string {
@@ -22,10 +23,10 @@ export function rowPatch(
   form: { quantity: string; price: string; source: 'estimate' | 'store'; store: string },
 ): { ok: true; patch: MaterialPatch } | { ok: false; error: string } {
   const quantity = parseDecimal(form.quantity);
-  if (!Number.isFinite(quantity) || quantity > 100000) return { ok: false, error: 'Miktarı sayı olarak yazın.' };
+  if (!Number.isFinite(quantity) || quantity > 100000) return { ok: false, error: t('Miktarı sayı olarak yazın.') };
   const price = form.price.trim() === '' ? null : parseDecimal(form.price);
-  if (price !== null && !Number.isFinite(price)) return { ok: false, error: 'Fiyatı sayı olarak yazın.' };
-  if (form.source === 'store' && price === null) return { ok: false, error: 'Mağaza fiyatı için tutar girin.' };
+  if (price !== null && !Number.isFinite(price)) return { ok: false, error: t('Fiyatı sayı olarak yazın.') };
+  if (form.source === 'store' && price === null) return { ok: false, error: t('Mağaza fiyatı için tutar girin.') };
   return {
     ok: true,
     patch: {
@@ -69,7 +70,7 @@ export function MaterialRow({
         <AppText variant="bodyStrong" style={{ flex: 1 }}>
           {item.name}
         </AppText>
-        <AppText variant="bodyStrong">{line === null ? 'Fiyat yok' : formatMoney(line)}</AppText>
+        <AppText variant="bodyStrong">{line === null ? t('Fiyat yok') : formatMoney(line)}</AppText>
         <Pressable
           accessibilityRole="button"
           accessibilityLabel={`${item.name} sil`}
@@ -79,12 +80,12 @@ export function MaterialRow({
         </Pressable>
       </View>
       <FieldRow>
-        <NumberField label="Miktar" unit={item.unit} value={form.quantity} onChangeText={(t) => setForm({ ...form, quantity: t })} />
-        <NumberField label={`Birim fiyat (${item.unit})`} unit="₺" value={form.price} onChangeText={(t) => setForm({ ...form, price: t })} />
+        <NumberField label={t('Miktar')} unit={item.unit} value={form.quantity} onChangeText={(value) => setForm({ ...form, quantity: value })} />
+        <NumberField label={t('Birim fiyat ({unit})', { unit: t(item.unit) })} unit="₺" value={form.price} onChangeText={(value) => setForm({ ...form, price: value })} />
       </FieldRow>
       <ChoiceChips options={PRICE_SOURCE_OPTIONS} value={form.source} onChange={(v) => setForm({ ...form, source: v })} />
       {form.source === 'store' ? (
-        <TextField label="Mağaza adı (isteğe bağlı)" value={form.store} onChangeText={(t) => setForm({ ...form, store: t })} maxLength={80} />
+        <TextField label={t('Mağaza adı (isteğe bağlı)')} value={form.store} onChangeText={(value) => setForm({ ...form, store: value })} maxLength={80} />
       ) : null}
       {error ? (
         <AppText variant="caption" tone="danger">
@@ -93,7 +94,7 @@ export function MaterialRow({
       ) : null}
       {dirty ? (
         <Button
-          label="Kaydet"
+          label={t('Kaydet')}
           variant="secondary"
           loading={saving}
           onPress={() => {

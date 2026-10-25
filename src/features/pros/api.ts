@@ -1,3 +1,4 @@
+import { t } from '@/i18n';
 import type { ProProfileRow, VerificationStatus } from '@/lib/database.types';
 import type { DbClient } from '@/lib/supabase';
 
@@ -16,15 +17,15 @@ export async function saveProProfile(db: DbClient, userId: string, record: ProRe
     .select('*')
     .single();
   if (error) {
-    if (error.message.includes('row-level security')) throw new Error('Usta profili için önce Profil sekmesinden usta rolünü aç.');
-    throw new Error('Profil kaydedilemedi. İnternet bağlantını kontrol et.');
+    if (error.message.includes('row-level security')) throw new Error(t('Usta profili için önce Profil sekmesinden usta rolünü aç.'));
+    throw new Error(t('Profil kaydedilemedi. İnternet bağlantını kontrol et.'));
   }
   return data;
 }
 
 export async function requestVerification(db: DbClient, userId: string): Promise<void> {
   const { error } = await db.from('pro_profiles').update({ verification_status: 'pending' }).eq('user_id', userId);
-  if (error) throw new Error('Doğrulama isteği gönderilemedi.');
+  if (error) throw new Error(t('Doğrulama isteği gönderilemedi.'));
 }
 
 // ---- Admin -------------------------------------------------------------------
@@ -37,5 +38,5 @@ export async function listProProfiles(db: DbClient): Promise<ProProfileRow[]> {
 
 export async function setVerification(db: DbClient, userId: string, status: VerificationStatus): Promise<void> {
   const { error } = await db.from('pro_profiles').update({ verification_status: status }).eq('user_id', userId);
-  if (error) throw new Error('Kaydedilemedi.');
+  if (error) throw new Error(t('Kaydedilemedi.'));
 }

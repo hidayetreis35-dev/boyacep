@@ -5,6 +5,7 @@ import { StyleSheet, View } from 'react-native';
 import { useSession } from '@/features/account/session';
 import type { Place } from '@/features/inspect/rules';
 import { useProjects } from '@/features/projects/queries';
+import { t } from '@/i18n';
 import { AppText, Button, Notice, TextField } from '@/ui/components';
 import { radius, space, usePalette } from '@/ui/theme';
 
@@ -22,12 +23,12 @@ export function SaveInspection({ symptoms, place }: { symptoms: string[]; place:
 
   if (!db) return null;
   if (!session) {
-    return <Button label="Projeye kaydetmek için giriş yap" icon="log-in" variant="secondary" onPress={() => router.push('/sign-in')} />;
+    return <Button label={t('Projeye kaydetmek için giriş yap')} icon="log-in" variant="secondary" onPress={() => router.push('/sign-in')} />;
   }
   if (!open) {
     return (
       <Button
-        label="Projeye kaydet"
+        label={t('Projeye kaydet')}
         icon="bookmark"
         variant="secondary"
         onPress={() => {
@@ -41,18 +42,18 @@ export function SaveInspection({ symptoms, place }: { symptoms: string[]; place:
   const list = projects.data ?? [];
   return (
     <View style={[styles.save, { backgroundColor: p.surface, borderColor: p.border }]} testID="save-inspection">
-      <AppText variant="bodyStrong">Bu inceleme hangi projeye?</AppText>
+      <AppText variant="bodyStrong">{t('Bu inceleme hangi projeye?')}</AppText>
       <AppText variant="small" tone="muted">
-        Projenin keşif dosyasına eklenir; projeye katılan ustalar da görür. Fotoğraf telefonunda kalır.
+        {t('Projenin keşif dosyasına eklenir; projeye katılan ustalar da görür. Fotoğraf telefonunda kalır.')}
       </AppText>
-      <TextField label="Nerede? (isteğe bağlı)" value={location} onChangeText={setLocation} placeholder="Banyo tavanı, salon pencere altı…" maxLength={60} />
-      {projects.isPending ? <AppText tone="muted">Projeler yükleniyor…</AppText> : null}
+      <TextField label={t('Nerede? (isteğe bağlı)')} value={location} onChangeText={setLocation} placeholder={t('Banyo tavanı, salon pencere altı…')} maxLength={60} />
+      {projects.isPending ? <AppText tone="muted">{t('Projeler yükleniyor…')}</AppText> : null}
       {projects.isError ? (
         <Notice tone="danger" icon="alert-circle">
-          Projeler yüklenemedi.
+          {t('Projeler yüklenemedi.')}
         </Notice>
       ) : null}
-      {list.length === 0 && projects.isSuccess ? <AppText tone="muted">Henüz projen yok. Önce Projelerim’den bir proje oluştur.</AppText> : null}
+      {list.length === 0 && projects.isSuccess ? <AppText tone="muted">{t('Henüz projen yok. Önce Projelerim’den bir proje oluştur.')}</AppText> : null}
       {saved ? null : (
         <View style={{ flexDirection: 'row', flexWrap: 'wrap', gap: space.sm }}>
           {list.map((project) => (
@@ -75,10 +76,10 @@ export function SaveInspection({ symptoms, place }: { symptoms: string[]; place:
       {saved ? (
         <>
           <Notice tone="success" icon="checkmark-circle">
-            İnceleme “{saved.title}” projesine kaydedildi.
+            {t('İnceleme “{title}” projesine kaydedildi.', { title: saved.title })}
           </Notice>
           <Button
-            label="Keşif dosyasını aç"
+            label={t('Keşif dosyasını aç')}
             icon="document-text"
             onPress={() => router.push({ pathname: '/projects/[id]/survey', params: { id: saved.id } })}
           />
@@ -89,7 +90,7 @@ export function SaveInspection({ symptoms, place }: { symptoms: string[]; place:
           {add.error.message}
         </Notice>
       ) : null}
-      <Button label="Kapat" variant="ghost" onPress={() => setOpen(false)} />
+      <Button label={t('Kapat')} variant="ghost" onPress={() => setOpen(false)} />
     </View>
   );
 }

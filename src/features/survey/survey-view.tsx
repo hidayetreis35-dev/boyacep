@@ -1,9 +1,10 @@
 import { StyleSheet, View } from 'react-native';
 
 import { AssumptionList } from '@/features/calculator/results';
-import { packageText, SOURCE_LABEL } from '@/features/calculator/labels';
+import { packageText, quantityText, SOURCE_LABEL } from '@/features/calculator/labels';
 import { SEVERITY_LABEL, type Severity } from '@/features/inspect/rules';
 import { formatDate } from '@/features/quotes/pdf';
+import { t } from '@/i18n';
 import { formatNumber } from '@/lib/number';
 import { Disclosure, Gradient, SectionTitle } from '@/ui/brand';
 import { AppText, Badge, Button, Card, Notice, Row } from '@/ui/components';
@@ -38,20 +39,20 @@ function Finding({ finding, onRemove, removing }: { finding: SurveyFinding; onRe
         </AppText>
       </View>
       {finding.symptoms.length === 0 ? (
-        <AppText tone="muted">Sorun işaretlenmedi.</AppText>
+        <AppText tone="muted">{t('Sorun işaretlenmedi.')}</AppText>
       ) : (
         <View style={styles.chips}>
           {finding.symptoms.map((s) => (
-            <Badge key={s.id} label={`${s.label} · ${SEVERITY_LABEL[s.severity]}`} tone={SEVERITY_TONE[s.severity]} />
+            <Badge key={s.id} label={`${s.label} · ${t(SEVERITY_LABEL[s.severity])}`} tone={SEVERITY_TONE[s.severity]} />
           ))}
         </View>
       )}
       {finding.blocked ? (
         <Notice tone="danger" icon="alert-circle">
-          Boyadan önce nedeni giderilmeli (nem, su ya da yapısal sorun).
+          {t('Boyadan önce nedeni giderilmeli (nem, su ya da yapısal sorun).')}
         </Notice>
       ) : null}
-      <Disclosure title="İş sırası">
+      <Disclosure title={t('İş sırası')}>
         {finding.steps.map((step, i) => (
           <View key={i} style={{ flexDirection: 'row', gap: space.sm }}>
             <AppText variant="bodyStrong" tone="primary" style={{ minWidth: 20 }}>
@@ -61,7 +62,7 @@ function Finding({ finding, onRemove, removing }: { finding: SurveyFinding; onRe
           </View>
         ))}
       </Disclosure>
-      {onRemove ? <Button label="İncelemeyi sil" icon="trash-outline" variant="ghost" loading={removing} onPress={onRemove} /> : null}
+      {onRemove ? <Button label={t('İncelemeyi sil')} icon="trash-outline" variant="ghost" loading={removing} onPress={onRemove} /> : null}
     </Card>
   );
 }
@@ -78,46 +79,52 @@ export function SurveyView({
   removingId?: string | null;
 }) {
   const p = usePalette();
-  const t = model.totals;
+  const totals = model.totals;
   return (
     <View style={{ gap: space.lg }} testID="survey-file">
       <View style={[styles.hero, shadowOf(p, 2)]}>
         <Gradient from={p.heroFrom} to={p.heroTo} />
         <AppText variant="overline" style={{ color: p.onHeroMuted }}>
-          Keşif dosyası · {formatDate(model.preparedOn)}
+          {t('Keşif dosyası · {date}', { date: formatDate(model.preparedOn) })}
         </AppText>
         <AppText variant="title" style={{ color: p.onHero }}>
           {model.title}
         </AppText>
         {model.ownerName ? <AppText style={{ color: p.onHeroMuted }}>{model.ownerName}</AppText> : null}
         <View style={{ flexDirection: 'row', gap: space.lg, flexWrap: 'wrap', marginTop: space.xs }}>
-          <Stat label="Oda" value={String(model.rooms.length)} />
-          {t ? <Stat label="Boyanacak alan" value={`${formatNumber(t.totalPaintable, 1)} m²`} /> : null}
-          {t ? <Stat label="Son kat boya" value={`${formatNumber(t.wallLitres + t.ceilingLitres)} L`} /> : null}
-          <Stat label="İnceleme" value={String(model.findings.length)} />
+          <Stat label={t('Oda')} value={String(model.rooms.length)} />
+          {totals ? <Stat label={t('Boyanacak alan')} value={`${formatNumber(totals.totalPaintable, 1)} m²`} /> : null}
+          {totals ? <Stat label={t('Son kat boya')} value={`${formatNumber(totals.wallLitres + totals.ceilingLitres)} L`} /> : null}
+          <Stat label={t('İnceleme')} value={String(model.findings.length)} />
         </View>
       </View>
 
       {model.calculationError ? (
         <Notice tone="danger" icon="alert-circle">
-          Hesap yapılamadı: {model.calculationError}
+          {t('Hesap yapılamadı: {calculationError}', { calculationError: model.calculationError })}
         </Notice>
       ) : null}
 
       <View style={{ gap: space.sm }}>
-        <SectionTitle title="Odalar" />
+        <SectionTitle title={t('Odalar')} />
         {model.rooms.length === 0 ? (
-          <AppText tone="muted">Henüz oda yok.</AppText>
+          <AppText tone="muted">{t('Henüz oda yok.')}</AppText>
         ) : (
           model.rooms.map((r, i) => (
             <Card key={`${r.name}-${i}`}>
               <AppText variant="bodyStrong">{r.name}</AppText>
               <AppText variant="small" tone="muted">
-                {formatNumber(r.length, 2)} × {formatNumber(r.width, 2)} m, tavan {formatNumber(r.height, 2)} m · {r.doors} kapı, {r.windows} pencere
+                {t('{length} × {width} m, tavan {height} m · {doors} kapı, {windows} pencere', {
+                  length: formatNumber(r.length, 2),
+                  width: formatNumber(r.width, 2),
+                  height: formatNumber(r.height, 2),
+                  doors: r.doors,
+                  windows: r.windows,
+                })}
               </AppText>
-              <Row label="Duvar" value={`${formatNumber(r.wallArea, 1)} m²`} />
-              {r.ceilingArea > 0 ? <Row label="Tavan" value={`${formatNumber(r.ceilingArea, 1)} m²`} /> : null}
-              <Row label="Son kat boya" value={`${formatNumber(r.litres, 1)} L`} strong />
+              <Row label={t('Duvar')} value={`${formatNumber(r.wallArea, 1)} m²`} />
+              {r.ceilingArea > 0 ? <Row label={t('Tavan')} value={`${formatNumber(r.ceilingArea, 1)} m²`} /> : null}
+              <Row label={t('Son kat boya')} value={`${formatNumber(r.litres, 1)} L`} strong />
             </Card>
           ))
         )}
@@ -125,17 +132,17 @@ export function SurveyView({
 
       {model.materials.length > 0 ? (
         <View style={{ gap: space.sm }}>
-          <SectionTitle title="Malzeme ihtiyacı" />
+          <SectionTitle title={t('Malzeme ihtiyacı')} />
           <Card>
             {model.materials.map((m) => (
               <View key={m.category} style={{ flexDirection: 'row', gap: space.sm, alignItems: 'center' }}>
-                <AppText style={{ flex: 1 }}>{m.name}</AppText>
-                <AppText variant="bodyStrong">{m.packages ? packageText(m.packages) : `${formatNumber(m.quantity)} ${m.unit}`}</AppText>
-                <Badge label={SOURCE_LABEL[m.source].label} tone={SOURCE_LABEL[m.source].tone} />
+                <AppText style={{ flex: 1 }}>{t(m.name)}</AppText>
+                <AppText variant="bodyStrong">{m.packages ? packageText(m.packages) : quantityText(m.quantity, m.unit)}</AppText>
+                <Badge label={t(SOURCE_LABEL[m.source].label)} tone={SOURCE_LABEL[m.source].tone} />
               </View>
             ))}
           </Card>
-          <Disclosure title="Hesapta kullanılan değerler">
+          <Disclosure title={t('Hesapta kullanılan değerler')}>
             <AssumptionList assumptions={model.assumptions} />
           </Disclosure>
         </View>
@@ -143,32 +150,32 @@ export function SurveyView({
 
       {model.colours.length > 0 ? (
         <View style={{ gap: space.sm }}>
-          <SectionTitle title="Seçilen renkler" />
+          <SectionTitle title={t('Seçilen renkler')} />
           <View style={styles.chips}>
             {model.colours.map((c) => (
-              <View key={c.hex} style={[styles.colour, { backgroundColor: p.surface, borderColor: p.border }]} accessibilityLabel={`${c.name}${c.surface ? `, ${c.surface}` : ''}`}>
+              <View key={c.hex} style={[styles.colour, { backgroundColor: p.surface, borderColor: p.border }]} accessibilityLabel={c.surface ? `${t(c.name)}, ${t(c.surface)}` : t(c.name)}>
                 <View style={{ height: 44, backgroundColor: c.hex }} />
                 <View style={{ padding: space.sm, gap: 2 }}>
                   <AppText variant="caption" style={{ fontFamily: fonts.bold }} numberOfLines={1}>
-                    {c.name}
+                    {t(c.name)}
                   </AppText>
                   <AppText variant="caption" tone="muted" numberOfLines={1} style={{ fontSize: 11 }}>
-                    {c.surface ?? c.hex}
+                    {c.surface ? t(c.surface) : c.hex}
                   </AppText>
                 </View>
               </View>
             ))}
           </View>
           <AppText variant="caption" tone="muted">
-            Renk adları genel tonlardır, marka ürün kodu değildir.
+            {t('Renk adları genel tonlardır, marka ürün kodu değildir.')}
           </AppText>
         </View>
       ) : null}
 
       <View style={{ gap: space.sm }}>
-        <SectionTitle title="Duvar incelemeleri" />
+        <SectionTitle title={t('Duvar incelemeleri')} />
         {model.findings.length === 0 ? (
-          <AppText tone="muted">Kayıtlı inceleme yok.</AppText>
+          <AppText tone="muted">{t('Kayıtlı inceleme yok.')}</AppText>
         ) : (
           model.findings.map((f) => (
             <Finding
@@ -182,11 +189,11 @@ export function SurveyView({
       </View>
 
       {model.photoCount > 0 ? (
-        <AppText tone="muted">Projede {model.photoCount} fotoğraf var; projeye katılan ustalar uygulamada görür.</AppText>
+        <AppText tone="muted">{t('Projede {photoCount} fotoğraf var; projeye katılan ustalar uygulamada görür.', { photoCount: model.photoCount })}</AppText>
       ) : null}
 
       <Notice icon="information-circle">
-        Alan ve miktarlar girilen ölçülerden hesaplanan tahminlerdir. İncelemeler işaretlenen belirtilere göre genel bilgidir, teşhis değildir.
+        {t('Alan ve miktarlar girilen ölçülerden hesaplanan tahminlerdir. İncelemeler işaretlenen belirtilere göre genel bilgidir, teşhis değildir.')}
       </Notice>
     </View>
   );

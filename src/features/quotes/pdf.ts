@@ -1,14 +1,15 @@
 import { QUOTE_KIND_LABEL, lineTotal, quoteTotals, type QuoteItemKind } from '@/engine';
+import { getLocale, t } from '@/i18n';
 import type { ProProfileRow, QuoteItemRow, QuoteRow } from '@/lib/database.types';
 import { escapeHtml } from '@/lib/html';
 import { formatMoney, formatNumber } from '@/lib/number';
 
 const multiline = (text: string) => escapeHtml(text).replace(/\n/g, '<br>');
 
-/** "2026-10-25" → "25.10.2026" */
+/** "2026-10-25" → "25.10.2026" (Turkish) or "25/10/2026" (English) */
 export function formatDate(iso: string): string {
   const [y, m, d] = iso.slice(0, 10).split('-');
-  return `${d}.${m}.${y}`;
+  return getLocale() === 'en' ? `${d}/${m}/${y}` : `${d}.${m}.${y}`;
 }
 
 const KIND_ORDER: QuoteItemKind[] = ['labor', 'material', 'other'];
@@ -27,12 +28,12 @@ export function quoteHtml(args: {
     const group = items.filter((i) => i.kind === kind);
     if (group.length === 0) return [];
     return [
-      `<tr class="group"><td colspan="5">${QUOTE_KIND_LABEL[kind]}</td></tr>`,
+      `<tr class="group"><td colspan="5">${t(QUOTE_KIND_LABEL[kind])}</td></tr>`,
       ...group.map(
         (i) => `<tr>
           <td>${escapeHtml(i.description)}</td>
           <td class="num">${formatNumber(Number(i.quantity), 2)}</td>
-          <td>${escapeHtml(i.unit)}</td>
+          <td>${escapeHtml(t(i.unit))}</td>
           <td class="num">${formatMoney(Number(i.unit_price))}</td>
           <td class="num">${formatMoney(lineTotal({ quantity: Number(i.quantity), unitPrice: Number(i.unit_price) }))}</td>
         </tr>`,
@@ -46,7 +47,7 @@ export function quoteHtml(args: {
   const to = [quote.customer_name, quote.customer_contact].filter(Boolean).map(escapeHtml).join('<br>');
 
   return `<!doctype html>
-<html lang="tr"><head><meta charset="utf-8"><title>Teklif ${quote.number}</title>
+<html lang="${getLocale()}"><head><meta charset="utf-8"><title>${t('Teklif {number}', { number: quote.number })}</title>
 <style>
   @page { size: A4; margin: 18mm; }
   body { font-family: -apple-system, 'Segoe UI', Roboto, Arial, sans-serif; color: #1B1F1E; font-size: 12px; }
@@ -68,26 +69,26 @@ export function quoteHtml(args: {
 </style></head>
 <body>
   <div class="head">
-    <div><h1>${escapeHtml(quote.title)}</h1><div class="muted">Teklif No: ${quote.number}</div></div>
-    <div class="muted" style="text-align:right">Tarih: ${formatDate(quote.sent_at ?? quote.created_at)}${
-      quote.valid_until ? `<br>Geçerlilik: ${formatDate(quote.valid_until)}` : ''
+    <div><h1>${escapeHtml(quote.title)}</h1><div class="muted">${t('Teklif No: {number}', { number: quote.number })}</div></div>
+    <div class="muted" style="text-align:right">${t('Tarih: {date}', { date: formatDate(quote.sent_at ?? quote.created_at) })}${
+      quote.valid_until ? `<br>${t('Geçerlilik: {date}', { date: formatDate(quote.valid_until) })}` : ''
     }</div>
   </div>
   <div class="parties">
-    <div><strong>Teklifi veren</strong><br>${from || '<span class="muted">—</span>'}</div>
-    <div><strong>Müşteri</strong><br>${to || '<span class="muted">—</span>'}</div>
+    <div><strong>${t('Teklifi veren')}</strong><br>${from || '<span class="muted">—</span>'}</div>
+    <div><strong>${t('Müşteri')}</strong><br>${to || '<span class="muted">—</span>'}</div>
   </div>
   <table>
-    <thead><tr><th>Açıklama</th><th class="num">Miktar</th><th>Birim</th><th class="num">Birim fiyat</th><th class="num">Tutar</th></tr></thead>
+    <thead><tr><th>${t('Açıklama')}</th><th class="num">${t('Miktar')}</th><th>${t('Birim')}</th><th class="num">${t('Birim fiyat')}</th><th class="num">${t('Tutar')}</th></tr></thead>
     <tbody>${rows}</tbody>
   </table>
   <table class="totals">
-    <tr><td>Ara toplam</td><td class="num">${formatMoney(totals.subtotal)}</td></tr>
-    ${totals.discount > 0 ? `<tr><td>İndirim</td><td class="num">-${formatMoney(totals.discount)}</td></tr>` : ''}
-    <tr><td>KDV (%${formatNumber(Number(quote.vat_rate), 2)})</td><td class="num">${formatMoney(totals.vat)}</td></tr>
-    <tr class="grand"><td>Genel toplam</td><td class="num">${formatMoney(totals.total)}</td></tr>
+    <tr><td>${t('Ara toplam')}</td><td class="num">${formatMoney(totals.subtotal)}</td></tr>
+    ${totals.discount > 0 ? `<tr><td>${t('İndirim')}</td><td class="num">-${formatMoney(totals.discount)}</td></tr>` : ''}
+    <tr><td>${t('KDV (%{rate})', { rate: formatNumber(Number(quote.vat_rate), 2) })}</td><td class="num">${formatMoney(totals.vat)}</td></tr>
+    <tr class="grand"><td>${t('Genel toplam')}</td><td class="num">${formatMoney(totals.total)}</td></tr>
   </table>
-  ${quote.notes ? `<div class="notes"><strong>Notlar</strong><br>${multiline(quote.notes)}</div>` : ''}
-  <footer>Bu teklif BoyaCep ile hazırlanmıştır. Fiyatlar teklifi verenin beyanıdır.</footer>
+  ${quote.notes ? `<div class="notes"><strong>${t('Notlar')}</strong><br>${multiline(quote.notes)}</div>` : ''}
+  <footer>${t('Bu teklif BoyaCep ile hazırlanmıştır. Fiyatlar teklifi verenin beyanıdır.')}</footer>
 </body></html>`;
 }

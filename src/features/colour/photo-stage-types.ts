@@ -1,5 +1,6 @@
 import type { GestureResponderEvent } from 'react-native';
 
+import { msg } from '@/i18n';
 import type { PhotoSurface, WallOutline } from '@/lib/database.types';
 
 import { toNormalised } from './outline';
@@ -33,5 +34,5 @@ export function pressPoint(e: GestureResponderEvent, width: number, height: numb
   return toNormalised(x, y, width, height);
 }
 
-export const TAP_LABEL = 'Fotoğraf: boyanacak yere dokun';
-export const CORNER_LABEL = 'Fotoğraf: yüzeyin köşesine dokun';
+export const TAP_LABEL = msg('Fotoğraf: boyanacak yere dokun');
+export const CORNER_LABEL = msg('Fotoğraf: yüzeyin köşesine dokun');

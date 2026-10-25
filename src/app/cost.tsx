@@ -15,6 +15,7 @@ import {
   type QuickCostForm,
 } from '@/features/cost/quick-cost';
 import { CostSummaryCard } from '@/features/materials/cost-summary';
+import { t } from '@/i18n';
 import { formatNumber, parseDecimal } from '@/lib/number';
 import { Disclosure, FeatureHeader, OptionCard, OptionGrid, SectionTitle } from '@/ui/brand';
 import { AppText, Button, Card, FieldRow, Icon, Notice, NumberField, Screen, Toggle } from '@/ui/components';
@@ -44,20 +45,20 @@ function PriceField({
         label={label}
         unit={unit}
         value={price.amount}
-        onChangeText={(t) => onChange({ ...price, amount: t })}
-        error={isInvalid(price.amount) ? 'Tutarı sayı olarak yazın (örnek: 1250,50).' : undefined}
+        onChangeText={(value) => onChange({ ...price, amount: value })}
+        error={isInvalid(price.amount) ? t('Tutarı sayı olarak yazın (örnek: 1250,50).') : undefined}
         hint={hint}
         testID={testID}
       />
       <Pressable
         accessibilityRole="switch"
         accessibilityState={{ checked: sure }}
-        accessibilityLabel={`${label}: kesin fiyat`}
+        accessibilityLabel={t('{label}: kesin fiyat', { label })}
         onPress={() => onChange({ ...price, source: sure ? 'estimate' : 'store' })}
         style={{ flexDirection: 'row', alignItems: 'center', gap: 6, alignSelf: 'flex-start', minHeight: 32 }}>
         <Icon name={sure ? 'checkmark-circle' : 'ellipse-outline'} size={18} color={sure ? p.success : p.textMuted} />
         <AppText variant="caption" style={{ color: sure ? p.success : p.textMuted }}>
-          {sure ? 'Kesin fiyat (mağaza/usta teyitli)' : 'Tahmini fiyat'}
+          {sure ? t('Kesin fiyat (mağaza/usta teyitli)') : t('Tahmini fiyat')}
         </AppText>
       </Pressable>
     </View>
@@ -91,16 +92,16 @@ export default function QuickCostScreen() {
 
   return (
     <Screen edges={['bottom']}>
-      <FeatureHeader feature="cost" icon="wallet" title="Ne kadar tutar?" subtitle="Fiyatları yaz, toplamı anında gör." />
+      <FeatureHeader feature="cost" icon="wallet" title={t('Ne kadar tutar?')} subtitle={t('Fiyatları yaz, toplamı anında gör.')} />
 
-      <SectionTitle title="Kim boyayacak?" />
+      <SectionTitle title={t('Kim boyayacak?')} />
       <OptionGrid>
         {WHO_OPTIONS.map((o) => (
           <OptionCard
             key={o.value}
             feature="cost"
-            title={o.label}
-            subtitle={o.hint}
+            title={t(o.label)}
+            subtitle={t(o.hint)}
             icon={o.value === 'self' ? 'hand-left' : 'person'}
             selected={form.who === o.value}
             onPress={() => set('who', o.value)}
@@ -108,78 +109,80 @@ export default function QuickCostScreen() {
         ))}
       </OptionGrid>
 
-      <SectionTitle title="Boya" />
+      <SectionTitle title={t('Boya')} />
       <Card>
         {fromWizard ? (
           <View style={{ flexDirection: 'row', alignItems: 'center', gap: space.sm, padding: space.md, borderRadius: radius.md, backgroundColor: p.surfaceMuted }}>
             <Icon name="color-fill" color={p.cta} />
             <AppText variant="bodyStrong" style={{ flex: 1 }}>
-              Hesaplanan: {form.paintLitres} L boya{form.primerLitres ? `, ${form.primerLitres} L astar` : ''}
+              {form.primerLitres
+                ? t('Hesaplanan: {paint} L boya, {primer} L astar', { paint: form.paintLitres, primer: form.primerLitres })
+                : t('Hesaplanan: {paint} L boya', { paint: form.paintLitres })}
             </AppText>
           </View>
         ) : (
           <NumberField
-            label="Kaç litre boya?"
+            label={t('Kaç litre boya?')}
             unit="L"
             value={form.paintLitres}
-            onChangeText={(t) => set('paintLitres', t)}
-            error={isInvalid(form.paintLitres) ? 'Litreyi sayı olarak yazın.' : undefined}
-            hint="Bilmiyorsan boş bırak ve aşağıya boyanın toplam fiyatını yaz."
+            onChangeText={(value) => set('paintLitres', value)}
+            error={isInvalid(form.paintLitres) ? t('Litreyi sayı olarak yazın.') : undefined}
+            hint={t('Bilmiyorsan boş bırak ve aşağıya boyanın toplam fiyatını yaz.')}
             testID="paint-litres"
           />
         )}
         <PriceField
-          label={hasLitres ? '1 litre boya fiyatı' : 'Boyanın toplam fiyatı'}
+          label={hasLitres ? t('1 litre boya fiyatı') : t('Boyanın toplam fiyatı')}
           unit={hasLitres ? '₺/L' : '₺'}
           price={form.paintPrice}
           onChange={(v) => set('paintPrice', v)}
-          hint={hasLitres ? '15 L kutu fiyatını 15’e bölerek bulabilirsin.' : undefined}
+          hint={hasLitres ? t('15 L kutu fiyatını 15’e bölerek bulabilirsin.') : undefined}
           testID="cost-paint"
         />
         {!fromWizard ? (
-          <Button label="Litreyi bilmiyorum, hesapla" icon="color-fill" variant="ghost" onPress={() => router.push('/calculate')} />
+          <Button label={t('Litreyi bilmiyorum, hesapla')} icon="color-fill" variant="ghost" onPress={() => router.push('/calculate')} />
         ) : null}
       </Card>
 
-      <SectionTitle title="Malzemeler" />
+      <SectionTitle title={t('Malzemeler')} />
       <Card>
         {form.primerLitres || !fromWizard ? (
           <FieldRow>
             {!fromWizard ? (
-              <NumberField label="Astar" unit="L" value={form.primerLitres} onChangeText={(t) => set('primerLitres', t)} testID="primer-litres" />
+              <NumberField label={t('Astar')} unit="L" value={form.primerLitres} onChangeText={(value) => set('primerLitres', value)} testID="primer-litres" />
             ) : null}
-            <PriceField label="1 litre astar fiyatı" unit="₺/L" price={form.primerPrice} onChange={(v) => set('primerPrice', v)} testID="cost-primer" />
+            <PriceField label={t('1 litre astar fiyatı')} unit="₺/L" price={form.primerPrice} onChange={(v) => set('primerPrice', v)} testID="cost-primer" />
           </FieldRow>
         ) : null}
-        <PriceField label="Macun ve zımpara (toplam)" price={form.filler} onChange={(v) => set('filler', v)} testID="cost-filler" />
+        <PriceField label={t('Macun ve zımpara (toplam)')} price={form.filler} onChange={(v) => set('filler', v)} testID="cost-filler" />
         <PriceField
-          label="Yardımcı malzemeler (toplam)"
+          label={t('Yardımcı malzemeler (toplam)')}
           price={form.supplies}
           onChange={(v) => set('supplies', v)}
-          hint="Rulo, fırça, bant, örtü"
+          hint={t('Rulo, fırça, bant, örtü')}
           testID="cost-supplies"
         />
       </Card>
 
       {form.who === 'pro' ? (
         <>
-          <SectionTitle title="İşçilik" />
+          <SectionTitle title={t('İşçilik')} />
           <Card>
-            <PriceField label="Ustanın işçilik ücreti (toplam)" price={form.labour} onChange={(v) => set('labour', v)} testID="cost-labor" />
+            <PriceField label={t('Ustanın işçilik ücreti (toplam)')} price={form.labour} onChange={(v) => set('labour', v)} testID="cost-labor" />
           </Card>
         </>
       ) : null}
 
-      <Disclosure title="Ek masraflar ve bütçe" initiallyOpen={Object.keys(form.extras).length > 0}>
+      <Disclosure title={t('Ek masraflar ve bütçe')} initiallyOpen={Object.keys(form.extras).length > 0}>
         <View style={{ gap: space.sm }}>
           {EXTRA_OPTIONS.map((o) => (
             <View key={o.value} style={{ gap: space.sm }}>
               <View style={{ flexDirection: 'row' }}>
-                <Toggle label={o.label} value={!!form.extras[o.value]} onChange={(on) => toggleExtra(o.value, on)} />
+                <Toggle label={t(o.label)} value={!!form.extras[o.value]} onChange={(on) => toggleExtra(o.value, on)} />
               </View>
               {form.extras[o.value] ? (
                 <PriceField
-                  label={o.label}
+                  label={t(o.label)}
                   price={form.extras[o.value]!}
                   onChange={(v) => setForm((f) => ({ ...f, extras: { ...f.extras, [o.value]: v } }))}
                   testID={`cost-extra-${o.value}`}
@@ -188,22 +191,22 @@ export default function QuickCostScreen() {
             </View>
           ))}
         </View>
-        <NumberField label="Bütçen (isteğe bağlı)" unit="₺" value={form.budget} onChangeText={(t) => set('budget', t)} testID="quick-budget" />
+        <NumberField label={t('Bütçen (isteğe bağlı)')} unit="₺" value={form.budget} onChangeText={(value) => set('budget', value)} testID="quick-budget" />
       </Disclosure>
 
-      <SectionTitle title="Sonuç" />
+      <SectionTitle title={t('Sonuç')} />
       <CostSummaryCard summary={summary} />
 
       <Notice>
-        Tutarlar senin yazdığın fiyatlarla hesaplanır. BoyaCep piyasa fiyatı uydurmaz; mağazadan ya da ustadan teyit ettiğin fiyatları “Kesin” olarak işaretle.
+        {t('Tutarlar senin yazdığın fiyatlarla hesaplanır. BoyaCep piyasa fiyatı uydurmaz; mağazadan ya da ustadan teyit ettiğin fiyatları “Kesin” olarak işaretle.')}
       </Notice>
 
       {session ? (
         <View style={{ gap: space.sm }}>
           <AppText variant="small" tone="muted" style={{ fontFamily: fonts.medium }}>
-            Projelerim’de malzeme listesi fiyatlarla birlikte otomatik hesaplanır ve saklanır.
+            {t('Projelerim’de malzeme listesi fiyatlarla birlikte otomatik hesaplanır ve saklanır.')}
           </AppText>
-          <Button label="Projelerime git" variant="secondary" icon="albums" onPress={() => router.push('/projects')} />
+          <Button label={t('Projelerime git')} variant="secondary" icon="albums" onPress={() => router.push('/projects')} />
         </View>
       ) : null}
     </Screen>

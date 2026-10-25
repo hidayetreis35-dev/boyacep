@@ -6,6 +6,7 @@ import { useSession } from '@/features/account/session';
 import { CONSULTATION_STATUS_LABEL, topicLabel } from '@/features/ask/api';
 import { useAskActions, useQuestion } from '@/features/ask/queries';
 import { formatDate } from '@/features/quotes/pdf';
+import { t } from '@/i18n';
 import type { ConsultationMessageRow } from '@/lib/database.types';
 import { AppText, Badge, Button, Card, ErrorState, LoadingState, Notice, Screen, TextField } from '@/ui/components';
 import { radius, space, usePalette } from '@/ui/theme';
@@ -25,7 +26,7 @@ function Bubble({ message, mine }: { message: ConsultationMessageRow; mine: bool
         borderColor: message.from_team ? p.primarySoft : p.border,
       }}>
       <AppText variant="caption" tone={message.from_team ? 'primary' : 'muted'}>
-        {message.from_team ? 'BoyaCep ekibi' : mine ? 'Sen' : 'Kullanıcı'} · {formatDate(message.created_at)}
+        {message.from_team ? t('BoyaCep ekibi') : mine ? t('Sen') : t('Kullanıcı')} · {formatDate(message.created_at)}
       </AppText>
       <AppText>{message.body}</AppText>
     </View>
@@ -41,7 +42,7 @@ export default function QuestionScreen() {
 
   if (question.isPending) return <Screen edges={['bottom']}><LoadingState /></Screen>;
   if (question.isError) {
-    return <Screen edges={['bottom']}><ErrorState message="Soru yüklenemedi." onRetry={() => question.refetch()} /></Screen>;
+    return <Screen edges={['bottom']}><ErrorState message={t('Soru yüklenemedi.')} onRetry={() => question.refetch()} /></Screen>;
   }
   const { consultation, messages } = question.data;
   const owner = consultation.user_id === session?.user.id;
@@ -52,7 +53,7 @@ export default function QuestionScreen() {
       <Stack.Screen options={{ title: consultation.subject }} />
       <Card>
         <View style={{ flexDirection: 'row', gap: space.sm, flexWrap: 'wrap' }}>
-          <Badge label={CONSULTATION_STATUS_LABEL[consultation.status]} tone={consultation.status === 'answered' ? 'success' : 'muted'} />
+          <Badge label={t(CONSULTATION_STATUS_LABEL[consultation.status])} tone={consultation.status === 'answered' ? 'success' : 'muted'} />
           <Badge label={topicLabel(consultation.topic)} />
         </View>
         <AppText variant="heading">{consultation.subject}</AppText>
@@ -63,16 +64,16 @@ export default function QuestionScreen() {
       ))}
       {owner && consultation.status === 'open' ? (
         <AppText variant="caption" tone="muted">
-          Ekibimiz genellikle bir iş günü içinde yanıtlar.
+          {t('Ekibimiz genellikle bir iş günü içinde yanıtlar.')}
         </AppText>
       ) : null}
 
       {closed ? (
-        <Notice icon="lock-closed">Bu soru kapandı.</Notice>
+        <Notice icon="lock-closed">{t('Bu soru kapandı.')}</Notice>
       ) : (
         <>
           <TextField
-            label={owner ? 'Ekle ya da yanıtla' : 'Ekip yanıtı'}
+            label={owner ? t('Ekle ya da yanıtla') : t('Ekip yanıtı')}
             multiline
             value={reply}
             maxLength={2000}
@@ -85,13 +86,13 @@ export default function QuestionScreen() {
             </Notice>
           ) : null}
           <Button
-            label="Gönder"
+            label={t('Gönder')}
             icon="send"
             loading={send.isPending}
             disabled={reply.trim().length === 0}
             onPress={() => send.mutate({ id, body: reply }, { onSuccess: () => setReply('') })}
           />
-          <Button label="Soruyu kapat" icon="checkmark-done" variant="ghost" loading={close.isPending} onPress={() => close.mutate(id)} />
+          <Button label={t('Soruyu kapat')} icon="checkmark-done" variant="ghost" loading={close.isPending} onPress={() => close.mutate(id)} />
         </>
       )}
     </Screen>

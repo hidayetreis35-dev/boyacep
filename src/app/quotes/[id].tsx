@@ -10,6 +10,7 @@ import { quoteHtml } from '@/features/quotes/pdf';
 import { useQuote, useQuoteActions } from '@/features/quotes/queries';
 import { QuoteEditor } from '@/features/quotes/quote-editor';
 import { QuoteView } from '@/features/quotes/quote-view';
+import { t } from '@/i18n';
 import type { QuoteItemRow, QuoteRow } from '@/lib/database.types';
 import { AppText, Button, Card, ErrorState, LoadingState, Notice, Screen } from '@/ui/components';
 import { space } from '@/ui/theme';
@@ -20,7 +21,7 @@ async function sharePdf(data: QuoteWithItems, draft?: { quote: QuoteRecord; item
   const items: QuoteItemRow[] = draft
     ? draft.items.map((i, n) => ({ ...i, id: `draft-${n}`, quote_id: quote.id, created_at: quote.created_at }))
     : data.items;
-  await shareQuotePdf(quoteHtml({ quote, items, pro: data.pro }), `Teklif ${quote.number}`);
+  await shareQuotePdf(quoteHtml({ quote, items, pro: data.pro }), t('Teklif {number}', { number: quote.number }));
 }
 
 function Confirm({ question, confirmLabel, onConfirm, onCancel, busy }: { question: string; confirmLabel: string; onConfirm: () => void; onCancel: () => void; busy: boolean }) {
@@ -28,7 +29,7 @@ function Confirm({ question, confirmLabel, onConfirm, onCancel, busy }: { questi
     <Card>
       <AppText variant="bodyStrong">{question}</AppText>
       <View style={{ flexDirection: 'row', gap: space.sm, flexWrap: 'wrap' }}>
-        <Button label="Vazgeç" variant="secondary" onPress={onCancel} />
+        <Button label={t('Vazgeç')} variant="secondary" onPress={onCancel} />
         <Button label={confirmLabel} loading={busy} onPress={onConfirm} />
       </View>
     </Card>
@@ -48,7 +49,7 @@ function QuoteScreenBody({ id, data }: { id: string; data: QuoteWithItems }) {
     try {
       await sharePdf(data, draft);
     } catch {
-      setPdfError('PDF oluşturulamadı.');
+      setPdfError(t('PDF oluşturulamadı.'));
     }
   };
 
@@ -86,18 +87,18 @@ function QuoteScreenBody({ id, data }: { id: string; data: QuoteWithItems }) {
       {!mine && quote.status === 'sent' ? (
         confirm === 'accept' || confirm === 'reject' ? (
           <Confirm
-            question={confirm === 'accept' ? 'Teklifi kabul ediyor musun? Usta bunu hemen görür.' : 'Teklifi reddediyor musun?'}
-            confirmLabel={confirm === 'accept' ? 'Evet, kabul et' : 'Evet, reddet'}
+            question={confirm === 'accept' ? t('Teklifi kabul ediyor musun? Usta bunu hemen görür.') : t('Teklifi reddediyor musun?')}
+            confirmLabel={confirm === 'accept' ? t('Evet, kabul et') : t('Evet, reddet')}
             busy={actions.respond.isPending}
             onCancel={() => setConfirm(null)}
             onConfirm={() => actions.respond.mutate(confirm === 'accept', { onSettled: () => setConfirm(null) })}
           />
         ) : (
           <>
-            <Button label="Teklifi kabul et" icon="checkmark-circle" onPress={() => setConfirm('accept')} />
-            <Button label="Reddet" icon="close-circle" variant="ghost" onPress={() => setConfirm('reject')} />
+            <Button label={t('Teklifi kabul et')} icon="checkmark-circle" onPress={() => setConfirm('accept')} />
+            <Button label={t('Reddet')} icon="close-circle" variant="ghost" onPress={() => setConfirm('reject')} />
             <Notice icon="information-circle">
-              Kabul etmek bir sözleşme değildir; işin detaylarını ve ödemeyi ustayla ayrıca netleştir.
+              {t('Kabul etmek bir sözleşme değildir; işin detaylarını ve ödemeyi ustayla ayrıca netleştir.')}
             </Notice>
           </>
         )
@@ -106,8 +107,8 @@ function QuoteScreenBody({ id, data }: { id: string; data: QuoteWithItems }) {
       {mine && quote.status === 'sent' ? (
         confirm === 'withdraw' ? (
           <Confirm
-            question="Teklif geri çekilsin mi? Müşteri artık yanıt veremez; düzenleyip tekrar gönderebilirsin."
-            confirmLabel="Geri çek"
+            question={t('Teklif geri çekilsin mi? Müşteri artık yanıt veremez; düzenleyip tekrar gönderebilirsin.')}
+            confirmLabel={t('Geri çek')}
             busy={actions.setStatus.isPending}
             onCancel={() => setConfirm(null)}
             onConfirm={() => actions.setStatus.mutate('withdrawn', { onSettled: () => setConfirm(null) })}
@@ -115,26 +116,26 @@ function QuoteScreenBody({ id, data }: { id: string; data: QuoteWithItems }) {
         ) : (
           <>
             {quote.project_id ? (
-              <Notice icon="time">Müşterinin yanıtı bekleniyor. Yanıt verdiğinde burada göreceksin.</Notice>
+              <Notice icon="time">{t('Müşterinin yanıtı bekleniyor. Yanıt verdiğinde burada göreceksin.')}</Notice>
             ) : (
               <>
-                <Button label="Müşteri kabul etti" icon="checkmark-circle" variant="secondary" loading={actions.setStatus.isPending} onPress={() => actions.setStatus.mutate('accepted')} />
-                <Button label="Müşteri kabul etmedi" icon="close-circle" variant="ghost" disabled={busy} onPress={() => actions.setStatus.mutate('rejected')} />
+                <Button label={t('Müşteri kabul etti')} icon="checkmark-circle" variant="secondary" loading={actions.setStatus.isPending} onPress={() => actions.setStatus.mutate('accepted')} />
+                <Button label={t('Müşteri kabul etmedi')} icon="close-circle" variant="ghost" disabled={busy} onPress={() => actions.setStatus.mutate('rejected')} />
               </>
             )}
-            <Button label="Geri çek" icon="arrow-undo" variant="ghost" disabled={busy} onPress={() => setConfirm('withdraw')} />
+            <Button label={t('Geri çek')} icon="arrow-undo" variant="ghost" disabled={busy} onPress={() => setConfirm('withdraw')} />
           </>
         )
       ) : null}
 
       {mine && (quote.status === 'withdrawn' || quote.status === 'rejected') ? (
-        <Button label="Düzenle ve yeniden gönder" icon="create" variant="secondary" loading={actions.setStatus.isPending} onPress={() => actions.setStatus.mutate('draft')} />
+        <Button label={t('Düzenle ve yeniden gönder')} icon="create" variant="secondary" loading={actions.setStatus.isPending} onPress={() => actions.setStatus.mutate('draft')} />
       ) : null}
       {mine && quote.status === 'withdrawn' ? (
-        <Button label="Teklifi sil" icon="trash-outline" variant="ghost" disabled={busy} onPress={() => actions.remove.mutate(undefined, { onSuccess: () => router.back() })} />
+        <Button label={t('Teklifi sil')} icon="trash-outline" variant="ghost" disabled={busy} onPress={() => actions.remove.mutate(undefined, { onSuccess: () => router.back() })} />
       ) : null}
 
-      <Button label="PDF olarak paylaş" icon="document" variant="secondary" onPress={() => pdf()} />
+      <Button label={t('PDF olarak paylaş')} icon="document" variant="secondary" onPress={() => pdf()} />
     </>
   );
 }
@@ -144,11 +145,11 @@ export default function QuoteScreen() {
   const query = useQuote(id);
   return (
     <Screen edges={['bottom']}>
-      <Stack.Screen options={{ title: query.data ? `Teklif #${query.data.quote.number}` : 'Teklif' }} />
+      <Stack.Screen options={{ title: query.data ? t('Teklif #{number}', { number: query.data.quote.number }) : t('Teklif') }} />
       {query.isPending ? (
         <LoadingState />
       ) : query.isError ? (
-        <ErrorState message="Teklif yüklenemedi. Silinmiş olabilir ya da internet bağlantın yok." onRetry={() => query.refetch()} />
+        <ErrorState message={t('Teklif yüklenemedi. Silinmiş olabilir ya da internet bağlantın yok.')} onRetry={() => query.refetch()} />
       ) : (
         <QuoteScreenBody id={id} data={query.data} />
       )}

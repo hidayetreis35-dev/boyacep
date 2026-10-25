@@ -1,6 +1,7 @@
 import { StyleSheet, View } from 'react-native';
 
 import { COST_GROUP_LABEL, type CostGroup, type CostSummary } from '@/engine';
+import { t } from '@/i18n';
 import { formatMoney } from '@/lib/number';
 import { Disclosure, Gradient } from '@/ui/brand';
 import { AppText, Badge, Icon, Notice, Row, type IconName } from '@/ui/components';
@@ -26,18 +27,18 @@ export function CostSummaryCard({ summary, showGroups = true }: { summary: CostS
       <View style={styles.hero} accessibilityLiveRegion="polite">
         <Gradient from={f.base} to="#1B2B4B" />
         <AppText variant="overline" style={{ color: '#FFFFFF', opacity: 0.9 }}>
-          Tahmini toplam
+          {t('Tahmini toplam')}
         </AppText>
         <AppText variant="display" style={{ color: '#FFFFFF', fontSize: 40, lineHeight: 46 }} testID="cost-total">
           {formatMoney(summary.total)}
         </AppText>
         <View style={{ flexDirection: 'row', flexWrap: 'wrap', gap: space.sm }}>
-          <Badge label={`Kesin fiyat: ${formatMoney(summary.store)}`} tone="success" />
-          <Badge label={`Tahmini: ${formatMoney(summary.estimate)}`} tone="accent" />
+          <Badge label={t('Kesin fiyat: {amount}', { amount: formatMoney(summary.store) })} tone="success" />
+          <Badge label={t('Tahmini: {amount}', { amount: formatMoney(summary.estimate) })} tone="accent" />
         </View>
         {summary.budgetLeft !== null ? (
           <AppText variant="bodyStrong" style={{ color: '#FFFFFF' }}>
-            {summary.budgetLeft >= 0 ? 'Bütçede kalan' : 'Bütçe aşımı'}: {formatMoney(Math.abs(summary.budgetLeft))}
+            {summary.budgetLeft >= 0 ? t('Bütçede kalan') : t('Bütçe aşımı')}: {formatMoney(Math.abs(summary.budgetLeft))}
           </AppText>
         ) : null}
       </View>
@@ -55,7 +56,7 @@ export function CostSummaryCard({ summary, showGroups = true }: { summary: CostS
                       <Icon name={style.icon} size={14} color="#FFFFFF" />
                     </View>
                     <AppText variant="small" tone="muted" style={{ flex: 1 }} numberOfLines={1}>
-                      {COST_GROUP_LABEL[g.group]}
+                      {t(COST_GROUP_LABEL[g.group])}
                     </AppText>
                   </View>
                   <AppText variant="bodyStrong" style={{ fontFamily: fonts.extrabold, fontSize: 18 }}>
@@ -66,7 +67,7 @@ export function CostSummaryCard({ summary, showGroups = true }: { summary: CostS
                   </View>
                   {g.missing > 0 ? (
                     <AppText variant="caption" tone="danger">
-                      {g.missing} kalem fiyatsız
+                      {t('{count} kalem fiyatsız', { count: g.missing })}
                     </AppText>
                   ) : null}
                 </View>
@@ -77,21 +78,25 @@ export function CostSummaryCard({ summary, showGroups = true }: { summary: CostS
       ) : null}
 
       {showGroups && groups.length > 0 ? (
-        <Disclosure title="Detaylı döküm">
+        <Disclosure title={t('Detaylı döküm')}>
           {groups.map((g) => (
             <Row
               key={g.group}
-              label={`${COST_GROUP_LABEL[g.group]}${g.missing > 0 ? ` (${g.missing} fiyatsız)` : ''}`}
+              label={
+                g.missing > 0
+                  ? t('{group} ({count} fiyatsız)', { group: t(COST_GROUP_LABEL[g.group]), count: g.missing })
+                  : t(COST_GROUP_LABEL[g.group])
+              }
               value={formatMoney(g.total)}
             />
           ))}
-          <Row strong label="Toplam" value={formatMoney(summary.total)} />
+          <Row strong label={t('Toplam')} value={formatMoney(summary.total)} />
         </Disclosure>
       ) : null}
 
       {summary.missingPrices > 0 ? (
         <Notice tone="accent">
-          {summary.missingPrices} kalemin fiyatı girilmedi; toplam eksik. Fiyatları girdikçe toplam tamamlanır.
+          {t('{count} kalemin fiyatı girilmedi; toplam eksik. Fiyatları girdikçe toplam tamamlanır.', { count: summary.missingPrices })}
         </Notice>
       ) : null}
     </View>

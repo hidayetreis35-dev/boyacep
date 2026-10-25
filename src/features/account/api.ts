@@ -1,12 +1,13 @@
+import { msg, t } from '@/i18n';
 import type { AppRole, ProfileRow } from '@/lib/database.types';
 import type { DbClient } from '@/lib/supabase';
 
 export type SelectableRole = Exclude<AppRole, 'admin'>;
 
 export const ROLE_LABEL: Record<AppRole, string> = {
-  homeowner: 'Ev sahibi',
-  pro: 'Usta',
-  admin: 'Yönetici',
+  homeowner: msg('Ev sahibi'),
+  pro: msg('Usta'),
+  admin: msg('Yönetici'),
 };
 
 const EMAIL_RE = /^[^\s@]+@[^\s@]+\.[^\s@]{2,}$/;
@@ -18,10 +19,10 @@ export function isValidEmail(email: string): boolean {
 /** Maps Supabase auth errors to plain Turkish. */
 export function authErrorMessage(message: string): string {
   const m = message.toLowerCase();
-  if (m.includes('expired') || m.includes('invalid')) return 'Kod hatalı veya süresi dolmuş. Yeni kod isteyin.';
-  if (m.includes('rate') || m.includes('too many')) return 'Çok fazla deneme yapıldı. Birkaç dakika sonra tekrar deneyin.';
-  if (m.includes('network') || m.includes('fetch')) return 'İnternet bağlantısı yok gibi görünüyor.';
-  return 'Bir sorun oluştu. Lütfen tekrar deneyin.';
+  if (m.includes('expired') || m.includes('invalid')) return t('Kod hatalı veya süresi dolmuş. Yeni kod isteyin.');
+  if (m.includes('rate') || m.includes('too many')) return t('Çok fazla deneme yapıldı. Birkaç dakika sonra tekrar deneyin.');
+  if (m.includes('network') || m.includes('fetch')) return t('İnternet bağlantısı yok gibi görünüyor.');
+  return t('Bir sorun oluştu. Lütfen tekrar deneyin.');
 }
 
 /** redirectTo is where the link in the email sends the user back to (the app's own URL). */
@@ -76,7 +77,7 @@ export async function setActiveRole(db: DbClient, userId: string, role: AppRole)
 
 export async function updateDisplayName(db: DbClient, userId: string, name: string): Promise<void> {
   const trimmed = name.trim();
-  if (trimmed.length > 80) throw new Error('İsim en fazla 80 karakter olabilir.');
+  if (trimmed.length > 80) throw new Error(t('İsim en fazla 80 karakter olabilir.'));
   const { error } = await db.from('profiles').update({ display_name: trimmed || null }).eq('id', userId);
   if (error) throw new Error(error.message);
 }
