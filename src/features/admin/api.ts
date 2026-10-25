@@ -1,7 +1,7 @@
 import { useQuery } from '@tanstack/react-query';
 
 import { useAccount, useSession } from '@/features/account/session';
-import type { AdminStats, GuideArticleRow, GuideCategory } from '@/lib/database.types';
+import type { AdminStats, ClientErrorRow, GuideArticleRow, GuideCategory } from '@/lib/database.types';
 import type { DbClient } from '@/lib/supabase';
 
 /** True only for accounts with the admin role. The database enforces the same rule with RLS. */
@@ -179,4 +179,15 @@ export function useAdminGuide(id: string | undefined, enabled: boolean) {
     enabled: !!db && !!id && enabled,
     queryFn: () => getGuideById(db!, id!),
   });
+}
+
+export async function listRecentErrors(db: DbClient): Promise<ClientErrorRow[]> {
+  const { data, error } = await db.from('client_errors').select('*').order('created_at', { ascending: false }).limit(20);
+  if (error) throw new Error(error.message);
+  return data;
+}
+
+export function useRecentErrors(enabled: boolean) {
+  const { db } = useSession();
+  return useQuery({ queryKey: ['admin', 'errors'], enabled: !!db && enabled, queryFn: () => listRecentErrors(db!) });
 }

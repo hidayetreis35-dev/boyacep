@@ -13,6 +13,7 @@ import {
   type SelectableRole,
 } from '@/features/account/api';
 import { readLocalRoles, writeLocalRoles } from '@/features/account/local-role';
+import { PrivacyActions } from '@/features/account/privacy-actions';
 import { RolePicker } from '@/features/account/role-picker';
 import { useAccount, useSession } from '@/features/account/session';
 import {
@@ -55,6 +56,7 @@ function GuestProfile({ hasBackend }: { hasBackend: boolean }) {
       </Card>
       <AppText variant="heading">Rolün</AppText>
       <RolePicker selected={roles} onToggle={toggle} />
+      <Button label="Gizlilik bilgileri" icon="shield-checkmark" variant="ghost" onPress={() => router.push('/privacy')} />
     </>
   );
 }
@@ -159,7 +161,7 @@ function AccountProfile() {
       ) : null}
 
       <Button label="Çıkış yap" icon="log-out" variant="ghost" loading={busy} onPress={() => run(() => signOut(db))} />
-      <Notice icon="shield-checkmark">Hesabını silme ve verilerini indirme seçenekleri 7. aşamada eklenecek.</Notice>
+      <PrivacyActions db={db} userId={userId} />
     </>
   );
 }

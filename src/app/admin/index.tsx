@@ -2,8 +2,9 @@ import { router } from 'expo-router';
 import { Pressable, View } from 'react-native';
 
 import { useSession } from '@/features/account/session';
-import { useAdminGuides, useAdminStats, useIsAdmin, type AdminGuideItem } from '@/features/admin/api';
+import { useAdminGuides, useAdminStats, useIsAdmin, useRecentErrors, type AdminGuideItem } from '@/features/admin/api';
 import { categoryLabel } from '@/features/guide/api';
+import { formatDate } from '@/features/quotes/pdf';
 import { AppText, Badge, Button, Card, EmptyState, ErrorState, Icon, LoadingState, Screen } from '@/ui/components';
 import { radius, space, usePalette } from '@/ui/theme';
 
@@ -47,6 +48,33 @@ function GuideRow({ guide }: { guide: AdminGuideItem }) {
   );
 }
 
+function RecentErrors() {
+  const errors = useRecentErrors(true);
+  return (
+    <>
+      <AppText variant="heading" accessibilityRole="header">
+        Son hata kayıtları
+      </AppText>
+      {errors.isPending ? (
+        <LoadingState />
+      ) : errors.isError ? (
+        <ErrorState message="Hata kayıtları yüklenemedi." onRetry={() => errors.refetch()} />
+      ) : errors.data.length === 0 ? (
+        <AppText tone="muted">Kayıtlı hata yok.</AppText>
+      ) : (
+        errors.data.map((e) => (
+          <Card key={e.id}>
+            <AppText variant="bodyStrong">{e.message}</AppText>
+            <AppText variant="caption" tone="muted">
+              {[formatDate(e.created_at), e.platform, e.screen, e.app_version].filter(Boolean).join(' · ')}
+            </AppText>
+          </Card>
+        ))
+      )}
+    </>
+  );
+}
+
 function AdminDashboard() {
   const stats = useAdminStats(true);
   const guides = useAdminGuides(true);
@@ -86,6 +114,7 @@ function AdminDashboard() {
       ) : (
         guides.data.map((g) => <GuideRow key={g.id} guide={g} />)
       )}
+      <RecentErrors />
     </>
   );
 }

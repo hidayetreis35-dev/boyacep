@@ -1,12 +1,34 @@
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
-import { DarkTheme, DefaultTheme, ThemeProvider } from 'expo-router';
+import { DarkTheme, DefaultTheme, ThemeProvider, usePathname, type ErrorBoundaryProps } from 'expo-router';
 import { Stack } from 'expo-router/stack';
 import { StatusBar } from 'expo-status-bar';
-import { useState } from 'react';
-import { useColorScheme } from 'react-native';
+import { useEffect, useState } from 'react';
+import { useColorScheme, View } from 'react-native';
 
 import { SessionProvider } from '@/features/account/session';
-import { palettes } from '@/ui/theme';
+import { reportError } from '@/lib/report-error';
+import { AppText, Button } from '@/ui/components';
+import { palettes, space } from '@/ui/theme';
+
+/** Shown instead of a crashed screen; the crash is reported for signed-in users. */
+export function ErrorBoundary({ error, retry }: ErrorBoundaryProps) {
+  const pathname = usePathname();
+  const p = palettes[useColorScheme() === 'dark' ? 'dark' : 'light'];
+  useEffect(() => {
+    reportError(error, pathname);
+  }, [error, pathname]);
+  return (
+    <View style={{ flex: 1, alignItems: 'center', justifyContent: 'center', gap: space.lg, padding: space.xl, backgroundColor: p.background }}>
+      <AppText variant="title" style={{ textAlign: 'center' }}>
+        Bir şeyler ters gitti
+      </AppText>
+      <AppText tone="muted" style={{ textAlign: 'center' }}>
+        Bu ekran beklenmedik bir hata verdi. Hatayı kaydettik. Tekrar dene; sorun sürerse uygulamayı kapatıp aç.
+      </AppText>
+      <Button label="Tekrar dene" icon="refresh" onPress={retry} />
+    </View>
+  );
+}
 
 export default function RootLayout() {
   const scheme = useColorScheme() === 'dark' ? 'dark' : 'light';
@@ -43,6 +65,7 @@ export default function RootLayout() {
             <Stack.Screen name="guide/[slug]" options={{ title: 'Rehber' }} />
             <Stack.Screen name="admin/index" options={{ title: 'Yönetim paneli' }} />
             <Stack.Screen name="admin/guide/[id]" options={{ title: 'Yazı düzenle' }} />
+            <Stack.Screen name="privacy" options={{ title: 'Gizlilik' }} />
             <Stack.Screen name="soon/[feature]" options={{ title: 'Yakında' }} />
           </Stack>
         </ThemeProvider>

@@ -257,6 +257,17 @@ export type QuoteItemRow = {
   created_at: string;
 };
 
+export type ClientErrorRow = {
+  id: number;
+  user_id: string | null;
+  message: string;
+  stack: string;
+  screen: string;
+  platform: '' | 'ios' | 'android' | 'web';
+  app_version: string;
+  created_at: string;
+};
+
 export type SharedProject = {
   id: string;
   title: string;
@@ -328,6 +339,11 @@ export type Database = {
         Partial<Omit<QuoteRow, 'id' | 'pro_id' | 'number' | 'created_at' | 'updated_at'>>
       >;
       quote_items: Table<QuoteItemRow, Omit<QuoteItemRow, 'id' | 'created_at' | 'sort_order'> & Partial<Pick<QuoteItemRow, 'sort_order'>>>;
+      client_errors: Table<
+        ClientErrorRow,
+        Pick<ClientErrorRow, 'message'> & Partial<Pick<ClientErrorRow, 'stack' | 'screen' | 'platform' | 'app_version'>>,
+        never
+      >;
       project_costs: Table<
         ProjectCostRow,
         Omit<ProjectCostRow, Generated | 'note' | 'price_source'> & Partial<Pick<ProjectCostRow, 'note' | 'price_source'>>
@@ -342,6 +358,8 @@ export type Database = {
       shared_projects: { Args: Record<string, never>; Returns: SharedProject[] };
       project_member_list: { Args: { project: string }; Returns: ProjectMember[] };
       respond_to_quote: { Args: { quote: string; accept: boolean }; Returns: undefined };
+      export_my_data: { Args: Record<string, never>; Returns: Json };
+      delete_my_account: { Args: Record<string, never>; Returns: undefined };
     };
     Enums: { app_role: AppRole; project_status: ProjectStatus };
     CompositeTypes: Record<string, never>;

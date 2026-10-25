@@ -16,7 +16,8 @@ const light = {
   primaryPressed: '#0D4F49',
   onPrimary: '#FFFFFF',
   primarySoft: '#DDEFEC',
-  accent: '#B76E12',
+  // Darker than a typical amber so accent text on accentSoft passes WCAG AA.
+  accent: '#9A5B0E',
   accentSoft: '#FBEBD3',
   danger: '#B42318',
   dangerSoft: '#FDE7E5',
