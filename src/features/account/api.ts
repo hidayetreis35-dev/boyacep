@@ -24,13 +24,12 @@ export function authErrorMessage(message: string): string {
   return 'Bir sorun oluştu. Lütfen tekrar deneyin.';
 }
 
-export async function sendEmailCode(db: DbClient, email: string): Promise<void> {
-  const { error } = await db.auth.signInWithOtp({ email: email.trim().toLowerCase(), options: { shouldCreateUser: true } });
-  if (error) throw new Error(authErrorMessage(error.message));
-}
-
-export async function verifyEmailCode(db: DbClient, email: string, code: string): Promise<void> {
-  const { error } = await db.auth.verifyOtp({ email: email.trim().toLowerCase(), token: code.trim(), type: 'email' });
+/** redirectTo is where the link in the email sends the user back to (the app's own URL). */
+export async function sendEmailCode(db: DbClient, email: string, redirectTo?: string): Promise<void> {
+  const { error } = await db.auth.signInWithOtp({
+    email: email.trim().toLowerCase(),
+    options: { shouldCreateUser: true, emailRedirectTo: redirectTo },
+  });
   if (error) throw new Error(authErrorMessage(error.message));
 }
 

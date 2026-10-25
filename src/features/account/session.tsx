@@ -1,10 +1,12 @@
 import type { Session } from '@supabase/supabase-js';
 import { useQuery, useQueryClient } from '@tanstack/react-query';
+import * as Linking from 'expo-linking';
 import { createContext, useContext, useEffect, useState, type ReactNode } from 'react';
 
 import { supabase, type DbClient } from '@/lib/supabase';
 
 import { enableRoles, getAccount, type Account } from './api';
+import { parseAuthInput } from './auth-link';
 import { readLocalRoles } from './local-role';
 
 interface SessionState {
@@ -40,6 +42,20 @@ export function SessionProvider({ children, client = supabase }: { children: Rea
       data.subscription.unsubscribe();
     };
   }, [client, queryClient]);
+
+  // The link in the sign-in email opens the app with the session in the URL.
+  useEffect(() => {
+    if (!client) return;
+    const handle = (url: string | null) => {
+      const parsed = url ? parseAuthInput(url) : null;
+      if (parsed?.kind === 'session') {
+        void client.auth.setSession({ access_token: parsed.accessToken, refresh_token: parsed.refreshToken });
+      }
+    };
+    void Linking.getInitialURL().then(handle);
+    const sub = Linking.addEventListener('url', ({ url }) => handle(url));
+    return () => sub.remove();
+  }, [client]);
 
   return <SessionContext.Provider value={{ db: client, session, loading }}>{children}</SessionContext.Provider>;
 }
