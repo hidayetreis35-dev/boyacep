@@ -3,6 +3,7 @@ import { useState } from 'react';
 import { Pressable, View } from 'react-native';
 
 import { useSession } from '@/features/account/session';
+import { useMyPlan } from '@/features/plans/queries';
 import { FREE_PROJECT_LIMIT } from '@/features/projects/limits';
 import { STATUS_LABEL } from '@/features/projects/mapping';
 import { useCreateProject, useProjects } from '@/features/projects/queries';
@@ -52,12 +53,19 @@ function NewProject({ count }: { count: number }) {
   const [open, setOpen] = useState(false);
   const [title, setTitle] = useState('');
   const create = useCreateProject();
+  const plan = useMyPlan();
+  const limit = plan.data?.project_limit ?? FREE_PROJECT_LIMIT;
 
-  if (count >= FREE_PROJECT_LIMIT) {
+  if (count >= limit) {
     return (
-      <Notice icon="lock-closed">
-        Ücretsiz sürümde en fazla {FREE_PROJECT_LIMIT} proje oluşturabilirsin. Daha fazlası Pro ile gelecek; şimdilik eski bir projeyi silebilirsin.
-      </Notice>
+      <>
+        <Notice icon="lock-closed">
+          {plan.data?.pro
+            ? `Pro planında en fazla ${limit} proje oluşturabilirsin. Yer açmak için eski bir projeyi silebilirsin.`
+            : `Ücretsiz sürümde en fazla ${limit} proje oluşturabilirsin. Daha fazlası Pro ile gelecek; şimdilik eski bir projeyi silebilirsin.`}
+        </Notice>
+        <Button label="Planları gör" icon="star" variant="ghost" onPress={() => router.push('/plans')} />
+      </>
     );
   }
   if (!open) return <Button label="Yeni proje" icon="add" onPress={() => setOpen(true)} />;

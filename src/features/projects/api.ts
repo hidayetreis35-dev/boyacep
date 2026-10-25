@@ -2,7 +2,6 @@ import { deleteAllProjectPhotos } from '@/features/photos/api';
 import type { ProjectRow, ProjectStatus } from '@/lib/database.types';
 import type { DbClient } from '@/lib/supabase';
 
-import { FREE_PROJECT_LIMIT } from './limits';
 import type { OpeningRecord, RoomRecord, RoomWithOpenings } from './mapping';
 
 function check<T>(result: { data: T; error: { message: string } | null }): NonNullable<T> {
@@ -18,7 +17,7 @@ export async function listProjects(db: DbClient): Promise<ProjectRow[]> {
 export async function createProject(db: DbClient, title: string): Promise<ProjectRow> {
   const result = await db.from('projects').insert({ title: title.trim() }).select().single();
   if (result.error?.message.includes('project limit')) {
-    throw new Error(`Ücretsiz sürümde en fazla ${FREE_PROJECT_LIMIT} proje oluşturabilirsin.`);
+    throw new Error('Planındaki proje sınırına ulaştın. Yer açmak için eski bir projeyi silebilirsin.');
   }
   return check(result);
 }

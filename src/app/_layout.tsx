@@ -66,6 +66,10 @@ export default function RootLayout() {
             <Stack.Screen name="admin/index" options={{ title: 'Yönetim paneli' }} />
             <Stack.Screen name="admin/guide/[id]" options={{ title: 'Yazı düzenle' }} />
             <Stack.Screen name="privacy" options={{ title: 'Gizlilik' }} />
+            <Stack.Screen name="plans" options={{ title: 'Planlar' }} />
+            <Stack.Screen name="ask/index" options={{ title: 'Ustaya Sor' }} />
+            <Stack.Screen name="ask/[id]" options={{ title: 'Soru' }} />
+            <Stack.Screen name="admin/questions" options={{ title: 'Bekleyen sorular' }} />
             <Stack.Screen name="soon/[feature]" options={{ title: 'Yakında' }} />
           </Stack>
         </ThemeProvider>

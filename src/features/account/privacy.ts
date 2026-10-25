@@ -20,7 +20,7 @@ export function exportFileName(date = new Date()): string {
 }
 
 export async function fetchMyData(db: DbClient): Promise<Json> {
-  const { data, error } = await db.rpc('export_my_data');
+  const { data, error } = await db.rpc('export_my_data_v2');
   if (error || data === null) throw new Error('Veriler hazırlanamadı. İnternet bağlantını kontrol et.');
   return data;
 }

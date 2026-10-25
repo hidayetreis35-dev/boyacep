@@ -190,6 +190,7 @@ export type AdminStats = {
   pros: number;
   pending_pros: number;
   quotes: number;
+  open_questions: number;
 };
 
 export type ProSpecialty = 'interior' | 'exterior' | 'ceiling' | 'decorative' | 'insulation' | 'plaster' | 'repair';
@@ -265,6 +266,42 @@ export type ClientErrorRow = {
   screen: string;
   platform: '' | 'ios' | 'android' | 'web';
   app_version: string;
+  created_at: string;
+};
+
+export type EntitlementRow = {
+  id: string;
+  user_id: string;
+  product: 'pro' | 'usta_pro';
+  source: 'admin' | 'promo' | 'app_store' | 'play_store';
+  starts_at: string;
+  expires_at: string | null;
+  note: string;
+  created_at: string;
+};
+
+export type MyPlan = { pro: boolean; usta_pro: boolean; project_limit: number; projects_used: number };
+
+export type ConsultationTopic = 'preparation' | 'paint_choice' | 'problem' | 'cost' | 'other';
+export type ConsultationStatus = 'open' | 'answered' | 'closed';
+
+export type ConsultationRow = {
+  id: string;
+  user_id: string;
+  project_id: string | null;
+  topic: ConsultationTopic;
+  subject: string;
+  status: ConsultationStatus;
+  created_at: string;
+  updated_at: string;
+};
+
+export type ConsultationMessageRow = {
+  id: string;
+  consultation_id: string;
+  author_id: string | null;
+  from_team: boolean;
+  body: string;
   created_at: string;
 };
 
@@ -344,6 +381,13 @@ export type Database = {
         Pick<ClientErrorRow, 'message'> & Partial<Pick<ClientErrorRow, 'stack' | 'screen' | 'platform' | 'app_version'>>,
         never
       >;
+      entitlements: Table<EntitlementRow, Pick<EntitlementRow, 'user_id' | 'product' | 'source'> & Partial<Pick<EntitlementRow, 'starts_at' | 'expires_at' | 'note'>>, never>;
+      consultations: Table<
+        ConsultationRow,
+        Pick<ConsultationRow, 'topic' | 'subject'> & Partial<Pick<ConsultationRow, 'id' | 'project_id'>>,
+        Partial<Pick<ConsultationRow, 'status'>>
+      >;
+      consultation_messages: Table<ConsultationMessageRow, Pick<ConsultationMessageRow, 'consultation_id' | 'body'>, never>;
       project_costs: Table<
         ProjectCostRow,
         Omit<ProjectCostRow, Generated | 'note' | 'price_source'> & Partial<Pick<ProjectCostRow, 'note' | 'price_source'>>
@@ -359,6 +403,8 @@ export type Database = {
       project_member_list: { Args: { project: string }; Returns: ProjectMember[] };
       respond_to_quote: { Args: { quote: string; accept: boolean }; Returns: undefined };
       export_my_data: { Args: Record<string, never>; Returns: Json };
+      export_my_data_v2: { Args: Record<string, never>; Returns: Json };
+      my_plan: { Args: Record<string, never>; Returns: MyPlan[] };
       delete_my_account: { Args: Record<string, never>; Returns: undefined };
     };
     Enums: { app_role: AppRole; project_status: ProjectStatus };

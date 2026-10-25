@@ -36,11 +36,16 @@ describe('app navigation', () => {
     expect(screen).toHavePathname('/calculate');
   });
 
-  it('marks unfinished features as coming soon', async () => {
+  it('opens Ustaya Sor and explains it needs the server', async () => {
     await renderRouter('./src/app', { initialUrl: '/' });
-    await fireEvent.press(await screen.findByLabelText('Ustaya Sor, yakında'));
-    expect(screen).toHavePathname('/soon/ask');
-    expect(screen.getByText('Ustaya Sor yakında')).toBeTruthy();
+    await fireEvent.press(await screen.findByLabelText('Ustaya Sor'));
+    expect(screen).toHavePathname('/ask');
+    expect(screen.getByText('Sunucu bağlı değil')).toBeTruthy();
+  });
+
+  it('shows an honest placeholder for unknown features', async () => {
+    await renderRouter('./src/app', { initialUrl: '/soon/unknown' });
+    expect(await screen.findByText('Bu bölüm yakında')).toBeTruthy();
   });
 
   it('explains wall problems without an account', async () => {

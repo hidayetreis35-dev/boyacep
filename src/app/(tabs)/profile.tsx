@@ -150,6 +150,7 @@ function AccountProfile() {
         />
       ) : null}
 
+      <Button label="Planlar" icon="star" variant="ghost" onPress={() => router.push('/plans')} />
       {roles.includes('admin') ? (
         <Button label="Yönetim paneli" icon="settings" variant="secondary" onPress={() => router.push('/admin')} />
       ) : null}

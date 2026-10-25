@@ -95,9 +95,11 @@ function AdminDashboard() {
           <Stat label="Yayındaki yazı" value={stats.data?.published_guides} />
           <Stat label="Gönderilen teklif" value={stats.data?.quotes} />
           <Stat label="Doğrulama bekleyen usta" value={stats.data?.pending_pros} />
+          <Stat label="Yanıt bekleyen soru" value={stats.data?.open_questions} />
         </View>
       )}
       <Button label="Usta doğrulama" icon="shield-checkmark" variant="secondary" onPress={() => router.push('/admin/pros')} />
+      <Button label="Ustaya Sor: bekleyen sorular" icon="chatbubbles" variant="secondary" onPress={() => router.push('/admin/questions')} />
 
       <View style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', gap: space.md }}>
         <AppText variant="heading" accessibilityRole="header">
