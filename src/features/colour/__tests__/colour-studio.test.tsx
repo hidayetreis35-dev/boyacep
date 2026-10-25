@@ -25,18 +25,37 @@ async function layout() {
   await fireEvent(screen.getByTestId('wall-canvas'), 'layout', { nativeEvent: { layout: { width: 400, height: 300 } } });
 }
 
-async function tap(x: number, y: number) {
-  await fireEvent.press(screen.getByLabelText('Fotoğraf: yüzeyin köşesine dokun'), {
+async function tap(x: number, y: number, label = 'Fotoğraf: yüzeyin köşesine dokun') {
+  await fireEvent.press(screen.getByLabelText(label), {
     nativeEvent: { locationX: x, locationY: y },
   });
 }
 
+const corners = () => fireEvent.press(screen.getByLabelText('Köşeleri çiz'));
+
 const paint = () => screen.getByRole('button', { name: 'Yüzeyi boya' });
 
 describe('ColourStudio', () => {
+  it('picks a surface by tapping similar colour', async () => {
+    const onSave = jest.fn();
+    await render(<Studio onSave={onSave} />);
+    await layout();
+    expect(paint()).toBeDisabled();
+    await tap(100, 80, 'Fotoğraf: boyanacak yere dokun');
+    expect(paint()).toBeEnabled();
+    await fireEvent.press(screen.getByText('Geniş'));
+    await tap(300, 80, 'Fotoğraf: boyanacak yere dokun');
+    await fireEvent.press(paint());
+    expect(screen.getByText('“Duvar” için renk: Adaçayı')).toBeTruthy();
+
+    await fireEvent.press(screen.getByText('Projeye kaydet'));
+    expect(onSave).toHaveBeenCalledWith([{ label: 'Duvar', points: [], seeds: [[0.25, 0.2667], [0.75, 0.2667]], tolerance: 24, hex: '#A3B49A' }]);
+  });
+
   it('needs three corners before a surface can be painted', async () => {
     await render(<Studio />);
     await layout();
+    await corners();
     expect(paint()).toBeDisabled();
     await tap(40, 30);
     await tap(360, 30);
@@ -57,6 +76,7 @@ describe('ColourStudio', () => {
 
     await fireEvent.press(screen.getByLabelText('Yüzey ekle'));
     await fireEvent.press(screen.getByText('Tavan'));
+    await corners();
     await tap(0, 0);
     await tap(400, 0);
     await tap(400, 40);
@@ -78,6 +98,7 @@ describe('ColourStudio', () => {
   it('undoes the last corner', async () => {
     await render(<Studio />);
     await layout();
+    await corners();
     await tap(40, 30);
     await tap(360, 30);
     await tap(360, 270);

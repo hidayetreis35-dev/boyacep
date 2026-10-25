@@ -7,14 +7,17 @@ import { AppText, Button, ChoiceChips, Icon, Notice } from '@/ui/components';
 import { PressableScale } from '@/ui/motion';
 import { fonts, radius, space, usePalette } from '@/ui/theme';
 
+import { CLASSICS, TRENDS } from './catalogue';
 import { toPicked, type PickedColour } from './colour-explorer';
 import { isUsableOutline, MAX_OUTLINE_POINTS, MAX_SURFACES } from './outline';
-import { WallCanvas } from './wall-canvas';
+import { PhotoStage } from './photo-stage';
+import type { SelectMode } from './photo-stage-types';
+import { DEFAULT_TOLERANCE, MAX_SEEDS, TOLERANCES, toleranceKeyOf, type ToleranceKey } from './recolour';
 
 const STRENGTHS = [
-  { value: 'light', label: 'Hafif', opacity: 0.45 },
-  { value: 'medium', label: 'Orta', opacity: 0.65 },
-  { value: 'strong', label: 'Güçlü', opacity: 0.85 },
+  { value: 'light', label: 'Hafif', amount: 0.55 },
+  { value: 'medium', label: 'Orta', amount: 0.8 },
+  { value: 'strong', label: 'Tam', amount: 1 },
 ] as const;
 type Strength = (typeof STRENGTHS)[number]['value'];
 
@@ -35,6 +38,7 @@ export function ColourStudio({
   quickColours,
   onPickColour,
   initialSurfaces,
+  onBrowse,
   onChangePhoto,
   onSaveSurfaces,
   saving,
@@ -47,6 +51,8 @@ export function ColourStudio({
   quickColours: string[];
   onPickColour: (c: PickedColour) => void;
   initialSurfaces?: PhotoSurface[];
+  /** Opens the full colour catalogue. */
+  onBrowse?: () => void;
   onChangePhoto?: () => void;
   onSaveSurfaces?: (surfaces: PhotoSurface[]) => void;
   saving?: boolean;
@@ -57,22 +63,45 @@ export function ColourStudio({
   const [active, setActive] = useState(0);
   const [drawing, setDrawing] = useState<string | null>(initialSurfaces?.length ? null : 'Duvar');
   const [draft, setDraft] = useState<WallOutline>([]);
-  const [strength, setStrength] = useState<Strength>('medium');
+  const [mode, setMode] = useState<SelectMode>('tap');
+  const [toleranceKey, setToleranceKey] = useState<ToleranceKey>('medium');
+  const tolerance = TOLERANCES.find((t) => t.value === toleranceKey)?.tolerance ?? DEFAULT_TOLERANCE;
+  const [strength, setStrength] = useState<Strength>('strong');
   const [view, setView] = useState<'after' | 'before'>('after');
   const [choosingKind, setChoosingKind] = useState(false);
-  const usable = isUsableOutline(draft);
+  const usable = mode === 'tap' ? draft.length > 0 : isUsableOutline(draft);
   const editingExisting = drawing !== null && active < surfaces.length && surfaces[active].label === drawing;
 
   const startDrawing = (label: string, index: number) => {
+    const existing = index < surfaces.length ? surfaces[index] : undefined;
     setActive(index);
-    setDraft([]);
+    if (existing?.seeds?.length) {
+      setMode('tap');
+      setDraft(existing.seeds);
+      setToleranceKey(toleranceKeyOf(existing.tolerance ?? DEFAULT_TOLERANCE));
+    } else if (existing) {
+      setMode('corners');
+      setDraft(existing.points);
+    } else {
+      setMode('tap');
+      setDraft([]);
+    }
     setDrawing(label);
     setChoosingKind(false);
   };
 
+  const switchMode = (next: SelectMode) => {
+    setMode(next);
+    setDraft([]);
+  };
+
+  const addPoint = (pt: [number, number]) =>
+    setDraft((d) => (d.length >= (mode === 'tap' ? MAX_SEEDS : MAX_OUTLINE_POINTS) ? d : [...d, pt]));
+
   const finishDrawing = () => {
     if (!drawing || !usable) return;
-    const surface: PhotoSurface = { label: drawing, points: draft, hex: editingExisting ? surfaces[active].hex ?? colour.hex : colour.hex };
+    const hex = editingExisting ? surfaces[active].hex ?? colour.hex : colour.hex;
+    const surface: PhotoSurface = mode === 'tap' ? { label: drawing, points: [], seeds: draft, tolerance, hex } : { label: drawing, points: draft, hex };
     setSurfaces((list) => (editingExisting ? list.map((s, i) => (i === active ? surface : s)) : [...list, surface]));
     if (!editingExisting) setActive(surfaces.length);
     setDraft([]);
@@ -90,27 +119,49 @@ export function ColourStudio({
     setActive(0);
   };
 
-  const strip = Array.from(new Set([colour.hex, ...quickColours])).slice(0, 12);
+  // The picked colour, favourites and recent ones first, then editorial picks so the strip is never empty.
+  const strip = Array.from(new Set([colour.hex, ...quickColours, ...CLASSICS.map((c) => c.hex), ...TRENDS.map((c) => c.hex)])).slice(0, 18);
 
   return (
     <View style={{ gap: space.lg }}>
       {drawing ? (
-        <Notice icon="hand-left">
-          “{drawing}” için köşelere sırayla dokun. En az 3 nokta gerekir. Kapı, pencere ve eşyaların dışından geç.
-        </Notice>
+        <>
+          <Segmented
+            options={[
+              { value: 'tap', label: 'Dokun-seç', icon: 'finger-print' },
+              { value: 'corners', label: 'Köşeleri çiz', icon: 'git-commit' },
+            ]}
+            value={mode}
+            onChange={switchMode}
+          />
+          <Notice icon="hand-left">
+            {mode === 'tap'
+              ? `“${drawing}” üzerine dokun. Benzer renkteki alan kendiliğinden seçilir; kapı, pencere ve eşyalar dışarıda kalır. Eksik kalan yere tekrar dokun.`
+              : `“${drawing}” için köşelere sırayla dokun. En az 3 nokta gerekir. Kapı, pencere ve eşyaların dışından geç.`}
+          </Notice>
+        </>
       ) : null}
 
-      <WallCanvas
+      <PhotoStage
         uri={photo.uri}
         aspect={photo.width / photo.height}
         surfaces={surfaces}
         active={active}
-        draft={draft}
-        opacity={STRENGTHS.find((s) => s.value === strength)!.opacity}
-        showColour={view === 'after'}
+        draft={{ mode, points: draft, tolerance }}
         drawing={!!drawing}
-        onAddPoint={(pt) => setDraft((d) => (d.length >= MAX_OUTLINE_POINTS ? d : [...d, pt]))}
+        showColour={view === 'after'}
+        amount={STRENGTHS.find((s) => s.value === strength)!.amount}
+        onTap={addPoint}
       />
+
+      {drawing && mode === 'tap' ? (
+        <ChoiceChips
+          label="Seçim genişliği"
+          options={TOLERANCES.map(({ value, label }) => ({ value, label }))}
+          value={toleranceKey}
+          onChange={setToleranceKey}
+        />
+      ) : null}
 
       {drawing ? (
         <View style={{ flexDirection: 'row', gap: space.sm, flexWrap: 'wrap' }}>
@@ -200,9 +251,7 @@ export function ColourStudio({
                   );
                 })}
               </ScrollView>
-              <AppText variant="caption" tone="muted">
-                Üstteki renk kataloğundan seçtiğin renk ve favorilerin burada görünür.
-              </AppText>
+              {onBrowse ? <Button label="Tüm renklere göz at" icon="color-palette" variant="ghost" onPress={onBrowse} /> : null}
             </View>
           ) : null}
 
@@ -211,7 +260,7 @@ export function ColourStudio({
           <View style={{ flexDirection: 'row', gap: space.sm, flexWrap: 'wrap' }}>
             {surfaces[active] ? (
               <>
-                <Button label="Çizimi düzenle" icon="create" variant="secondary" onPress={() => startDrawing(surfaces[active].label, active)} />
+                <Button label="Seçimi düzenle" icon="create" variant="secondary" onPress={() => startDrawing(surfaces[active].label, active)} />
                 <Button label="Yüzeyi sil" icon="trash" variant="ghost" onPress={removeActive} />
               </>
             ) : null}
@@ -232,7 +281,7 @@ export function ColourStudio({
       ) : null}
 
       <Notice icon="information-circle">
-        Bu bir önizlemedir: renk, fotoğrafın üstüne yarı saydam bir katman olarak konur. Gerçekte renk ışığa, ekran ayarına ve boyanın parlaklığına göre farklı görünür. Karar vermeden önce renk kartına bak ya da küçük bir alana deneme yap.
+        Bu bir önizlemedir: renk, fotoğraftaki ışık, gölge ve doku korunarak uygulanır. Yine de gerçek renk odanın ışığına, ekran ayarına ve boyanın parlaklığına göre farklı görünebilir. Karar vermeden önce renk kartına bak ya da küçük bir alana deneme yap.
       </Notice>
     </View>
   );

@@ -1,5 +1,7 @@
 import type { PhotoSurface, WallOutline } from '@/lib/database.types';
 
+import { DEFAULT_TOLERANCE, MAX_SEEDS, MAX_TOLERANCE, MIN_TOLERANCE } from './recolour';
+
 export const MAX_OUTLINE_POINTS = 24;
 
 const clamp01 = (v: number) => Math.min(1, Math.max(0, v));
@@ -49,7 +51,8 @@ export const MAX_SURFACES = 6;
 
 /**
  * Reads project_photos.wall_outline in either stored shape: a single outline
- * (older rows) or a list of surfaces. Invalid entries are dropped.
+ * (older rows) or a list of surfaces, each outlined by corners or picked by
+ * tapping. Invalid entries are dropped.
  */
 export function parseSurfaces(value: unknown): PhotoSurface[] {
   if (!Array.isArray(value) || value.length === 0) return [];
@@ -58,14 +61,24 @@ export function parseSurfaces(value: unknown): PhotoSurface[] {
   const out: PhotoSurface[] = [];
   for (const item of value.slice(0, MAX_SURFACES)) {
     if (!item || typeof item !== 'object') continue;
-    const { label, points, hex } = item as Record<string, unknown>;
+    const { label, points, hex, seeds, tolerance } = item as Record<string, unknown>;
+    const taps = parseOutline(seeds);
     const outline = parseOutline(points);
-    if (!outline || !isUsableOutline(outline)) continue;
-    out.push({
+    const picked = taps && taps.length > 0 && taps.length <= MAX_SEEDS;
+    if (!picked && !isUsableOutline(outline)) continue;
+    const surface: PhotoSurface = {
       label: typeof label === 'string' && label.trim() ? label.trim().slice(0, 40) : 'Yüzey',
-      points: outline,
+      points: picked ? [] : outline!,
       hex: typeof hex === 'string' && /^#[0-9A-F]{6}$/.test(hex) ? hex : null,
-    });
+    };
+    if (picked) {
+      surface.seeds = taps;
+      surface.tolerance =
+        typeof tolerance === 'number' && Number.isFinite(tolerance)
+          ? Math.min(MAX_TOLERANCE, Math.max(MIN_TOLERANCE, tolerance))
+          : DEFAULT_TOLERANCE;
+    }
+    out.push(surface);
   }
   return out;
 }

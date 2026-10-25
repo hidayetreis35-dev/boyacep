@@ -17,7 +17,9 @@ type Tab = 'colours' | 'photo' | 'favourites';
 const MAX_COMPARE = 3;
 
 /** Try colours on a photo that never leaves the phone. */
-function LocalPhoto({ colour, quickColours, onPickColour }: { colour: PickedColour; quickColours: string[]; onPickColour: (c: PickedColour) => void }) {
+type PhotoProps = { colour: PickedColour; quickColours: string[]; onPickColour: (c: PickedColour) => void; onBrowse: () => void };
+
+function LocalPhoto({ colour, quickColours, onPickColour, onBrowse }: PhotoProps) {
   const [photo, setPhoto] = useState<PickedPhoto | null>(null);
   if (!photo) {
     return (
@@ -44,13 +46,14 @@ function LocalPhoto({ colour, quickColours, onPickColour }: { colour: PickedColo
       colour={colour}
       quickColours={quickColours}
       onPickColour={onPickColour}
+      onBrowse={onBrowse}
       onChangePhoto={() => setPhoto(null)}
     />
   );
 }
 
 /** Same tool on a photo saved in a project; the surfaces can be saved back. */
-function ProjectPhoto({ photoId, colour, quickColours, onPickColour }: { photoId: string; colour: PickedColour; quickColours: string[]; onPickColour: (c: PickedColour) => void }) {
+function ProjectPhoto({ photoId, colour, quickColours, onPickColour, onBrowse }: PhotoProps & { photoId: string }) {
   const query = useProjectPhoto(photoId);
   const save = useSaveSurfaces({ id: photoId, project_id: query.data?.project_id ?? '' });
   const [saved, setSaved] = useState(false);
@@ -66,6 +69,7 @@ function ProjectPhoto({ photoId, colour, quickColours, onPickColour }: { photoId
         colour={colour}
         quickColours={quickColours}
         onPickColour={onPickColour}
+        onBrowse={onBrowse}
         initialSurfaces={photo.surfaces}
         onSaveSurfaces={(surfaces) => {
           setSaved(false);
@@ -143,13 +147,14 @@ export default function ColourScreen() {
         </>
       ) : null}
 
-      {tab === 'photo' ? (
-        photoId ? (
-          <ProjectPhoto photoId={photoId} colour={colour} quickColours={quickColours} onPickColour={pick} />
+      {/* Kept mounted while other tabs are open, so the photo and its surfaces survive a trip to the catalogue. */}
+      <View style={{ display: tab === 'photo' ? 'flex' : 'none', gap: space.lg }}>
+        {photoId ? (
+          <ProjectPhoto photoId={photoId} colour={colour} quickColours={quickColours} onPickColour={pick} onBrowse={() => setTab('colours')} />
         ) : (
-          <LocalPhoto colour={colour} quickColours={quickColours} onPickColour={pick} />
-        )
-      ) : null}
+          <LocalPhoto colour={colour} quickColours={quickColours} onPickColour={pick} onBrowse={() => setTab('colours')} />
+        )}
+      </View>
 
       {tab === 'favourites' ? (
         favourites.list.length === 0 ? (

@@ -1,7 +1,7 @@
 /**
  * BoyaCep's generic colour catalogue. These are generic tones, not any brand's
  * colour codes: the studio tells users to check the real swatch. Brand colour
- * cards can be added later with `brand` and `code` filled in.
+ * cards live in a separate layer (`BRAND_CATALOGUES` in colour-data.ts).
  */
 
 export type FamilyKey =
@@ -23,10 +23,6 @@ export type CatalogColour = {
   name: string;
   hex: string;
   family: FamilyKey;
-  /** Manufacturer, when the colour comes from a brand's card. */
-  brand?: string;
-  /** Manufacturer colour code. */
-  code?: string;
 };
 
 export const FAMILIES: { key: FamilyKey; label: string; sample: string }[] = [

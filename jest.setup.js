@@ -10,3 +10,6 @@ jest.mock('@expo/vector-icons/Ionicons', () => {
 jest.mock('@react-native-async-storage/async-storage', () =>
   require('@react-native-async-storage/async-storage/jest/async-storage-mock'),
 );
+
+// Skia draws with a native (or WebAssembly) engine that Jest does not load.
+jest.mock('./src/features/colour/photo-stage', () => require('./src/features/colour/photo-stage.mock'));

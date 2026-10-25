@@ -74,3 +74,23 @@ describe('parseSurfaces', () => {
     expect(parseSurfaces('x')).toEqual([]);
   });
 });
+
+describe('tap-picked surfaces', () => {
+  it('reads surfaces picked by tapping and clamps their tolerance', () => {
+    const surfaces = parseSurfaces([
+      { label: 'Duvar', points: [], seeds: [[0.2, 0.3]], tolerance: 99, hex: '#A3B49A' },
+      { label: 'Tavan', points: [], seeds: [], hex: null },
+      { label: 'Kapı', points: [], seeds: [[0.5, 0.5]], hex: null },
+    ]);
+    expect(surfaces).toEqual([
+      { label: 'Duvar', points: [], seeds: [[0.2, 0.3]], tolerance: 40, hex: '#A3B49A' },
+      { label: 'Kapı', points: [], seeds: [[0.5, 0.5]], tolerance: 15, hex: null },
+    ]);
+  });
+
+  it('rejects too many taps or points outside the photo', () => {
+    const many = Array.from({ length: 9 }, () => [0.5, 0.5]);
+    expect(parseSurfaces([{ label: 'Duvar', points: [], seeds: many, hex: null }])).toEqual([]);
+    expect(parseSurfaces([{ label: 'Duvar', points: [], seeds: [[1.5, 0.5]], hex: null }])).toEqual([]);
+  });
+});

@@ -169,8 +169,12 @@ export type GuideArticleRow = {
 /** Normalised wall outline: points with 0 <= x, y <= 1. */
 export type WallOutline = [number, number][];
 
-/** One outlined surface on a photo and the colour tried on it. */
-export type PhotoSurface = { label: string; points: WallOutline; hex: string | null };
+/**
+ * One surface on a photo and the colour tried on it. A surface is either
+ * outlined by its corners (`points`) or picked by tapping (`seeds`: the tapped
+ * points, re-grown over similar colours with `tolerance` each time it is shown).
+ */
+export type PhotoSurface = { label: string; points: WallOutline; hex: string | null; seeds?: WallOutline; tolerance?: number };
 
 /**
  * Stored in project_photos.wall_outline. Older rows hold a single WallOutline;

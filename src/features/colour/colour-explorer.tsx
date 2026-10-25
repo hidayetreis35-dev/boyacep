@@ -10,6 +10,7 @@ import { PressableScale } from '@/ui/motion';
 import { fonts, radius, shadowOf, space, usePalette } from '@/ui/theme';
 
 import { CLASSICS, colourByHex, COLOURS, familyLabel, FAMILIES, searchColours, TRENDS, type CatalogColour, type FamilyKey } from './catalogue';
+import { colourFacts, TEMPERATURE_LABEL } from './colour-data';
 import { harmonies, lrv, nearest } from './harmony';
 import { isLight, normaliseHex } from './palette';
 import { useProjectColourActions } from './project-colours';
@@ -208,6 +209,7 @@ export function SelectedColour({
   const p = usePalette();
   const fg = ink(colour.hex);
   const reflect = lrv(colour.hex);
+  const facts = colourFacts(colour.hex);
   return (
     <View style={{ gap: space.md }}>
       <View style={[styles.hero, { backgroundColor: colour.hex, borderColor: p.border }]} testID="selected-colour">
@@ -218,6 +220,9 @@ export function SelectedColour({
             </AppText>
             <AppText variant="title" style={{ color: fg }}>
               {colour.name}
+            </AppText>
+            <AppText variant="caption" style={{ color: fg, opacity: 0.8 }}>
+              {facts.caption}
             </AppText>
           </View>
           <PressableScale
@@ -237,6 +242,11 @@ export function SelectedColour({
           <View style={styles.tag}>
             <AppText variant="caption" style={{ color: '#141B2D' }}>
               Işık yansıtma ≈ %{reflect}
+            </AppText>
+          </View>
+          <View style={styles.tag}>
+            <AppText variant="caption" style={{ color: '#141B2D' }}>
+              {TEMPERATURE_LABEL[facts.temperature]}
             </AppText>
           </View>
           <View style={styles.tag}>
