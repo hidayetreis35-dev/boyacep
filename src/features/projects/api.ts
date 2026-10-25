@@ -1,3 +1,4 @@
+import { deleteAllProjectPhotos } from '@/features/photos/api';
 import type { ProjectRow, ProjectStatus } from '@/lib/database.types';
 import type { DbClient } from '@/lib/supabase';
 
@@ -50,6 +51,8 @@ export async function setProjectStatus(db: DbClient, id: string, status: Project
 }
 
 export async function deleteProject(db: DbClient, id: string): Promise<void> {
+  // Photo files are not removed by the database cascade, so clear them first.
+  await deleteAllProjectPhotos(db, id);
   const { error } = await db.from('projects').delete().eq('id', id);
   if (error) throw new Error(error.message);
 }

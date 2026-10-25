@@ -4,6 +4,7 @@ import { Pressable, View } from 'react-native';
 
 import { calculateProject, round } from '@/engine';
 import { AssumptionList, packageText } from '@/features/calculator/results';
+import { ProjectPhotos } from '@/features/photos/project-photos';
 import { roomToInput, STATUS_LABEL, STATUS_ORDER, type RoomWithOpenings } from '@/features/projects/mapping';
 import { useDeleteProject, useProject, useSetProjectStatus } from '@/features/projects/queries';
 import { formatNumber } from '@/lib/number';
@@ -58,7 +59,7 @@ function DeleteProject({ id }: { id: string }) {
   if (!confirming) return <Button label="Projeyi sil" icon="trash" variant="ghost" onPress={() => setConfirming(true)} />;
   return (
     <Card>
-      <AppText variant="bodyStrong">Proje ve tüm odaları kalıcı olarak silinsin mi?</AppText>
+      <AppText variant="bodyStrong">Proje; odaları, malzeme listesi ve fotoğraflarıyla birlikte kalıcı olarak silinsin mi?</AppText>
       {remove.isError ? (
         <Notice tone="danger" icon="alert-circle">
           Silinemedi: {remove.error.message}
@@ -178,6 +179,8 @@ export default function ProjectScreen() {
         icon="wallet"
         onPress={() => router.push({ pathname: '/projects/[id]/cost', params: { id: project.id } })}
       />
+
+      <ProjectPhotos projectId={project.id} />
 
       <DeleteProject id={project.id} />
     </Screen>

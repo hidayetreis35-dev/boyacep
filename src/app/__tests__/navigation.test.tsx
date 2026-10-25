@@ -38,9 +38,28 @@ describe('app navigation', () => {
 
   it('marks unfinished features as coming soon', async () => {
     await renderRouter('./src/app', { initialUrl: '/' });
-    await fireEvent.press(await screen.findByLabelText('Rengini Dene, yakında'));
-    expect(screen).toHavePathname('/soon/color');
-    expect(screen.getByText('Rengini Dene yakında')).toBeTruthy();
+    await fireEvent.press(await screen.findByLabelText('Ustaya Sor, yakında'));
+    expect(screen).toHavePathname('/soon/ask');
+    expect(screen.getByText('Ustaya Sor yakında')).toBeTruthy();
+  });
+
+  it('explains wall problems without an account', async () => {
+    await renderRouter('./src/app', { initialUrl: '/inspect' });
+    expect(screen.getByRole('button', { name: 'Sonucu göster' })).toBeDisabled();
+    await fireEvent.press(screen.getByText('Küf, siyah noktalar'));
+    await fireEvent.press(screen.getByText('Geniş ya da büyüyen çatlak'));
+    await fireEvent.press(screen.getByText('Sonucu göster'));
+    expect(screen.getByTestId('inspect-result')).toBeTruthy();
+    expect(screen.getByText(/uzmanın görmesi gereken/)).toBeTruthy();
+    expect(screen.getAllByText('Uzmana danış').length).toBe(1);
+  });
+
+  it('opens the colour preview without an account', async () => {
+    await renderRouter('./src/app', { initialUrl: '/' });
+    await fireEvent.press(await screen.findByLabelText('Rengini Dene'));
+    expect(screen).toHavePathname('/colour');
+    expect(screen.getByText('Duvarının fotoğrafını ekle')).toBeTruthy();
+    expect(screen.getByText('Fotoğraf çek')).toBeTruthy();
   });
 
   it('explains that accounts are not connected when there is no backend', async () => {

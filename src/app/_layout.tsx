@@ -32,6 +32,8 @@ export default function RootLayout() {
             <Stack.Screen name="projects/[id]/room" options={{ title: 'Oda' }} />
             <Stack.Screen name="projects/[id]/cost" options={{ title: 'Malzeme ve maliyet' }} />
             <Stack.Screen name="cost" options={{ title: 'Maliyet Hesapla' }} />
+            <Stack.Screen name="colour" options={{ title: 'Rengini Dene' }} />
+            <Stack.Screen name="inspect" options={{ title: 'Duvarını İncele' }} />
             <Stack.Screen name="guide/index" options={{ title: 'Boya Rehberi' }} />
             <Stack.Screen name="guide/[slug]" options={{ title: 'Rehber' }} />
             <Stack.Screen name="admin/index" options={{ title: 'Yönetim paneli' }} />

@@ -166,6 +166,22 @@ export type GuideArticleRow = {
   updated_at: string;
 };
 
+/** Normalised wall outline: points with 0 <= x, y <= 1. */
+export type WallOutline = [number, number][];
+
+export type ProjectPhotoRow = {
+  id: string;
+  project_id: string;
+  room_id: string | null;
+  owner_id: string;
+  storage_path: string;
+  width: number;
+  height: number;
+  byte_size: number;
+  wall_outline: WallOutline | null;
+  created_at: string;
+};
+
 export type AdminStats = { users: number; projects: number; rooms: number; published_guides: number; pros: number };
 
 type Generated = 'id' | 'created_at' | 'updated_at';
@@ -198,6 +214,12 @@ export type Database = {
       guide_articles: Table<
         GuideArticleRow,
         Pick<GuideArticleRow, 'slug' | 'category' | 'title'> & Partial<Omit<GuideArticleRow, Generated | 'slug' | 'category' | 'title'>>
+      >;
+      project_photos: Table<
+        ProjectPhotoRow,
+        Pick<ProjectPhotoRow, 'id' | 'project_id' | 'storage_path' | 'width' | 'height' | 'byte_size'> &
+          Partial<Pick<ProjectPhotoRow, 'room_id' | 'wall_outline'>>,
+        Partial<Pick<ProjectPhotoRow, 'room_id' | 'wall_outline'>>
       >;
       project_costs: Table<
         ProjectCostRow,
