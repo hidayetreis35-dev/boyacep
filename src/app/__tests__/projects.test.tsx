@@ -1,5 +1,6 @@
 import AsyncStorage from '@react-native-async-storage/async-storage';
-import { fireEvent, screen } from '@testing-library/react-native';
+import { fireEvent, screen, waitFor } from '@testing-library/react-native';
+import { Linking } from 'react-native';
 import { renderRouter } from 'expo-router/testing-library';
 
 import * as materialsApi from '@/features/materials/api';
@@ -280,6 +281,33 @@ function expense(overrides: Partial<budgetApi.ExpenseWithReceipt> = {}): budgetA
     ...overrides,
   };
 }
+
+describe('Alışveriş listesi', () => {
+  beforeEach(() => {
+    api.getProject.mockResolvedValue({ project: project(), rooms: [salon] });
+    mapi.listMaterials.mockResolvedValue([paintRow, { ...paintRow, id: 'm2', name: 'Rulo', category: 'roller', unit: 'adet', unit_price: null, price_source: 'estimate' }]);
+  });
+
+  it('ticks items, remembers them and sends only what is left', async () => {
+    const open = jest.spyOn(Linking, 'openURL').mockResolvedValue(true);
+    await renderRouter('./src/app', { initialUrl: '/projects/p1/shopping' });
+    expect(await screen.findByText('0 / 2 alındı')).toBeTruthy();
+    await fireEvent.press(screen.getByRole('checkbox', { name: /İç cephe boyası/ }));
+    expect(screen.getByText('1 / 2 alındı')).toBeTruthy();
+    await waitFor(async () => expect(await AsyncStorage.getItem('boyacep.shopping.p1.v1')).toBe('["m1"]'));
+    await fireEvent.press(screen.getByText('WhatsApp’ta gönder'));
+    const url = decodeURIComponent(open.mock.calls[0][0].replace('https://wa.me/?text=', ''));
+    expect(url).toContain('• Rulo: 1 adet');
+    expect(url).not.toContain('İç cephe');
+    open.mockRestore();
+  });
+
+  it('shows the empty state without materials', async () => {
+    mapi.listMaterials.mockResolvedValue([]);
+    await renderRouter('./src/app', { initialUrl: '/projects/p1/shopping' });
+    expect(await screen.findByText('Liste boş')).toBeTruthy();
+  });
+});
 
 describe('Akıllı Bütçe', () => {
   beforeEach(() => {

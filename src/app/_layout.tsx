@@ -98,6 +98,7 @@ function App() {
             <Stack.Screen name="projects/[id]/room" options={{ title: t('Oda') }} />
             <Stack.Screen name="projects/[id]/cost" options={{ title: t('Malzeme ve maliyet') }} />
             <Stack.Screen name="projects/[id]/budget" options={{ title: t('Akıllı Bütçe') }} />
+            <Stack.Screen name="projects/[id]/shopping" options={{ title: t('Alışveriş listesi') }} />
             <Stack.Screen name="projects/[id]/share" options={{ title: t('Ustayla paylaş') }} />
             <Stack.Screen name="projects/[id]/survey" options={{ title: t('Keşif dosyası') }} />
             <Stack.Screen name="cost" options={{ title: t('Maliyet Hesapla') }} />

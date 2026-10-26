@@ -1,4 +1,4 @@
-import { Stack, useLocalSearchParams } from 'expo-router';
+import { router, Stack, useLocalSearchParams } from 'expo-router';
 import { useState } from 'react';
 import { Pressable, View } from 'react-native';
 
@@ -192,6 +192,14 @@ export default function CostScreen() {
         )}
         {update.isError ? <Notice tone="danger" icon="alert-circle">{t('Kaydedilemedi: {message}', { message: update.error.message })}</Notice> : null}
         <AddMaterial projectId={id} />
+        {materials.data.length > 0 ? (
+          <Button
+            label={t('Alışveriş listesi')}
+            icon="cart"
+            variant="secondary"
+            onPress={() => router.push({ pathname: '/projects/[id]/shopping', params: { id } })}
+          />
+        ) : null}
         <AppText variant="caption" tone="muted">
           {t('Ölçülerden yeniden oluşturunca hesapla gelen kalemler güncellenir; girdiğin fiyatlar ve kendi eklediğin kalemler korunur.')}
         </AppText>
