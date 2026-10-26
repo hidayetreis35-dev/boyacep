@@ -156,6 +156,26 @@ export type ProjectExpenseRow = {
   updated_at: string;
 };
 
+export type PaintFinish = 'matt' | 'eggshell' | 'satin' | 'gloss';
+
+export type HomeLogRow = {
+  id: string;
+  owner_id: string;
+  project_id: string | null;
+  place: string;
+  colour_name: string | null;
+  colour_hex: string | null;
+  colour_code: string | null;
+  product: string | null;
+  finish: PaintFinish | null;
+  /** YYYY-MM-DD */
+  painted_on: string;
+  painter: string | null;
+  note: string | null;
+  created_at: string;
+  updated_at: string;
+};
+
 export type GuideCategory =
   | 'preparation'
   | 'primer'
@@ -465,6 +485,11 @@ export type Database = {
       project_costs: Table<
         ProjectCostRow,
         Omit<ProjectCostRow, Generated | 'note' | 'price_source'> & Partial<Pick<ProjectCostRow, 'note' | 'price_source'>>
+      >;
+      home_log: Table<
+        HomeLogRow,
+        Pick<HomeLogRow, 'place'> & Partial<Omit<HomeLogRow, Generated | 'owner_id' | 'place'>>,
+        Partial<Omit<HomeLogRow, Generated | 'owner_id' | 'project_id'>>
       >;
       project_expenses: Table<
         ProjectExpenseRow,

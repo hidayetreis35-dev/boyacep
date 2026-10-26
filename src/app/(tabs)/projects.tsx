@@ -130,6 +130,7 @@ function ProjectList() {
       ) : (
         projects.data.map((project) => <ProjectCard key={project.id} project={project} />)
       )}
+      <Button label={t('Ev Hafızası: boyadığım renkler')} icon="color-palette" variant="ghost" onPress={() => router.push('/home-log')} />
     </View>
   );
 }

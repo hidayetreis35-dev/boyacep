@@ -6,6 +6,7 @@ import { calculateProject, round } from '@/engine';
 import { quantityText } from '@/features/calculator/labels';
 import { AssumptionList, packageText } from '@/features/calculator/results';
 import { useProjectColours } from '@/features/colour/project-colours';
+import { SaveToHomeLog } from '@/features/home-log/from-project';
 import { ProjectPhotos } from '@/features/photos/project-photos';
 import { ReceivedQuotes } from '@/features/quotes/received-quotes';
 import { ProjectSteps } from '@/features/projects/project-steps';
@@ -201,6 +202,8 @@ export default function ProjectScreen() {
           {project.budget ? <HeroStat label={t('Bütçe')} value={formatMoney(project.budget)} /> : null}
         </View>
       </View>
+
+      {project.status === 'completed' ? <SaveToHomeLog project={project} /> : null}
 
       <ProjectSteps projectId={project.id} rooms={rooms.length} budget={project.budget} />
 

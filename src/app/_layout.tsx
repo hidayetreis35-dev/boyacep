@@ -101,6 +101,7 @@ function App() {
             <Stack.Screen name="projects/[id]/shopping" options={{ title: t('Alışveriş listesi') }} />
             <Stack.Screen name="projects/[id]/share" options={{ title: t('Ustayla paylaş') }} />
             <Stack.Screen name="projects/[id]/survey" options={{ title: t('Keşif dosyası') }} />
+            <Stack.Screen name="home-log" options={{ title: t('Ev Hafızası') }} />
             <Stack.Screen name="cost" options={{ title: t('Maliyet Hesapla') }} />
             <Stack.Screen name="prices" options={{ title: t('Boya Fiyatları') }} />
             <Stack.Screen name="usta/profile" options={{ title: t('Usta profili') }} />

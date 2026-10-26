@@ -153,6 +153,7 @@ function AccountProfile() {
         />
       ) : null}
 
+      <Button label={t('Ev Hafızası')} icon="color-palette" variant="ghost" onPress={() => router.push('/home-log')} />
       <Button label={t('Planlar')} icon="star" variant="ghost" onPress={() => router.push('/plans')} />
       {roles.includes('admin') ? (
         <Button label={t('Yönetim paneli')} icon="settings" variant="secondary" onPress={() => router.push('/admin')} />
