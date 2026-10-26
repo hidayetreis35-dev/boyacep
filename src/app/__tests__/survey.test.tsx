@@ -1,6 +1,7 @@
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { fireEvent, screen, waitFor } from '@testing-library/react-native';
 import { renderRouter } from 'expo-router/testing-library';
+import { Linking } from 'react-native';
 
 import * as photosApi from '@/features/photos/api';
 import * as projectsApi from '@/features/projects/api';
@@ -127,6 +128,31 @@ describe('Keşif dosyası', () => {
       expect.objectContaining({ engineVersion: expect.any(String), input: expect.objectContaining({ rooms: expect.any(Array) }) }),
     );
     expect(pdf.shareQuotePdf.mock.calls[0][0]).toContain('Salon boyası');
+  });
+
+  it('lists what a painter would ask for before quoting', async () => {
+    api.getProject.mockResolvedValue({ project, rooms: [salon] });
+    survey.listInspections.mockResolvedValue([]);
+    await renderRouter('./src/app', { initialUrl: '/projects/p1/survey' });
+    expect(await screen.findByText('Teklif için eksik bilgi var')).toBeTruthy();
+    expect(screen.getByText(/Duvar fotoğrafı yok/)).toBeTruthy();
+    expect(screen.getByText(/Renk seçilmedi/)).toBeTruthy();
+  });
+
+  it('sends a text summary on WhatsApp and stores a snapshot', async () => {
+    const open = jest.spyOn(Linking, 'openURL').mockResolvedValue(undefined);
+    api.getProject.mockResolvedValue({ project, rooms: [salon] });
+    survey.listInspections.mockResolvedValue([damp]);
+    survey.saveSnapshot.mockResolvedValue(true);
+    await renderRouter('./src/app', { initialUrl: '/projects/p1/survey' });
+    await fireEvent.press(await screen.findByText('WhatsApp’ta özet gönder'));
+    await waitFor(() => expect(open).toHaveBeenCalled());
+    expect(survey.saveSnapshot).toHaveBeenCalled();
+    const text = decodeURIComponent(open.mock.calls[0][0].replace('https://wa.me/?text=', ''));
+    expect(text).toContain('BoyaCep keşif dosyası: Salon boyası');
+    expect(text).toContain('Nem lekesi (Uzmana danış)');
+    expect(text).not.toMatch(/30\.000/);
+    open.mockRestore();
   });
 
   it('still shares the PDF when the snapshot cannot be saved', async () => {
