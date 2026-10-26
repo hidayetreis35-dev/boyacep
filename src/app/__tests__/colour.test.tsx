@@ -29,8 +29,8 @@ describe('Renk Stüdyosu', () => {
     await fireEvent.press(screen.getByLabelText('Favorilere ekle'));
     await waitFor(() => expect(screen.getByLabelText('Favorilerden çıkar')).toBeTruthy());
 
-    await fireEvent.press(screen.getByLabelText('Favoriler (1)'));
-    expect(screen.getByLabelText('Petrol mavisi')).toBeTruthy();
+    expect(screen.getByText('Favorilerin (1)')).toBeTruthy();
+    expect(screen.getAllByLabelText('Petrol mavisi').length).toBeGreaterThan(1);
   });
 
   it('compares up to three colours side by side', async () => {
@@ -47,6 +47,18 @@ describe('Renk Stüdyosu', () => {
 
   it('offers matching colour schemes', async () => {
     await openStudio();
-    expect(screen.getAllByLabelText(/^(Ton sür ton|Komşu renkler|Zıt vurgu|Nötr eşlik): /).length).toBeGreaterThan(0);
+    expect(screen.getByTestId('room-preview')).toBeTruthy();
+    expect(screen.getAllByLabelText(/^Ton sür ton: /).length).toBeGreaterThan(0);
+    await fireEvent.press(screen.getByLabelText('Kombinasyonlar'));
+    for (const name of ['Ton sür ton', 'Komşu renkler', 'Zıt vurgu', 'Nötr eşlik']) {
+      expect(screen.getByText(name)).toBeTruthy();
+    }
+    expect(screen.queryByText('Renk kataloğu')).toBeNull();
+    // Picking a colour from a scheme makes it the selected colour.
+    const accent = screen.getAllByLabelText(/^Zıt vurgu: /).at(-1)!;
+    const name = String(accent.props.accessibilityLabel).replace('Zıt vurgu: ', '');
+    await fireEvent.press(accent);
+    await fireEvent.press(screen.getByLabelText('Renkler'));
+    expect(screen.getByTestId('selected-colour')).toHaveTextContent(new RegExp(name));
   });
 });

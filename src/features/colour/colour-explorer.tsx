@@ -5,6 +5,7 @@ import { ScrollView, StyleSheet, View } from 'react-native';
 import { useSession } from '@/features/account/session';
 import { useProjects } from '@/features/projects/queries';
 import { t } from '@/i18n';
+import { RoomArt } from '@/ui/art';
 import { SectionTitle } from '@/ui/brand';
 import { AppText, Button, Icon, Notice, TextField } from '@/ui/components';
 import { PressableScale } from '@/ui/motion';
@@ -189,7 +190,7 @@ export function ColourExplorer({ selected, favourites, onSelect }: { selected: s
   );
 }
 
-/** Big preview of the selected colour with its actions and matching schemes. */
+/** Big preview of the selected colour with its actions. */
 export function SelectedColour({
   colour,
   favourite,
@@ -197,7 +198,6 @@ export function SelectedColour({
   onToggleFavourite,
   onToggleCompare,
   onTryOnWall,
-  onSelect,
 }: {
   colour: PickedColour;
   favourite: boolean;
@@ -205,7 +205,6 @@ export function SelectedColour({
   onToggleFavourite: () => void;
   onToggleCompare: () => void;
   onTryOnWall: () => void;
-  onSelect: (c: PickedColour) => void;
 }) {
   const p = usePalette();
   const fg = ink(colour.hex);
@@ -269,34 +268,45 @@ export function SelectedColour({
 
       <SaveToProject colour={colour} />
 
-      <SectionTitle title={t('Uyumlu kombinasyonlar')} />
-      {harmonies(colour.hex).map((h) => (
-        <View key={h.key} style={[styles.harmony, { backgroundColor: p.surface, borderColor: p.border }, shadowOf(p)]}>
-          <View style={styles.harmonyStrip}>
-            {h.colours.map((c) => (
-              <PressableScale
-                key={c.hex}
-                accessibilityRole="button"
-                accessibilityLabel={`${h.title}: ${t(c.name)}`}
-                onPress={() => onSelect(c)}
-                style={[styles.harmonyBlock, { backgroundColor: c.hex }]}>
-                <AppText variant="caption" numberOfLines={1} style={{ color: ink(c.hex), fontFamily: fonts.bold }}>
-                  {t(c.name)}
-                </AppText>
-              </PressableScale>
-            ))}
-          </View>
-          <View style={{ padding: space.md, gap: 2 }}>
-            <AppText variant="bodyStrong" style={{ fontFamily: fonts.bold }}>
-              {h.title}
-            </AppText>
-            <AppText variant="small" tone="muted">
-              {h.hint}
-            </AppText>
-          </View>
-        </View>
-      ))}
     </View>
+  );
+}
+
+/** Colour schemes for the selected colour; `limit` shows only the first few. */
+export function ColourHarmonies({ hex, onSelect, limit, withRoom = false }: { hex: string; onSelect: (c: PickedColour) => void; limit?: number; withRoom?: boolean }) {
+  const p = usePalette();
+  return (
+    <>
+      {harmonies(hex)
+        .slice(0, limit)
+        .map((h) => (
+          <View key={h.key} style={[styles.harmony, { backgroundColor: p.surface, borderColor: p.border }, shadowOf(p)]}>
+            {withRoom ? <RoomArt wall={h.colours[0].hex} width="100%" height={120} /> : null}
+            <View style={styles.harmonyStrip}>
+              {h.colours.map((c) => (
+                <PressableScale
+                  key={c.hex}
+                  accessibilityRole="button"
+                  accessibilityLabel={`${h.title}: ${t(c.name)}`}
+                  onPress={() => onSelect(c)}
+                  style={[styles.harmonyBlock, { backgroundColor: c.hex }]}>
+                  <AppText variant="caption" numberOfLines={1} style={{ color: ink(c.hex), fontFamily: fonts.bold }}>
+                    {t(c.name)}
+                  </AppText>
+                </PressableScale>
+              ))}
+            </View>
+            <View style={{ padding: space.md, gap: 2 }}>
+              <AppText variant="bodyStrong" style={{ fontFamily: fonts.bold }}>
+                {h.title}
+              </AppText>
+              <AppText variant="small" tone="muted">
+                {h.hint}
+              </AppText>
+            </View>
+          </View>
+        ))}
+    </>
   );
 }
 

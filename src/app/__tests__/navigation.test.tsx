@@ -146,8 +146,17 @@ describe('app navigation', () => {
     expect(screen.getByTestId('inspect-verdict')).toHaveTextContent('Önce bir uzmana göster');
     expect(screen.getByText(/inşaat mühendisine/)).toBeTruthy();
     expect(screen.getByText(/küfe dayanıklı/)).toBeTruthy();
-    await fireEvent.press(screen.getAllByText('Geniş çatlak').at(-1)!);
-    expect(screen.getByText('Uzmana danış')).toBeTruthy();
+    expect(screen.getByText('Tespit Edilen Sorunlar')).toBeTruthy();
+    expect(screen.getByLabelText('Geniş çatlak, Uzmana danış')).toBeTruthy();
+    expect(screen.getByLabelText('Küf, Dikkatli ol')).toBeTruthy();
+    // Causes open one by one, or all at once with the detailed report.
+    expect(screen.queryByText('Olası neden')).toBeNull();
+    await fireEvent.press(screen.getByLabelText('Geniş çatlak, Uzmana danış'));
+    expect(screen.getAllByText('Olası neden')).toHaveLength(1);
+    await fireEvent.press(screen.getByText('Detaylı Rapor'));
+    expect(screen.getAllByText('Olası neden')).toHaveLength(2);
+    await fireEvent.press(screen.getByText('Raporu kısalt'));
+    expect(screen.queryByText('Olası neden')).toBeNull();
   });
 
   it('says a wall in good shape is ready to paint', async () => {
@@ -165,7 +174,7 @@ describe('app navigation', () => {
     await fireEvent.press(await screen.findByLabelText('Renk Stüdyosu'));
     expect(screen).toHavePathname('/colour');
     expect(screen.getByText('Renk kataloğu')).toBeTruthy();
-    await fireEvent.press(screen.getByLabelText('Duvarda'));
+    await fireEvent.press(screen.getByLabelText('Odayı Dene'));
     expect(screen.getByText('Odanın fotoğrafını ekle')).toBeTruthy();
     expect(screen.getByText('Fotoğraf çek')).toBeTruthy();
   });

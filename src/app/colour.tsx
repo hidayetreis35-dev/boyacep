@@ -2,18 +2,19 @@ import { useLocalSearchParams } from 'expo-router';
 import { useState } from 'react';
 import { View } from 'react-native';
 
-import { CompareColours, ColourExplorer, SelectedColour, SwatchCard, toPicked, type PickedColour } from '@/features/colour/colour-explorer';
+import { ColourHarmonies, CompareColours, ColourExplorer, SelectedColour, SwatchCard, toPicked, type PickedColour } from '@/features/colour/colour-explorer';
 import { ColourStudio } from '@/features/colour/colour-studio';
 import { useFavourites } from '@/features/colour/favourites';
 import type { PickedPhoto } from '@/features/photos/picker';
 import { PhotoSourceButtons } from '@/features/photos/photo-source';
 import { useProjectPhoto, useSaveSurfaces } from '@/features/photos/queries';
 import { t } from '@/i18n';
-import { FeatureHeader, Segmented, SectionTitle, SwatchFan } from '@/ui/brand';
-import { AppText, Card, EmptyState, ErrorState, LoadingState, Notice, Screen, useScrollToTop } from '@/ui/components';
-import { space } from '@/ui/theme';
+import { RoomArt } from '@/ui/art';
+import { Segmented, SectionTitle, SwatchFan } from '@/ui/brand';
+import { AppText, Button, Card, ErrorState, LoadingState, Notice, Screen, useScrollToTop } from '@/ui/components';
+import { radius, space } from '@/ui/theme';
 
-type Tab = 'colours' | 'photo' | 'favourites';
+type Tab = 'colours' | 'photo' | 'combos';
 
 const MAX_COMPARE = 3;
 
@@ -116,21 +117,22 @@ export default function ColourScreen() {
         setTab('photo');
         scrollToTop();
       }}
-      onSelect={pick}
     />
   );
 
   return (
     <Screen edges={['bottom']}>
-      <FeatureHeader feature="color" icon="color-palette" title={t('Renk Stüdyosu')} subtitle={t('Keşfet, karşılaştır, duvarında dene.')} />
       <Segmented
         options={[
           { value: 'colours', label: t('Renkler'), icon: 'color-palette' },
-          { value: 'photo', label: t('Duvarda'), icon: 'camera' },
-          { value: 'favourites', label: favourites.list.length ? t('Favoriler ({count})', { count: favourites.list.length }) : t('Favoriler'), icon: 'heart' },
+          { value: 'photo', label: t('Odayı Dene'), icon: 'camera' },
+          { value: 'combos', label: t('Kombinasyonlar'), icon: 'color-filter' },
         ]}
         value={tab}
-        onChange={setTab}
+        onChange={(next) => {
+          setTab(next);
+          scrollToTop();
+        }}
       />
 
       {compare.length > 0 ? (
@@ -142,7 +144,26 @@ export default function ColourScreen() {
 
       {tab === 'colours' ? (
         <>
+          {/* An illustrated room shows the colour on a wall before any photo. */}
+          <View style={{ borderRadius: radius.lg, overflow: 'hidden' }} testID="room-preview">
+            <RoomArt wall={colour.hex} width="100%" height={200} />
+          </View>
           {selected}
+          {favourites.list.length > 0 ? (
+            <View style={{ gap: space.sm }}>
+              <SectionTitle title={t('Favorilerin ({count})', { count: favourites.list.length })} />
+              <View style={{ flexDirection: 'row', flexWrap: 'wrap', gap: space.sm }}>
+                {favourites.list.map((hex) => (
+                  <SwatchCard key={hex} colour={toPicked(hex)} width={100} favourite selected={colour.hex === hex} onPress={() => pick(toPicked(hex))} />
+                ))}
+              </View>
+            </View>
+          ) : null}
+          <SectionTitle
+            title={t('Uyumlu Renk Kombinasyonları')}
+            action={<Button label={t('Tümü')} variant="ghost" onPress={() => setTab('combos')} />}
+          />
+          <ColourHarmonies hex={colour.hex} onSelect={pick} limit={1} />
           <SectionTitle title={t('Renk kataloğu')} />
           <ColourExplorer selected={colour.hex} favourites={favourites.list} onSelect={pick} />
         </>
@@ -157,27 +178,11 @@ export default function ColourScreen() {
         )}
       </View>
 
-      {tab === 'favourites' ? (
-        favourites.list.length === 0 ? (
-          <EmptyState icon="heart" title={t('Henüz favorin yok')} message={t('Beğendiğin renklerde kalp simgesine dokun; burada toplansın ve karşılaştırabilesin.')} />
-        ) : (
-          <View style={{ flexDirection: 'row', flexWrap: 'wrap', gap: space.sm }}>
-            {favourites.list.map((hex) => (
-              <SwatchCard
-                key={hex}
-                colour={toPicked(hex)}
-                width={108}
-                favourite
-                selected={colour.hex === hex}
-                onPress={() => {
-                  pick(toPicked(hex));
-                  setTab('colours');
-                  scrollToTop();
-                }}
-              />
-            ))}
-          </View>
-        )
+      {tab === 'combos' ? (
+        <>
+          <AppText tone="muted">{t('“{name}” ile uyumlu renkler. Bir renge dokun, seçili renk olsun.', { name: t(colour.name) })}</AppText>
+          <ColourHarmonies hex={colour.hex} onSelect={pick} withRoom />
+        </>
       ) : null}
     </Screen>
   );
