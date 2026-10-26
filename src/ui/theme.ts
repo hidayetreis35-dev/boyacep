@@ -131,6 +131,10 @@ export type TypeVariant = keyof typeof type;
 /** Content never stretches wider than this on tablets and desktop browsers. */
 export const MAX_CONTENT_WIDTH = 680;
 
+/** Screens with two columns may grow to this width once the window is wide enough. */
+export const MAX_WIDE_WIDTH = 1160;
+export const WIDE_BREAKPOINT = 980;
+
 /** Minimum touch target for accessibility. */
 export const MIN_TOUCH = 44;
 

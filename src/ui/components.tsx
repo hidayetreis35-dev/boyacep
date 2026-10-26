@@ -18,6 +18,7 @@ import {
   Text,
   TextInput,
   View,
+  useWindowDimensions,
   type TextInputProps,
   type HostInstance,
   type ScrollViewInstance,
@@ -29,7 +30,7 @@ import {
 import { SafeAreaView } from 'react-native-safe-area-context';
 
 import { PressableScale } from './motion';
-import { MAX_CONTENT_WIDTH, MIN_TOUCH, fonts, radius, shadowOf, space, type, usePalette, type Palette, type TypeVariant } from './theme';
+import { MAX_CONTENT_WIDTH, MAX_WIDE_WIDTH, MIN_TOUCH, WIDE_BREAKPOINT, fonts, radius, shadowOf, space, type, usePalette, type Palette, type TypeVariant } from './theme';
 
 import { t, toUpper } from '@/i18n';
 
@@ -92,8 +93,41 @@ export function useScrollToView(): ScrollToView {
 }
 
 /** Scrollable page with safe area, background and a centred max width. */
-export function Screen({ children, edges = ['top'] }: { children: ReactNode; edges?: ('top' | 'bottom')[] }) {
+/** True on desktop browsers and large tablets, where two columns fit. */
+export function useWide(): boolean {
+  return useWindowDimensions().width >= WIDE_BREAKPOINT;
+}
+
+/**
+ * Two columns on wide windows, one column on phones. `sideFirst` keeps the
+ * phone order when the side column holds what a phone shows first.
+ */
+export function Columns({ main, side, sideFirst = false }: { main: ReactNode; side: ReactNode; sideFirst?: boolean }) {
+  const wide = useWide();
+  if (!wide) return sideFirst ? <>{side}{main}</> : <>{main}{side}</>;
+  return (
+    <View style={styles.columns}>
+      <View style={styles.mainColumn}>{main}</View>
+      <View style={styles.sideColumn}>{side}</View>
+    </View>
+  );
+}
+
+/** Cards in a two-column grid on wide windows, a list on phones. */
+export function Grid({ children }: { children: ReactNode }) {
+  const wide = useWide();
+  if (!wide) return <View style={{ gap: space.sm }}>{children}</View>;
+  return (
+    <View style={styles.grid}>
+      {Children.map(children, (child) => (child ? <View style={styles.gridCell}>{child}</View> : null))}
+    </View>
+  );
+}
+
+/** `wide` lets a screen with Columns or Grid use the desktop width. */
+export function Screen({ children, edges = ['top'], wide = false }: { children: ReactNode; edges?: ('top' | 'bottom')[]; wide?: boolean }) {
   const p = usePalette();
+  const isWide = useWide() && wide;
   const scrollRef = useRef<ScrollViewInstance>(null);
   const innerRef = useRef<HostInstance>(null);
   const scrollToView = useCallback<ScrollToView>((view) => {
@@ -110,7 +144,7 @@ export function Screen({ children, edges = ['top'] }: { children: ReactNode; edg
         contentContainerStyle={styles.screenContent}
         keyboardShouldPersistTaps="handled"
         style={{ backgroundColor: p.background }}>
-        <View ref={innerRef} style={styles.screenInner}>
+        <View ref={innerRef} style={[styles.screenInner, isWide && { maxWidth: MAX_WIDE_WIDTH, paddingHorizontal: space.xl }]}>
           <ScrollTopContext.Provider value={scrollToTop}>
             <ScrollContext.Provider value={scrollToView}>{children}</ScrollContext.Provider>
           </ScrollTopContext.Provider>
@@ -455,6 +489,11 @@ const webNoOutline = Platform.OS === 'web' ? ({ outlineStyle: 'none' } as unknow
 const styles = StyleSheet.create({
   screenContent: { flexGrow: 1, alignItems: 'center', paddingBottom: space.xxl },
   screenInner: { width: '100%', maxWidth: MAX_CONTENT_WIDTH, padding: space.lg, gap: space.lg },
+  columns: { flexDirection: 'row', alignItems: 'flex-start', gap: space.xl },
+  mainColumn: { flex: 3, minWidth: 0, gap: space.lg },
+  sideColumn: { flex: 2, minWidth: 0, gap: space.lg },
+  grid: { flexDirection: 'row', flexWrap: 'wrap', margin: -space.xs },
+  gridCell: { width: '50%', padding: space.xs },
   card: { borderWidth: StyleSheet.hairlineWidth, borderRadius: radius.lg, padding: space.lg + 2, gap: space.md },
   button: {
     minHeight: MIN_TOUCH + 8,

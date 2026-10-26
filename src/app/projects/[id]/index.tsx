@@ -20,6 +20,7 @@ import {
   Button,
   Card,
   ChoiceChips,
+  Columns,
   EmptyState,
   ErrorState,
   Icon,
@@ -184,7 +185,7 @@ export default function ProjectScreen() {
   const totalLitres = calc?.ok ? calc.value.totals.wallLitres + calc.value.totals.ceilingLitres : null;
 
   return (
-    <Screen edges={['bottom']}>
+    <Screen edges={['bottom']} wide>
       <Stack.Screen options={{ title: project.title }} />
 
       <View style={[styles.hero, shadowOf(p, 2)]}>
@@ -203,113 +204,123 @@ export default function ProjectScreen() {
         </View>
       </View>
 
-      {project.status === 'completed' ? <SaveToHomeLog project={project} /> : null}
+      <Columns
+        sideFirst
+        side={
+          <>
+          {project.status === 'completed' ? <SaveToHomeLog project={project} /> : null}
 
-      <ProjectSteps projectId={project.id} rooms={rooms.length} budget={project.budget} />
+          <ProjectSteps projectId={project.id} rooms={rooms.length} budget={project.budget} />
 
-      <View style={styles.quickRow}>
-        <QuickAction icon="add-circle" label={t('Oda ekle')} feature="calculate" onPress={() => router.push({ pathname: '/projects/[id]/room', params: { id: project.id } })} />
-        <QuickAction icon="wallet" label={t('Maliyet')} feature="cost" onPress={() => router.push({ pathname: '/projects/[id]/cost', params: { id: project.id } })} />
-        <QuickAction icon="color-palette" label={t('Renkler')} feature="color" onPress={() => router.push('/colour')} />
-        <QuickAction icon="share-social" label={t('Ustayla paylaş')} feature="ask" onPress={() => router.push({ pathname: '/projects/[id]/share', params: { id: project.id } })} />
-      </View>
+          <View style={styles.quickRow}>
+            <QuickAction icon="add-circle" label={t('Oda ekle')} feature="calculate" onPress={() => router.push({ pathname: '/projects/[id]/room', params: { id: project.id } })} />
+            <QuickAction icon="wallet" label={t('Maliyet')} feature="cost" onPress={() => router.push({ pathname: '/projects/[id]/cost', params: { id: project.id } })} />
+            <QuickAction icon="color-palette" label={t('Renkler')} feature="color" onPress={() => router.push('/colour')} />
+            <QuickAction icon="share-social" label={t('Ustayla paylaş')} feature="ask" onPress={() => router.push({ pathname: '/projects/[id]/share', params: { id: project.id } })} />
+          </View>
 
-      <View style={styles.quickRow}>
-        <View style={{ flex: 1 }}>
-          <Button
-            label={t('Akıllı Bütçe')}
-            icon="pie-chart"
-            variant="secondary"
-            onPress={() => router.push({ pathname: '/projects/[id]/budget', params: { id: project.id } })}
+          <View style={styles.quickRow}>
+            <View style={{ flex: 1 }}>
+              <Button
+                label={t('Akıllı Bütçe')}
+                icon="pie-chart"
+                variant="secondary"
+                onPress={() => router.push({ pathname: '/projects/[id]/budget', params: { id: project.id } })}
+              />
+            </View>
+            <View style={{ flex: 1 }}>
+              <Button
+                label={t('Keşif dosyası')}
+                icon="document-text"
+                variant="secondary"
+                onPress={() => router.push({ pathname: '/projects/[id]/survey', params: { id: project.id } })}
+              />
+            </View>
+          </View>
+
+          <ChoiceChips
+            label={t('Projenin durumu')}
+            options={STATUS_ORDER.map((s) => ({ value: s, label: t(STATUS_LABEL[s]) }))}
+            value={project.status}
+            onChange={(s) => setStatus.mutate(s)}
           />
-        </View>
-        <View style={{ flex: 1 }}>
-          <Button
-            label={t('Keşif dosyası')}
-            icon="document-text"
-            variant="secondary"
-            onPress={() => router.push({ pathname: '/projects/[id]/survey', params: { id: project.id } })}
-          />
-        </View>
-      </View>
-
-      <ChoiceChips
-        label={t('Projenin durumu')}
-        options={STATUS_ORDER.map((s) => ({ value: s, label: t(STATUS_LABEL[s]) }))}
-        value={project.status}
-        onChange={(s) => setStatus.mutate(s)}
-      />
-      {setStatus.isError ? (
-        <Notice tone="danger" icon="alert-circle">
-          {t('Durum kaydedilemedi.')}
-        </Notice>
-      ) : null}
-
-      <View style={{ gap: space.sm }}>
-        <SectionTitle title={t('Odalar')} />
-        {rooms.length === 0 ? (
-          <EmptyState icon="cube" title={t('Henüz oda yok')} message={t('Oda ekle; ölçülerini gir, boya ihtiyacı burada toplansın.')} />
-        ) : (
-          rooms.map((room, i) => (
-            <RoomCard
-              key={room.id}
-              projectId={project.id}
-              room={room}
-              litres={
-                calc?.ok
-                  ? round(calc.value.rooms[i].paint.wallLitres + calc.value.rooms[i].paint.ceilingLitres, 1)
-                  : null
-              }
+          {setStatus.isError ? (
+            <Notice tone="danger" icon="alert-circle">
+              {t('Durum kaydedilemedi.')}
+            </Notice>
+          ) : null}
+          </>
+        }
+        main={
+          <>
+          <View style={{ gap: space.sm }}>
+            <SectionTitle title={t('Odalar')} />
+            {rooms.length === 0 ? (
+              <EmptyState icon="cube" title={t('Henüz oda yok')} message={t('Oda ekle; ölçülerini gir, boya ihtiyacı burada toplansın.')} />
+            ) : (
+              rooms.map((room, i) => (
+                <RoomCard
+                  key={room.id}
+                  projectId={project.id}
+                  room={room}
+                  litres={
+                    calc?.ok
+                      ? round(calc.value.rooms[i].paint.wallLitres + calc.value.rooms[i].paint.ceilingLitres, 1)
+                      : null
+                  }
+                />
+              ))
+            )}
+            <Button
+              label={t('Oda ekle')}
+              icon="add"
+              variant="secondary"
+              onPress={() => router.push({ pathname: '/projects/[id]/room', params: { id: project.id } })}
             />
-          ))
-        )}
-        <Button
-          label={t('Oda ekle')}
-          icon="add"
-          variant="secondary"
-          onPress={() => router.push({ pathname: '/projects/[id]/room', params: { id: project.id } })}
-        />
-      </View>
+          </View>
 
-      {calc && !calc.ok ? (
-        <Notice tone="danger" icon="alert-circle">
-          {t('Bir odanın ölçüleri hatalı: {message}', { message: calc.issues[0] ? t(calc.issues[0].message) : '' })}
-        </Notice>
-      ) : null}
+          {calc && !calc.ok ? (
+            <Notice tone="danger" icon="alert-circle">
+              {t('Bir odanın ölçüleri hatalı: {message}', { message: calc.issues[0] ? t(calc.issues[0].message) : '' })}
+            </Notice>
+          ) : null}
 
-      {calc?.ok ? (
-        <View style={{ gap: space.sm }}>
-          <SectionTitle title={t('Proje toplamı')} />
-          <Card>
-            {calc.value.materials.map((m) => (
-              <View key={m.category} style={{ flexDirection: 'row', gap: space.sm, alignItems: 'center' }}>
-                <AppText style={{ flex: 1 }}>{t(m.name)}</AppText>
-                <AppText variant="bodyStrong">
-                  {m.packages ? packageText(m.packages) : quantityText(m.quantity, m.unit)}
-                </AppText>
-              </View>
-            ))}
-            <Badge label={t('Tahmini değerler içerir')} tone="accent" />
-          </Card>
-          <Button
-            label={t('Malzeme listesi ve maliyet')}
-            icon="wallet"
-            variant="cta"
-            onPress={() => router.push({ pathname: '/projects/[id]/cost', params: { id: project.id } })}
-          />
-          <Disclosure title={t('Hesapta kullanılan değerler')}>
-            <AssumptionList assumptions={calc.value.assumptions} />
-          </Disclosure>
-        </View>
-      ) : null}
+          {calc?.ok ? (
+            <View style={{ gap: space.sm }}>
+              <SectionTitle title={t('Proje toplamı')} />
+              <Card>
+                {calc.value.materials.map((m) => (
+                  <View key={m.category} style={{ flexDirection: 'row', gap: space.sm, alignItems: 'center' }}>
+                    <AppText style={{ flex: 1 }}>{t(m.name)}</AppText>
+                    <AppText variant="bodyStrong">
+                      {m.packages ? packageText(m.packages) : quantityText(m.quantity, m.unit)}
+                    </AppText>
+                  </View>
+                ))}
+                <Badge label={t('Tahmini değerler içerir')} tone="accent" />
+              </Card>
+              <Button
+                label={t('Malzeme listesi ve maliyet')}
+                icon="wallet"
+                variant="cta"
+                onPress={() => router.push({ pathname: '/projects/[id]/cost', params: { id: project.id } })}
+              />
+              <Disclosure title={t('Hesapta kullanılan değerler')}>
+                <AssumptionList assumptions={calc.value.assumptions} />
+              </Disclosure>
+            </View>
+          ) : null}
 
-      <ProjectColours projectId={project.id} />
+          <ProjectColours projectId={project.id} />
 
-      <ProjectPhotos projectId={project.id} />
+          <ProjectPhotos projectId={project.id} />
 
-      <ReceivedQuotes projectId={project.id} />
+          <ReceivedQuotes projectId={project.id} />
 
-      <DeleteProject id={project.id} />
+          <DeleteProject id={project.id} />
+          </>
+        }
+      />
     </Screen>
   );
 }
