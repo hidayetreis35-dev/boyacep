@@ -1801,4 +1801,8 @@ export const en: Record<string, Translation> = {
   "Maliyet Kalemleri": "Cost items",
   "Kendim Yapacağım": "I'll do it myself",
   "Usta ile Yaptıracağım": "With a painter",
+  "Devam Eden": "In progress",
+  "Tamamlanan": "Completed",
+  "Henüz tamamlanan projen yok.": "No completed projects yet.",
+  "Devam eden projen yok.": "No projects in progress.",
 };

@@ -100,6 +100,35 @@ describe('Projelerim (signed in)', () => {
   });
 });
 
+describe('Projelerim filters', () => {
+  it('splits projects into in progress and completed, with progress', async () => {
+    api.listProjects.mockResolvedValue([
+      project({ id: 'p1', title: 'Salon boyası' }),
+      project({ id: 'p2', title: 'Banyo', status: 'completed' }),
+    ]);
+    api.getProject.mockResolvedValue({ project: project(), rooms: [] });
+    await renderRouter('./src/app', { initialUrl: '/projects' });
+    expect(await screen.findByText('Salon boyası')).toBeTruthy();
+    expect(screen.getByText('Banyo')).toBeTruthy();
+    expect(screen.getByText('%100')).toBeTruthy();
+
+    await fireEvent.press(screen.getByLabelText('Tamamlanan'));
+    expect(screen.queryByText('Salon boyası')).toBeNull();
+    expect(screen.getByText('Banyo')).toBeTruthy();
+
+    await fireEvent.press(screen.getByLabelText('Devam Eden'));
+    expect(screen.getByText('Salon boyası')).toBeTruthy();
+    expect(screen.queryByText('Banyo')).toBeNull();
+  });
+
+  it('says so when a filter is empty', async () => {
+    api.listProjects.mockResolvedValue([project()]);
+    await renderRouter('./src/app', { initialUrl: '/projects' });
+    await fireEvent.press(await screen.findByLabelText('Tamamlanan'));
+    expect(screen.getByText('Henüz tamamlanan projen yok.')).toBeTruthy();
+  });
+});
+
 describe('Project detail', () => {
   it('totals the paint for saved rooms', async () => {
     api.getProject.mockResolvedValue({

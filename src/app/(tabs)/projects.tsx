@@ -7,9 +7,11 @@ import { SignInGate } from '@/features/account/sign-in-gate';
 import { useMyPlan } from '@/features/plans/queries';
 import { FREE_PROJECT_LIMIT } from '@/features/projects/limits';
 import { STATUS_LABEL } from '@/features/projects/mapping';
-import { useCreateProject, useProjects } from '@/features/projects/queries';
+import { useProjectProgress } from '@/features/projects/project-steps';
+import { PROJECT_STEPS } from '@/features/projects/progress';
+import { useCreateProject, useProject, useProjects } from '@/features/projects/queries';
 import { formatDate } from '@/features/quotes/pdf';
-import { t } from '@/i18n';
+import { msg, t } from '@/i18n';
 import type { ProjectRow } from '@/lib/database.types';
 import {
   AppText,
@@ -24,9 +26,51 @@ import {
   Screen,
   TextField,
 } from '@/ui/components';
-import { IconBubble } from '@/ui/brand';
+import { IconBubble, Segmented } from '@/ui/brand';
 import { PressableScale } from '@/ui/motion';
-import { radius, shadowOf, space, usePalette } from '@/ui/theme';
+import { fonts, radius, shadowOf, space, useFeatureColour, usePalette } from '@/ui/theme';
+
+type Filter = 'all' | 'active' | 'done';
+
+const FILTERS: { value: Filter; label: string }[] = [
+  { value: 'all', label: msg('Tümü') },
+  { value: 'active', label: msg('Devam Eden') },
+  { value: 'done', label: msg('Tamamlanan') },
+];
+
+const isOpen = (project: ProjectRow) => project.status !== 'completed' && project.status !== 'cancelled';
+
+function ProgressBar({ share, label, done }: { share: number; label: string | null; done?: boolean }) {
+  const p = usePalette();
+  const f = useFeatureColour('projects');
+  return (
+    <View style={{ flexDirection: 'row', alignItems: 'center', gap: space.sm }}>
+      <View style={[styles.track, { backgroundColor: p.surfaceMuted }]}>
+        <View style={[styles.fill, { width: `${Math.round(share * 100)}%`, backgroundColor: done ? p.success : p.cta }]} />
+      </View>
+      {label ? (
+        <AppText variant="caption" style={{ color: done ? p.success : f.ink, fontFamily: fonts.bold, minWidth: 36, textAlign: 'right' }}>
+          {label}
+        </AppText>
+      ) : null}
+    </View>
+  );
+}
+
+/** Share of Ölç → Malzeme → Renk → Bütçe → Dosya done; the number shows once every step is known. */
+function LiveProgress({ project, rooms }: { project: ProjectRow; rooms: number }) {
+  const { states, done } = useProjectProgress(project.id, rooms, project.budget);
+  const known = PROJECT_STEPS.every((s) => states[s] !== 'unknown');
+  const share = done / PROJECT_STEPS.length;
+  return <ProgressBar share={share} label={known ? `%${Math.round(share * 100)}` : null} />;
+}
+
+function CardProgress({ project }: { project: ProjectRow }) {
+  const detail = useProject(project.id);
+  if (project.status === 'completed') return <ProgressBar share={1} label="%100" done />;
+  if (!detail.isSuccess) return null;
+  return <LiveProgress project={project} rooms={detail.data.rooms.length} />;
+}
 
 function ProjectCard({ project }: { project: ProjectRow }) {
   const p = usePalette();
@@ -37,19 +81,30 @@ function ProjectCard({ project }: { project: ProjectRow }) {
       accessibilityLabel={project.title}
       onPress={() => router.push({ pathname: '/projects/[id]', params: { id: project.id } })}
       style={[styles.card, { backgroundColor: p.surface, borderColor: p.border }, shadowOf(p)]}>
-      <IconBubble icon={done ? 'checkmark-done' : 'home'} feature="projects" />
-      <View style={{ flex: 1, gap: 4 }}>
-        <AppText variant="bodyStrong">{project.title}</AppText>
-        <View style={{ flexDirection: 'row', alignItems: 'center', gap: space.sm, flexWrap: 'wrap' }}>
-          <Badge label={t(STATUS_LABEL[project.status])} tone={done ? 'success' : 'primary'} />
+      <View style={{ flexDirection: 'row', alignItems: 'center', gap: space.md }}>
+        <IconBubble icon={done ? 'checkmark-done' : 'home'} feature="projects" />
+        <View style={{ flex: 1, gap: 2 }}>
+          <AppText variant="bodyStrong" numberOfLines={1}>
+            {project.title}
+          </AppText>
           <AppText variant="caption" tone="muted">
             {formatDate(project.updated_at)}
           </AppText>
         </View>
+        <Icon name="chevron-forward" color={p.textMuted} />
       </View>
-      <Icon name="chevron-forward" color={p.textMuted} />
+      <CardProgress project={project} />
+      <View style={{ flexDirection: 'row', justifyContent: 'flex-end' }}>
+        <Badge label={t(STATUS_LABEL[project.status])} tone={done ? 'success' : 'primary'} />
+      </View>
     </PressableScale>
   );
+}
+
+function shownProjects(list: ProjectRow[], filter: Filter): ProjectRow[] {
+  if (filter === 'active') return list.filter(isOpen);
+  if (filter === 'done') return list.filter((project) => project.status === 'completed');
+  return list;
 }
 
 function NewProject({ count }: { count: number }) {
@@ -115,6 +170,7 @@ function NewProject({ count }: { count: number }) {
 
 function ProjectList() {
   const projects = useProjects();
+  const [filter, setFilter] = useState<Filter>('all');
   if (projects.isPending) return <LoadingState label={t('Projeler yükleniyor…')} />;
   if (projects.isError) return <ErrorState message={t('Projeler yüklenemedi. İnternet bağlantını kontrol et.')} onRetry={() => projects.refetch()} />;
 
@@ -128,7 +184,16 @@ function ProjectList() {
           message={t('Bir proje oluştur, odalarını ekle; boya ve malzeme ihtiyacın otomatik hesaplansın.')}
         />
       ) : (
-        projects.data.map((project) => <ProjectCard key={project.id} project={project} />)
+        <>
+          <Segmented options={FILTERS} value={filter} onChange={setFilter} />
+          {shownProjects(projects.data, filter).length === 0 ? (
+            <AppText tone="muted" style={{ textAlign: 'center', paddingVertical: space.lg }}>
+              {filter === 'done' ? t('Henüz tamamlanan projen yok.') : t('Devam eden projen yok.')}
+            </AppText>
+          ) : (
+            shownProjects(projects.data, filter).map((project) => <ProjectCard key={project.id} project={project} />)
+          )}
+        </>
       )}
       <Button label={t('Ev Hafızası: boyadığım renkler')} icon="color-palette" variant="ghost" onPress={() => router.push('/home-log')} />
     </View>
@@ -174,5 +239,7 @@ export default function ProjectsScreen() {
 }
 
 const styles = StyleSheet.create({
-  card: { flexDirection: 'row', alignItems: 'center', gap: space.md, padding: space.lg, borderRadius: radius.lg, borderWidth: StyleSheet.hairlineWidth },
+  card: { gap: space.md, padding: space.lg, borderRadius: radius.lg, borderWidth: StyleSheet.hairlineWidth },
+  track: { flex: 1, height: 8, borderRadius: radius.pill, overflow: 'hidden' },
+  fill: { height: '100%', borderRadius: radius.pill },
 });
