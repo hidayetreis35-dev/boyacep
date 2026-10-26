@@ -2,7 +2,9 @@ import { Stack, useLocalSearchParams } from 'expo-router';
 import { useState } from 'react';
 import { Pressable, View } from 'react-native';
 
-import { calculateProject, summarizeCost } from '@/engine';
+import { calculateProject } from '@/engine';
+import { BudgetField } from '@/features/budget/budget-field';
+import { costSummaryFromRows } from '@/features/budget/plan';
 import { CostSummaryCard } from '@/features/materials/cost-summary';
 import { materialsToDrafts } from '@/features/materials/from-calculation';
 import { MaterialRow } from '@/features/materials/material-row';
@@ -13,7 +15,6 @@ import {
   useDeleteCost,
   useDeleteMaterial,
   useMaterials,
-  useSetBudget,
   useSyncMaterials,
   useUpdateMaterial,
 } from '@/features/materials/queries';
@@ -21,7 +22,7 @@ import { roomToInput } from '@/features/projects/mapping';
 import { useProject } from '@/features/projects/queries';
 import { msg, t } from '@/i18n';
 import type { ProjectCostRow } from '@/lib/database.types';
-import { formatMoney, formatNumber, parseDecimal } from '@/lib/number';
+import { formatMoney, parseDecimal } from '@/lib/number';
 import {
   AppText,
   Button,
@@ -125,30 +126,6 @@ function AddCost({ projectId }: { projectId: string }) {
   );
 }
 
-function Budget({ projectId, budget }: { projectId: string; budget: number | null }) {
-  const initial = budget === null ? '' : formatNumber(budget, 2);
-  const [text, setText] = useState(initial);
-  const save = useSetBudget(projectId);
-  const value = text.trim() === '' ? null : parseDecimal(text);
-  const invalid = value !== null && !Number.isFinite(value);
-  return (
-    <Card>
-      <AppText variant="heading">{t('Bütçe')}</AppText>
-      <NumberField
-        label={t('Bu iş için ayırdığın tutar')}
-        unit="₺"
-        value={text}
-        onChangeText={setText}
-        error={invalid ? t('Tutarı sayı olarak yazın.') : undefined}
-        testID="budget"
-      />
-      {text !== initial ? (
-        <Button label={t('Bütçeyi kaydet')} variant="secondary" disabled={invalid} loading={save.isPending} onPress={() => save.mutate(value)} />
-      ) : null}
-    </Card>
-  );
-}
-
 export default function CostScreen() {
   const { id } = useLocalSearchParams<{ id: string }>();
   const p = usePalette();
@@ -174,16 +151,7 @@ export default function CostScreen() {
 
   const { rooms } = project.data;
   const budget = project.data.project.budget === null ? null : Number(project.data.project.budget);
-  const summary = summarizeCost(
-    materials.data.map((m) => ({
-      category: m.category,
-      quantity: Number(m.quantity),
-      unitPrice: m.unit_price === null ? null : Number(m.unit_price),
-      priceSource: m.price_source,
-    })),
-    costs.data.map((c) => ({ kind: c.kind, amount: Number(c.amount), priceSource: c.price_source })),
-    budget,
-  );
+  const summary = costSummaryFromRows(materials.data, costs.data, budget);
 
   const regenerate = () => {
     const calc = calculateProject(rooms.map(roomToInput));
@@ -252,7 +220,7 @@ export default function CostScreen() {
         <AddCost projectId={id} />
       </Card>
 
-      <Budget key={String(budget)} projectId={id} budget={budget} />
+      <BudgetField key={String(budget)} projectId={id} budget={budget} />
       <Notice>
         {t('“Tahmini” tutarlar senin ya da uygulamanın varsayımıdır. “Mağaza fiyatı” ve “Kesin” sadece senin kontrol ettiğin fiyatlardır.')}
       </Notice>

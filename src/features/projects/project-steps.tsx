@@ -15,13 +15,14 @@ const NEXT: Record<ProjectStep, { title: string; action: string; icon: IconName 
   measure: { title: msg('Odalarını ölç'), action: msg('Oda ekle'), icon: 'add-circle' },
   materials: { title: msg('Malzeme listeni çıkar'), action: msg('Malzeme listesi'), icon: 'list' },
   colour: { title: msg('Rengini seç'), action: msg('Renk Stüdyosu'), icon: 'color-palette' },
-  budget: { title: msg('Bütçeni yaz'), action: msg('Bütçe ve maliyet'), icon: 'wallet' },
+  budget: { title: msg('Bütçeni yaz'), action: msg('Akıllı Bütçe'), icon: 'wallet' },
   file: { title: msg('Keşif dosyasını ustaya gönder'), action: msg('Keşif dosyası'), icon: 'document-text' },
 };
 
 function go(step: ProjectStep, id: string) {
   if (step === 'measure') router.push({ pathname: '/projects/[id]/room', params: { id } });
-  else if (step === 'materials' || step === 'budget') router.push({ pathname: '/projects/[id]/cost', params: { id } });
+  else if (step === 'materials') router.push({ pathname: '/projects/[id]/cost', params: { id } });
+  else if (step === 'budget') router.push({ pathname: '/projects/[id]/budget', params: { id } });
   else if (step === 'colour') router.push('/colour');
   else router.push({ pathname: '/projects/[id]/survey', params: { id } });
 }

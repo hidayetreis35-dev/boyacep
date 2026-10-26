@@ -3,6 +3,7 @@ import { fireEvent, screen } from '@testing-library/react-native';
 import { renderRouter } from 'expo-router/testing-library';
 
 import * as materialsApi from '@/features/materials/api';
+import * as budgetApi from '@/features/budget/api';
 import { EMPTY_ROOM_FORM } from '@/features/calculator/form';
 import * as projectsApi from '@/features/projects/api';
 import { clearPendingRoom, getPendingRoom, setPendingRoom } from '@/features/projects/pending-room';
@@ -32,6 +33,14 @@ jest.mock('@/features/projects/api');
 const api = jest.mocked(projectsApi);
 jest.mock('@/features/materials/api');
 const mapi = jest.mocked(materialsApi);
+jest.mock('@/features/budget/api', () => ({
+  ...jest.requireActual('@/features/budget/api'),
+  listExpenses: jest.fn(),
+  addExpense: jest.fn(),
+  deleteExpense: jest.fn(),
+  deleteReceipts: jest.fn(async () => {}),
+}));
+const bapi = jest.mocked(budgetApi);
 
 function project(overrides: Partial<ProjectRow> = {}): ProjectRow {
   return {
@@ -250,6 +259,87 @@ describe('Malzeme ve maliyet', () => {
       price_source: 'store',
       store_name: null,
     });
+  });
+});
+
+function expense(overrides: Partial<budgetApi.ExpenseWithReceipt> = {}): budgetApi.ExpenseWithReceipt {
+  return {
+    id: 'e1',
+    project_id: 'p1',
+    owner_id: 'user-1',
+    category: 'paint',
+    label: 'İç cephe boyası',
+    amount: 1500,
+    spent_on: '2026-10-20',
+    store_name: 'Yapı market',
+    note: null,
+    receipt_path: null,
+    receiptUrl: null,
+    created_at: '',
+    updated_at: '',
+    ...overrides,
+  };
+}
+
+describe('Akıllı Bütçe', () => {
+  beforeEach(() => {
+    api.getProject.mockResolvedValue({ project: project({ budget: 10000 }), rooms: [salon] });
+    mapi.listMaterials.mockResolvedValue([paintRow]);
+    mapi.listCosts.mockResolvedValue([
+      { id: 'c1', project_id: 'p1', kind: 'labor', label: 'İşçilik', amount: 3000, price_source: 'estimate', note: null, created_at: '', updated_at: '' },
+    ]);
+  });
+
+  it('shows what was spent against the budget and the plan', async () => {
+    bapi.listExpenses.mockResolvedValue([expense()]);
+    await renderRouter('./src/app', { initialUrl: '/projects/p1/budget' });
+    expect(await screen.findByTestId('budget-spent')).toHaveTextContent('1.500,00 ₺');
+    expect(screen.getByText('Kalan: 8.500,00 ₺')).toBeTruthy();
+    expect(screen.getByText('4.200,00 ₺')).toBeTruthy(); // planned: 1200 paint + 3000 labour
+    expect(screen.getByText('İç cephe boyası')).toBeTruthy();
+    expect(screen.getByText('Boya · 20.10.2026 · Yapı market')).toBeTruthy();
+  });
+
+  it('warns when the forecast goes over the budget', async () => {
+    // Paint 7000 spent (plan 1200) + labour still 3000 planned = 10 000 + 500 other.
+    bapi.listExpenses.mockResolvedValue([expense({ amount: 7000 }), expense({ id: 'e2', category: 'other', amount: 500 })]);
+    await renderRouter('./src/app', { initialUrl: '/projects/p1/budget' });
+    expect(await screen.findByText('Bu gidişle bütçeyi yaklaşık 500,00 ₺ aşabilirsin.')).toBeTruthy();
+  });
+
+  it('shows an over-budget warning', async () => {
+    bapi.listExpenses.mockResolvedValue([expense({ amount: 12000 })]);
+    await renderRouter('./src/app', { initialUrl: '/projects/p1/budget' });
+    expect(await screen.findByText('Bütçe aşımı: 2.000,00 ₺')).toBeTruthy();
+    expect(screen.getByText(/Bütçeyi aştın/)).toBeTruthy();
+  });
+
+  it('adds an expense', async () => {
+    bapi.listExpenses.mockResolvedValue([]);
+    bapi.addExpense.mockResolvedValue();
+    await renderRouter('./src/app', { initialUrl: '/projects/p1/budget' });
+    expect(await screen.findByText('Henüz harcama yok')).toBeTruthy();
+    await fireEvent.press(screen.getByText('Harcama ekle'));
+    await fireEvent.press(screen.getByText('Kaydet'));
+    expect(screen.getByText('Ne aldığını ya da ödediğini yaz.')).toBeTruthy();
+    expect(bapi.addExpense).not.toHaveBeenCalled();
+    await fireEvent.changeText(screen.getByTestId('expense-label'), 'Usta kaparo');
+    await fireEvent.changeText(screen.getByTestId('expense-amount'), '2.000');
+    await fireEvent.changeText(screen.getByTestId('expense-date'), '21.10.2026');
+    await fireEvent.press(screen.getAllByText('İşçilik')[0]);
+    await fireEvent.press(screen.getByText('Kaydet'));
+    expect(bapi.addExpense).toHaveBeenCalledWith(expect.anything(), {
+      ownerId: 'user-1',
+      projectId: 'p1',
+      draft: { category: 'labor', label: 'Usta kaparo', amount: 2000, spent_on: '2026-10-21', store_name: null },
+      receipt: null,
+    });
+  });
+
+  it('says "Yakında" while the server does not have the feature', async () => {
+    bapi.listExpenses.mockRejectedValue(new Error("Could not find the table 'public.project_expenses' in the schema cache"));
+    await renderRouter('./src/app', { initialUrl: '/projects/p1/budget' });
+    expect(await screen.findByText('Yakında', {}, { timeout: 3000 })).toBeTruthy();
   });
 });
 

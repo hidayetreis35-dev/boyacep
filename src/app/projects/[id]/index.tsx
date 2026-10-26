@@ -211,12 +211,24 @@ export default function ProjectScreen() {
         <QuickAction icon="share-social" label={t('Ustayla paylaş')} feature="ask" onPress={() => router.push({ pathname: '/projects/[id]/share', params: { id: project.id } })} />
       </View>
 
-      <Button
-        label={t('Keşif dosyası')}
-        icon="document-text"
-        variant="secondary"
-        onPress={() => router.push({ pathname: '/projects/[id]/survey', params: { id: project.id } })}
-      />
+      <View style={styles.quickRow}>
+        <View style={{ flex: 1 }}>
+          <Button
+            label={t('Akıllı Bütçe')}
+            icon="pie-chart"
+            variant="secondary"
+            onPress={() => router.push({ pathname: '/projects/[id]/budget', params: { id: project.id } })}
+          />
+        </View>
+        <View style={{ flex: 1 }}>
+          <Button
+            label={t('Keşif dosyası')}
+            icon="document-text"
+            variant="secondary"
+            onPress={() => router.push({ pathname: '/projects/[id]/survey', params: { id: project.id } })}
+          />
+        </View>
+      </View>
 
       <ChoiceChips
         label={t('Projenin durumu')}

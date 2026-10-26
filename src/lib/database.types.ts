@@ -140,6 +140,22 @@ export type ProjectCostRow = {
   updated_at: string;
 };
 
+export type ProjectExpenseRow = {
+  id: string;
+  project_id: string;
+  owner_id: string;
+  category: 'paint' | 'material' | 'labor' | 'other';
+  label: string;
+  amount: number;
+  /** YYYY-MM-DD */
+  spent_on: string;
+  store_name: string | null;
+  note: string | null;
+  receipt_path: string | null;
+  created_at: string;
+  updated_at: string;
+};
+
 export type GuideCategory =
   | 'preparation'
   | 'primer'
@@ -450,6 +466,12 @@ export type Database = {
         ProjectCostRow,
         Omit<ProjectCostRow, Generated | 'note' | 'price_source'> & Partial<Pick<ProjectCostRow, 'note' | 'price_source'>>
       >;
+      project_expenses: Table<
+        ProjectExpenseRow,
+        Omit<ProjectExpenseRow, Generated | 'owner_id' | 'spent_on' | 'store_name' | 'note' | 'receipt_path'> &
+          Partial<Pick<ProjectExpenseRow, 'id' | 'spent_on' | 'store_name' | 'note' | 'receipt_path'>>,
+        Partial<Pick<ProjectExpenseRow, 'category' | 'label' | 'amount' | 'spent_on' | 'store_name' | 'note' | 'receipt_path'>>
+      >;
     };
     Views: Record<string, never>;
     Functions: {
@@ -464,6 +486,7 @@ export type Database = {
       respond_to_quote: { Args: { quote: string; accept: boolean }; Returns: undefined };
       export_my_data: { Args: Record<string, never>; Returns: Json };
       export_my_data_v2: { Args: Record<string, never>; Returns: Json };
+      export_my_data_v3: { Args: Record<string, never>; Returns: Json };
       my_plan: { Args: Record<string, never>; Returns: MyPlan[] };
       delete_my_account: { Args: Record<string, never>; Returns: undefined };
     };

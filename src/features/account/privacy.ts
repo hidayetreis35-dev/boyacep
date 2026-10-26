@@ -2,6 +2,7 @@ import { File, Paths } from 'expo-file-system';
 import * as Sharing from 'expo-sharing';
 import { Platform } from 'react-native';
 
+import { deleteReceipts } from '@/features/budget/api';
 import { PHOTO_BUCKET } from '@/features/photos/api';
 import { msg, t } from '@/i18n';
 import type { Json } from '@/lib/database.types';
@@ -22,7 +23,9 @@ export function exportFileName(date = new Date()): string {
 }
 
 export async function fetchMyData(db: DbClient): Promise<Json> {
-  const { data, error } = await db.rpc('export_my_data_v2');
+  // v3 adds expenses; fall back while the live database has only v2.
+  let { data, error } = await db.rpc('export_my_data_v3');
+  if (error && (error.message.includes('export_my_data_v3') || error.code === 'PGRST202')) ({ data, error } = await db.rpc('export_my_data_v2'));
   if (error || data === null) throw new Error(t('Veriler hazırlanamadı. İnternet bağlantını kontrol et.'));
   return data;
 }
@@ -58,6 +61,11 @@ export async function deleteMyAccount(db: DbClient, userId: string): Promise<voi
   for (let i = 0; i < paths.length; i += 100) {
     const removed = await db.storage.from(PHOTO_BUCKET).remove(paths.slice(i, i + 100));
     if (removed.error) throw new Error(t('Fotoğraflar silinemedi; hesap silinmedi. Tekrar dene.'));
+  }
+  try {
+    await deleteReceipts(db, { ownerId: userId });
+  } catch {
+    throw new Error(t('Fotoğraflar silinemedi; hesap silinmedi. Tekrar dene.'));
   }
   const { error: deleteError } = await db.rpc('delete_my_account');
   if (deleteError) {

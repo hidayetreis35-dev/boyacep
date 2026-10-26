@@ -26,3 +26,15 @@ export {
 } from './cost';
 export * from './quote';
 export * from './market';
+export {
+  EXPENSE_CATEGORY_LABEL,
+  EXPENSE_CATEGORY_OF_GROUP,
+  EXPENSE_CATEGORY_ORDER,
+  NEAR_LIMIT_SHARE,
+  summarizeBudget,
+  type BudgetLine,
+  type BudgetStatus,
+  type BudgetSummary,
+  type Expense,
+  type ExpenseCategory,
+} from './budget';
