@@ -3,6 +3,7 @@ import {
   calculateProject,
   calculateRoom,
   planPackages,
+  areaEstimate,
   quickEstimate,
   type RoomInput,
 } from '@/engine';
@@ -316,5 +317,22 @@ describe('quickEstimate', () => {
   ])('rejects invalid %s', (field, overrides) => {
     const input = { houseType: '2+1', floorArea: 90, includeCeilings: true, coats: 2, ...overrides };
     expect(fields(quickEstimate(input as never))).toContain(field);
+  });
+});
+
+describe('areaEstimate', () => {
+  it('turns a measured wall area into litres, with waste', () => {
+    // 120 m² × 2 coats / 10 m²/L × 1.1 = 26.4 L
+    expect(ok(areaEstimate({ wallArea: 120, ceilingArea: null, coats: 2 }))).toEqual({ wallLitres: 26.4, ceilingLitres: 0, totalLitres: 26.4 });
+  });
+
+  it('adds the ceiling when it is painted', () => {
+    expect(ok(areaEstimate({ wallArea: 50, ceilingArea: 20, coats: 1 }))).toEqual({ wallLitres: 5.5, ceilingLitres: 2.2, totalLitres: 7.7 });
+  });
+
+  it('rejects impossible input', () => {
+    const r = areaEstimate({ wallArea: 0, ceilingArea: 0, coats: 5 });
+    expect(r.ok).toBe(false);
+    if (!r.ok) expect(r.issues.map((i) => i.field)).toEqual(['wallArea', 'ceilingArea', 'coats']);
   });
 });

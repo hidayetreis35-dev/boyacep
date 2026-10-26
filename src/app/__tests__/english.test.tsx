@@ -40,7 +40,7 @@ beforeEach(async () => {
 describe('the app in English', () => {
   it.each([
     ['/', 'What would you like to do for your home today?'],
-    ['/calculate', 'What are you painting?'],
+    ['/calculate', 'Wall area'],
     ['/colour', 'Colour catalogue'],
     ['/inspect', 'Continue without a photo'],
     ['/cost', 'How much will it cost?'],
@@ -66,6 +66,13 @@ describe('the app in English', () => {
 
   it('runs the paint calculator in English', async () => {
     await renderRouter('./src/app', { initialUrl: '/calculate' });
+    await fireEvent.changeText(await screen.findByTestId('manual-wall'), '120');
+    await fireEvent.press(screen.getByText('Ceiling included'));
+    await fireEvent.changeText(screen.getByTestId('manual-ceiling'), '40');
+    await fireEvent.press(screen.getByRole('button', { name: 'Calculate' }));
+    expect(screen.getByTestId('manual-result')).toBeTruthy();
+    expect(turkishOnScreen()).toEqual([]);
+    await fireEvent.press(screen.getByLabelText('Measure rooms'));
     await screen.findAllByText('What are you painting?');
     expect(turkishOnScreen()).toEqual([]);
     await fireEvent.press(screen.getByLabelText('Room'));

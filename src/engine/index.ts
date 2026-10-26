@@ -9,7 +9,7 @@ export {
   type ProjectOptions,
   type ProjectTotals,
 } from './project';
-export { quickEstimate, HOUSE_TYPES, WALL_FACTOR, type HouseType, type QuickEstimate, type QuickInput } from './quick';
+export { areaEstimate, quickEstimate, HOUSE_TYPES, WALL_FACTOR, type AreaEstimate, type AreaInput, type HouseType, type QuickEstimate, type QuickInput } from './quick';
 export { round } from './round';
 export { ENGINE_VERSION } from './version';
 export {

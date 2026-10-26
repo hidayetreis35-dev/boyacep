@@ -66,3 +66,37 @@ export function quickEstimate(input: QuickInput): Result<QuickEstimate> {
     },
   };
 }
+
+export interface AreaInput {
+  /** Paintable wall area the user measured, m². */
+  wallArea: number;
+  /** Ceiling area, m²; null when the ceiling is not painted. */
+  ceilingArea: number | null;
+  coats: number;
+}
+
+export interface AreaEstimate {
+  wallLitres: number;
+  ceilingLitres: number;
+  totalLitres: number;
+}
+
+/** Litres for a wall area the user already knows (the "Manuel Giriş" calculator). */
+export function areaEstimate(input: AreaInput): Result<AreaEstimate> {
+  const issues = [];
+  if (!Number.isFinite(input.wallArea) || input.wallArea < 1 || input.wallArea > 5000) {
+    issues.push({ field: 'wallArea', message: 'Duvar alanı 1 ile 5000 m² arasında olmalı.' });
+  }
+  if (input.ceilingArea !== null && (!Number.isFinite(input.ceilingArea) || input.ceilingArea < 1 || input.ceilingArea > 2000)) {
+    issues.push({ field: 'ceilingArea', message: 'Tavan alanı 1 ile 2000 m² arasında olmalı.' });
+  }
+  if (!Number.isInteger(input.coats) || input.coats < 1 || input.coats > 4) {
+    issues.push({ field: 'coats', message: 'Kat sayısı 1 ile 4 arasında olmalı.' });
+  }
+  if (issues.length > 0) return { ok: false, issues };
+
+  const perArea = (input.coats / DEFAULT_WALL_COVERAGE.m2PerLitre) * (1 + WASTE_FACTOR);
+  const wallLitres = round(input.wallArea * perArea, 1);
+  const ceilingLitres = round((input.ceilingArea ?? 0) * perArea, 1);
+  return { ok: true, value: { wallLitres, ceilingLitres, totalLitres: round(wallLitres + ceilingLitres, 1) } };
+}
