@@ -11,10 +11,11 @@ import { ProvincePicker } from '@/features/market/components';
 import { DISTRICTS, PILOT_PROVINCES, provinceByCode, type ProvinceCode } from '@/features/market/provinces';
 import { LOCALES, msg, t } from '@/i18n';
 import { useLocale } from '@/i18n/provider';
-import { CityArt, WelcomeArt } from '@/ui/art';
-import { PaintDrops } from '@/ui/brand';
+import { CityArt } from '@/ui/art';
+import { Gradient, PaintDrops } from '@/ui/brand';
 import { AppText, Button, Card, Icon, Screen, type IconName } from '@/ui/components';
 import { PressableScale } from '@/ui/motion';
+import { Photo } from '@/ui/photos';
 import { MAX_CONTENT_WIDTH, fonts, radius, shadowOf, space, usePalette } from '@/ui/theme';
 
 const ROLES: { role: SelectableRole; title: string; text: string; icon: IconName }[] = [
@@ -69,8 +70,9 @@ function Hero({ onStart }: { onStart: () => void }) {
             {t('Evin için ihtiyacın olan her şey, tek platformda.')}
           </AppText>
           <AppText style={{ color: p.onHeroMuted }}>{t('Boya • Renk • Tadilat planı • Ev bütçesi')}</AppText>
-          <View style={styles.art}>
-            <WelcomeArt width={320} height={210} />
+          <View style={styles.heroPhoto}>
+            <Photo name="welcome" style={StyleSheet.absoluteFill} />
+            <Gradient vertical from={p.heroFrom} to={p.heroFrom} fromOpacity={1} toOpacity={0} style={{ height: '45%' }} />
           </View>
           <View style={{ flexGrow: 1 }} />
           <Button label={t('Başlayalım')} icon="arrow-forward" variant="cta" size="lg" onPress={onStart} />
@@ -310,7 +312,14 @@ const styles = StyleSheet.create({
   brandMark: { width: 36, height: 36, borderRadius: 11, alignItems: 'center', justifyContent: 'center' },
   lang: { flexDirection: 'row', borderRadius: radius.pill, padding: 3 },
   langItem: { borderRadius: radius.pill, paddingHorizontal: 12, minHeight: 32, justifyContent: 'center' },
-  art: { alignItems: 'center', marginVertical: space.md },
+  heroPhoto: {
+    height: 250,
+    marginHorizontal: -space.xl,
+    marginVertical: space.sm,
+    overflow: 'hidden',
+    borderBottomLeftRadius: 160,
+    borderBottomRightRadius: 160,
+  },
   signIn: { alignSelf: 'center', paddingVertical: space.sm, minHeight: 44, justifyContent: 'center' },
   stepHeader: { flexDirection: 'row', alignItems: 'center', gap: space.sm },
   back: { width: 44, height: 44, marginLeft: -space.sm, alignItems: 'center', justifyContent: 'center' },

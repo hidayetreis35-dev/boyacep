@@ -1813,4 +1813,5 @@ export const en: Record<string, Translation> = {
   "{name} rengini seç": "Select {name}",
   "Favorilerde": "In favourites",
   "Odamda dene": "Try in my room",
+  "Örnek: dökülen boya": "Example: peeling paint",
 };

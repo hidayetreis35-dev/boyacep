@@ -4,20 +4,36 @@ import Svg, { Circle, Defs, LinearGradient, Path, Rect, Stop } from 'react-nativ
 
 import { AppText, Icon, type IconName } from './components';
 import { PressableScale } from './motion';
+import { Photo, type PhotoName } from './photos';
 import { fonts, radius, shadowOf, space, useFeatureColour, usePalette, type FeatureKey } from './theme';
 
 import { t } from '@/i18n';
 
 /** Diagonal gradient that fills its parent. Put it first inside a View with overflow hidden. */
-export function Gradient({ from, to, style }: { from: string; to: string; style?: StyleProp<ViewStyle> }) {
+export function Gradient({
+  from,
+  to,
+  style,
+  vertical,
+  fromOpacity = 1,
+  toOpacity = 1,
+}: {
+  from: string;
+  to: string;
+  style?: StyleProp<ViewStyle>;
+  /** Top to bottom instead of corner to corner. */
+  vertical?: boolean;
+  fromOpacity?: number;
+  toOpacity?: number;
+}) {
   const id = useId().replace(/:/g, '');
   return (
     <View pointerEvents="none" style={[StyleSheet.absoluteFill, style]}>
       <Svg width="100%" height="100%" preserveAspectRatio="none">
         <Defs>
-          <LinearGradient id={id} x1="0" y1="0" x2="1" y2="1">
-            <Stop offset="0" stopColor={from} />
-            <Stop offset="1" stopColor={to} />
+          <LinearGradient id={id} x1="0" y1="0" x2={vertical ? '0' : '1'} y2="1">
+            <Stop offset="0" stopColor={from} stopOpacity={fromOpacity} />
+            <Stop offset="1" stopColor={to} stopOpacity={toOpacity} />
           </LinearGradient>
         </Defs>
         <Rect x="0" y="0" width="100%" height="100%" fill={`url(#${id})`} />
@@ -143,6 +159,7 @@ export function OptionCard({
   badge,
   disabled,
   swatch,
+  photo,
   multiple,
   testID,
 }: {
@@ -156,6 +173,8 @@ export function OptionCard({
   disabled?: boolean;
   /** Shows a colour chip instead of an icon. */
   swatch?: string;
+  /** Shows a real photo of the space instead of an icon. */
+  photo?: PhotoName;
   /** Part of a pick-several list: shows a checkbox instead of a radio. */
   multiple?: boolean;
   testID?: string;
@@ -166,7 +185,9 @@ export function OptionCard({
   const tile = layout === 'tile';
   const checkIcon = multiple ? (selected ? 'checkbox' : 'square-outline') : selected ? 'checkmark-circle' : 'ellipse-outline';
   const check = <Icon name={checkIcon} size={24} color={selected ? f.base : p.border} />;
-  const visual = swatch ? (
+  const visual = photo ? (
+    <Photo name={photo} style={tile ? styles.optionPhotoTile : styles.optionPhoto} />
+  ) : swatch ? (
     <View style={[styles.optionSwatch, { backgroundColor: swatch, borderColor: p.border }]} />
   ) : icon ? (
     <View style={[styles.optionIcon, { backgroundColor: selected ? f.base : f.soft }]}>
@@ -190,7 +211,12 @@ export function OptionCard({
         },
         !selected && shadowOf(p),
       ]}>
-      {tile ? (
+      {tile && photo ? (
+        <View>
+          {visual}
+          <View style={[styles.optionPhotoCheck, { backgroundColor: p.surface }]}>{check}</View>
+        </View>
+      ) : tile ? (
         <View style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'flex-start' }}>
           {visual}
           {check}
@@ -436,6 +462,9 @@ const styles = StyleSheet.create({
   // percentage against the screen and stretch every tile to full height.
   optionTile: { flexGrow: 1, gap: space.sm, padding: space.md + 2, borderRadius: radius.lg, borderWidth: 2, minHeight: 120 },
   optionIcon: { width: 44, height: 44, borderRadius: 14, alignItems: 'center', justifyContent: 'center' },
+  optionPhoto: { width: 56, height: 56, borderRadius: 14 },
+  optionPhotoTile: { width: '100%', height: 88, borderRadius: radius.md },
+  optionPhotoCheck: { position: 'absolute', top: 6, right: 6, borderRadius: 14 },
   optionSwatch: { width: 44, height: 44, borderRadius: 14, borderWidth: StyleSheet.hairlineWidth },
   optionBadge: { alignSelf: 'flex-start', borderRadius: radius.pill, paddingHorizontal: space.sm, paddingVertical: 2, marginTop: 2 },
   grid: { flexDirection: 'row', flexWrap: 'wrap', margin: -space.xs },

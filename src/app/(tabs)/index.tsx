@@ -9,9 +9,9 @@ import { provinceByCode } from '@/features/market/provinces';
 import { ContinueProject } from '@/features/projects/continue-card';
 import { useProjects } from '@/features/projects/queries';
 import { msg, t } from '@/i18n';
-import { InspirationArt } from '@/ui/art';
 import { AppText, Icon, type IconName } from '@/ui/components';
 import { PressableScale } from '@/ui/motion';
+import { Photo } from '@/ui/photos';
 import { MAX_CONTENT_WIDTH, fonts, radius, shadowOf, space, useFeatureColour, usePalette, type FeatureKey } from '@/ui/theme';
 
 interface Tile {
@@ -160,7 +160,7 @@ function Inspiration() {
           <Icon name="arrow-forward" size={14} color={p.onCta} />
         </View>
       </View>
-      <InspirationArt width={140} height={120} />
+      <Photo name="inspiration" style={styles.bannerPhoto} />
     </PressableScale>
   );
 }
@@ -237,7 +237,8 @@ const styles = StyleSheet.create({
   tile: { borderRadius: radius.lg, padding: space.md, gap: space.sm, minHeight: 124 },
   tileRow: { flexDirection: 'row', alignItems: 'center', borderRadius: radius.lg, padding: space.md, gap: space.sm, minHeight: 92 },
   tileIcon: { width: 44, height: 44, borderRadius: 14, alignItems: 'center', justifyContent: 'center' },
-  banner: { flexDirection: 'row', alignItems: 'center', borderRadius: radius.lg, overflow: 'hidden' },
+  banner: { flexDirection: 'row', alignItems: 'stretch', borderRadius: radius.lg, overflow: 'hidden' },
+  bannerPhoto: { width: 150, minHeight: 124 },
   go: { flexDirection: 'row', alignItems: 'center', gap: 4, alignSelf: 'flex-start', borderRadius: radius.pill, paddingHorizontal: space.md, paddingVertical: 6 },
   tools: { flexDirection: 'row', flexWrap: 'wrap', gap: space.sm },
   tool: { flexDirection: 'row', alignItems: 'center', gap: 6, borderRadius: radius.pill, paddingHorizontal: space.md, minHeight: 40 },

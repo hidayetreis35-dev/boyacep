@@ -185,6 +185,7 @@ export function PaintWizard() {
                   title={t(s.label)}
                   subtitle={t(s.hint)}
                   icon={s.icon}
+                  photo={s.photo}
                   badge={s.ready ? undefined : t('Yakında')}
                   disabled={!s.ready}
                   selected={space_ === s.value}

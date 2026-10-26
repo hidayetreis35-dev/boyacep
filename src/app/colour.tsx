@@ -1,6 +1,6 @@
 import { useLocalSearchParams } from 'expo-router';
 import { useState } from 'react';
-import { View } from 'react-native';
+import { StyleSheet, View } from 'react-native';
 
 import { ColourHarmonies, CompareColours, ColourExplorer, SelectedColour, toPicked, type PickedColour } from '@/features/colour/colour-explorer';
 import { ColourStudio } from '@/features/colour/colour-studio';
@@ -9,9 +9,9 @@ import type { PickedPhoto } from '@/features/photos/picker';
 import { PhotoSourceButtons } from '@/features/photos/photo-source';
 import { useProjectPhoto, useSaveSurfaces } from '@/features/photos/queries';
 import { t } from '@/i18n';
-import { RoomArt } from '@/ui/art';
 import { Segmented, SectionTitle, SwatchFan } from '@/ui/brand';
 import { AppText, Button, Card, ErrorState, LoadingState, Notice, Screen, useScrollToTop } from '@/ui/components';
+import { RoomPhoto } from '@/ui/photos';
 import { radius, space } from '@/ui/theme';
 
 type Tab = 'colours' | 'photo' | 'combos';
@@ -105,7 +105,7 @@ export default function ColourScreen() {
   const toggleCompare = (hex: string) =>
     setCompare((list) => (list.includes(hex) ? list.filter((h) => h !== hex) : [...list, hex].slice(-MAX_COMPARE)));
   const quickColours = [...new Set([...favourites.list, ...recent])];
-  const room = (wall: string) => <RoomArt wall={wall} width="100%" height="100%" />;
+  const room = (wall: string) => <RoomPhoto wall={wall} style={StyleSheet.absoluteFill} />;
 
   const selected = (
     <SelectedColour
@@ -147,9 +147,9 @@ export default function ColourScreen() {
 
       {tab === 'colours' ? (
         <>
-          {/* An illustrated room shows the colour on a wall before any photo. */}
+          {/* A sample room photo shows the colour on a real wall before the user adds their own. */}
           <View style={{ borderRadius: radius.lg, overflow: 'hidden' }} testID="room-preview">
-            <RoomArt wall={colour.hex} width="100%" height={200} />
+            <RoomPhoto wall={colour.hex} style={{ height: 210 }} />
           </View>
           {selected}
           <SectionTitle

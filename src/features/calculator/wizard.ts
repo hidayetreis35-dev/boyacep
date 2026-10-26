@@ -1,18 +1,19 @@
 import type { SurfaceCondition, SurfaceType } from '@/engine';
 import { msg } from '@/i18n';
 import type { IconName } from '@/ui/components';
+import type { PhotoName } from '@/ui/photos';
 
 import { toRoomInput, type FormErrors, type RoomForm } from './form';
 
 /** What the user is painting. Only the label and hints change; the maths is the same room engine. */
 export type SpaceKind = 'room' | 'living' | 'kitchen' | 'bathroom' | 'home' | 'exterior' | 'custom';
 
-export const SPACES: { value: SpaceKind; label: string; hint: string; icon: IconName; ready: boolean }[] = [
-  { value: 'room', label: msg('Oda'), hint: msg('Yatak, çocuk ya da çalışma odası'), icon: 'bed', ready: true },
-  { value: 'living', label: msg('Salon'), hint: msg('Oturma ve yemek alanı'), icon: 'tv', ready: true },
-  { value: 'kitchen', label: msg('Mutfak'), hint: msg('Buhara dayanıklı boya önerilir'), icon: 'restaurant', ready: true },
-  { value: 'bathroom', label: msg('Banyo'), hint: msg('Neme dayanıklı boya önerilir'), icon: 'water', ready: true },
-  { value: 'home', label: msg('Tüm ev'), hint: msg('Ev tipi ve metrekareyle hızlı tahmin'), icon: 'home', ready: true },
+export const SPACES: { value: SpaceKind; label: string; hint: string; icon: IconName; photo?: PhotoName; ready: boolean }[] = [
+  { value: 'room', photo: 'bedroom', label: msg('Oda'), hint: msg('Yatak, çocuk ya da çalışma odası'), icon: 'bed', ready: true },
+  { value: 'living', photo: 'inspiration', label: msg('Salon'), hint: msg('Oturma ve yemek alanı'), icon: 'tv', ready: true },
+  { value: 'kitchen', photo: 'kitchen', label: msg('Mutfak'), hint: msg('Buhara dayanıklı boya önerilir'), icon: 'restaurant', ready: true },
+  { value: 'bathroom', photo: 'bathroom', label: msg('Banyo'), hint: msg('Neme dayanıklı boya önerilir'), icon: 'water', ready: true },
+  { value: 'home', photo: 'welcome', label: msg('Tüm ev'), hint: msg('Ev tipi ve metrekareyle hızlı tahmin'), icon: 'home', ready: true },
   { value: 'custom', label: msg('Özel alan'), hint: msg('Koridor, antre, ofis…'), icon: 'shapes', ready: true },
   { value: 'exterior', label: msg('Dış cephe'), hint: msg('Ayrı katsayılar gerekiyor'), icon: 'business', ready: false },
 ];

@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { View } from 'react-native';
+import { StyleSheet, View } from 'react-native';
 
 import type { PickedPhoto } from '@/features/photos/picker';
 import { PhotoSourceButtons } from '@/features/photos/photo-source';
@@ -7,7 +7,8 @@ import { msg, t } from '@/i18n';
 import { IconBubble, OptionCard, OptionGrid, StepProgress, WizardNav } from '@/ui/brand';
 import { AppText, Button, Card, Notice, useScrollToTop, type IconName } from '@/ui/components';
 import { FadeIn } from '@/ui/motion';
-import { space } from '@/ui/theme';
+import { Photo } from '@/ui/photos';
+import { fonts, radius, space } from '@/ui/theme';
 
 import { InspectResult } from './inspect-result';
 import { PLACES, type Place } from './rules';
@@ -113,6 +114,14 @@ export function InspectWizard() {
               </>
             ) : (
               <>
+                <View style={styles.example}>
+                  <Photo name="wallProblem" style={StyleSheet.absoluteFill} />
+                  <View style={styles.exampleTag}>
+                    <AppText variant="caption" style={{ color: '#FFFFFF', fontFamily: fonts.semibold }}>
+                      {t('Örnek: dökülen boya')}
+                    </AppText>
+                  </View>
+                </View>
                 <Card>
                   <View style={{ flexDirection: 'row', gap: space.md, alignItems: 'center' }}>
                     <IconBubble icon="camera" feature="inspect" />
@@ -244,3 +253,8 @@ export function InspectWizard() {
     </View>
   );
 }
+
+const styles = StyleSheet.create({
+  example: { height: 170, borderRadius: radius.lg, overflow: 'hidden', justifyContent: 'flex-end', padding: space.sm },
+  exampleTag: { alignSelf: 'flex-start', backgroundColor: 'rgba(15,23,42,0.72)', borderRadius: radius.pill, paddingHorizontal: space.sm, paddingVertical: 4 },
+});
