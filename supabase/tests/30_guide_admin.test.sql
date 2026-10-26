@@ -6,12 +6,12 @@ insert into auth.users (id, email) values
   ('00000000-0000-0000-0000-0000000000f1', 'user@example.com');
 insert into public.user_roles (user_id, role) values ('00000000-0000-0000-0000-0000000000e1', 'admin');
 
-select tests.check((select count(*) from public.guide_articles where status = 'published') = 10, 'seed has 10 published guides');
+select tests.check((select count(*) from public.guide_articles where status = 'published') = 31, 'seed has 31 published guides');
 
 -- Visitors without an account read published guides only.
 insert into public.guide_articles (slug, category, title) values ('taslak-yazi', 'walls', 'Taslak');
 select tests.as_anon();
-select tests.check((select count(*) from public.guide_articles) = 10, 'anon reads published guides');
+select tests.check((select count(*) from public.guide_articles) = 31, 'anon reads published guides');
 select tests.check((select count(*) from public.guide_articles where slug = 'taslak-yazi') = 0, 'anon does not see drafts');
 select tests.fails($$insert into public.guide_articles (slug, category, title) values ('x', 'walls', 'x')$$, 'anon cannot write guides');
 
@@ -43,7 +43,7 @@ select tests.check(
     where table_name = 'guide_articles' and actor_id = '00000000-0000-0000-0000-0000000000e1' and action = 'UPDATE') = 1,
   'admin edit is written to the audit log'
 );
-select tests.check((select published_guides from public.admin_stats()) = 11, 'admin stats count published guides');
+select tests.check((select published_guides from public.admin_stats()) = 32, 'admin stats count published guides');
 select tests.fails($$delete from public.audit_log$$, 'nobody can delete audit entries through the API');
 
 reset role;
