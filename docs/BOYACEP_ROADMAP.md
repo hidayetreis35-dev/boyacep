@@ -4,9 +4,10 @@ Tarih: 25.10.2026. Sıra öneridir; maliyeti ya da canlı veriyi etkileyen adım
 
 ## Şimdi (onay bekleyen)
 
+Piyasa tabloları 26.10.2026'da onayla canlıya uygulandı.
+
 | Adım | Neden onay gerekiyor |
 |---|---|
-| Piyasa tablolarını canlı veri tabanına uygula | Canlı sisteme değişiklik. Risk düşük (yalnızca ekleme), ayrıntı: [BOYACEP_DATABASE_MIGRATION_PLAN.md](BOYACEP_DATABASE_MIGRATION_PLAN.md) |
 | Armut'a iş birliği e-postası gönder | Dışarıya, BoyaCep adına mesaj |
 | Yeni APK | Hidayet "beklemede kalsın" dedi |
 

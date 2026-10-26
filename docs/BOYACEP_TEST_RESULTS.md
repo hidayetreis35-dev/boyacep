@@ -38,7 +38,8 @@ Tarih: 25.10.2026. Komutlar: `npm run check` (tip kontrolü, lint, Jest) ve `npm
 ## Test edilemeyenler
 
 - **Gerçek telefon (Android APK)**: yeni ekranlar telefonda denenmedi. Yeni APK, Hidayet'in "APK beklemede kalsın" isteği üzerine yapılmadı.
-- **Canlı veri tabanı**: tablolar canlıya uygulanmadı (onay bekliyor); testler yalnızca yerel PostgreSQL'de.
+- **Canlı veri tabanı**: tablolar 26.10.2026'da canlıya uygulandı ve salt okuma sorgularıyla doğrulandı (il/ilçe sayıları, RLS, ziyaretçi izinleri). Kural testleri (onay, rıza, 5 iş eşiği) yalnızca yerel PostgreSQL'de çalıştı; canlıda test verisi yazılmadı.
+- **Android emülatör**: bu bulut ortamında donanım sanallaştırması (KVM) yok, Android emülatörü çalışamıyor. Telefon boyutundaki ekranlar tarayıcıda (390×844) denendi.
 - **iOS**: test edilmedi.
 - **Hesap sonucu kartı tarayıcıda**: bileşen testleriyle doğrulandı; tarayıcıda ekran görüntüsü alınmadı.
 - **Karanlık tema**: yeni kartlar tema renklerini kullanıyor, ama karanlık temada ayrıca bakılmadı.

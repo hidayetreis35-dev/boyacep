@@ -2,7 +2,7 @@
 
 Dosya: `supabase/migrations/20261025320000_market_prices.sql`. Testler: `supabase/tests/97_market_prices.test.sql` (yerel PostgreSQL 16'da, diğer bütün veri tabanı testleriyle birlikte geçti).
 
-**Durum: canlı veri tabanına uygulanmadı.** Uygulamak için Hidayet'in onayı gerekiyor.
+**Durum: 26.10.2026'da Hidayet'in onayıyla canlı veri tabanına uygulandı.** Kontrol: 81 il, 47 ilçe, 9 kategori yüklü; 8 tablonun hepsinde RLS açık; ziyaretçi ham kayıtları ve tamamlanan işleri okuyamıyor, yalnızca istatistiği okuyabiliyor; yönetici fonksiyonlarını ziyaretçi çalıştıramıyor. Güvenlik uyarılarında yeni bulgu yalnızca beklenen türden: giriş yapmış kullanıcının çağırabildiği SECURITY DEFINER fonksiyonlar (hepsi içeride yönetici ya da sahiplik kontrolü yapıyor).
 
 ## Ne ekliyor
 
@@ -39,7 +39,7 @@ Fonksiyonlar (yalnızca yönetici): `market_data_quality()` il il kayıt, durum 
 | Veri dışa aktarma | `export_my_data_v2` henüz tamamlanan işleri içermiyor; uygulama bu tabloyu kullanmaya başlamadan önce eklenmeli |
 | Tip dosyası | `src/lib/database.types.ts` güncellenmedi; uygulama bu tabloları henüz okumuyor |
 
-## Uygulama adımları (onaydan sonra)
+## Uygulama adımları (yapıldı, 4. adım hariç)
 
 1. Yerel testler: `npm run test:db`.
 2. Supabase'de `apply_migration` ile `20261025320000_market_prices` uygula.

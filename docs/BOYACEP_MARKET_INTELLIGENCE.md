@@ -25,7 +25,7 @@ BoyaCep artık bir kullanıcıya "şehrinde boya ustası yaklaşık ne ister" so
 | Uygulama | Türkiye Boya Fiyatları ekranı; isteğe bağlı şehir seçimi (konum izni yok); hesap sonucunda "ustayla yaklaşık maliyet" kartı; maliyet ekranından bağlantı; Profil'de şehir ayarı |
 | Dürüstlük | Yetersiz veri → "Bu şehir için yeterli güncel veri bulunamadı."; piyasa referansı, tahmin ve gerçek teklif görsel olarak ayrı; uygulamadaki veri eskidikçe kalite kendiliğinden düşüyor ve uyarı çıkıyor |
 | İngilizce | Bütün yeni metinler çevrili; dil değişince şehir seçimi korunuyor; Türkiye fiyatları her dilde ₺ |
-| Veri tabanı | Tablolar, güvenlik kuralları ve testler hazır; **canlıya uygulanmadı** |
+| Veri tabanı | Tablolar, güvenlik kuralları ve testler hazır; 26.10.2026'da canlıya uygulandı (uygulama henüz bu tablolardan okumuyor) |
 | Raporlar | 11 rapor (bu klasör) |
 
 ## Eksik kalanlar (tamamlanmış gibi gösterilmiyor)
