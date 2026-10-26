@@ -45,6 +45,12 @@ export function toUpper(text: string, locale: Locale = current): string {
   return text.toUpperCase();
 }
 
+/** Lower case in the app's language: "İ" → "i", "I" → "ı" in Turkish. */
+export function toLower(text: string, locale: Locale = current): string {
+  if (locale === 'tr') return text.replace(/İ/g, 'i').replace(/I/g, 'ı').toLowerCase();
+  return text.toLowerCase();
+}
+
 export type Vars = Record<string, string | number>;
 
 function pick(entry: Translation, vars?: Vars): string {

@@ -245,8 +245,7 @@ export default function UstaScreen() {
   }
 
   return (
-    <Screen>
-      <AppText variant="title">{t('Usta')}</AppText>
+    <Screen edges={['bottom']}>
       <View style={{ gap: space.lg }}>{body}</View>
     </Screen>
   );

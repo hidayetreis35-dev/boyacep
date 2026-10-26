@@ -32,11 +32,15 @@ export {
   EXPENSE_CATEGORY_ORDER,
   NEAR_LIMIT_SHARE,
   summarizeBudget,
+  summarizeHomeBudget,
   type BudgetLine,
   type BudgetStatus,
   type BudgetSummary,
   type Expense,
   type ExpenseCategory,
+  type HomeBudgetExpense,
+  type HomeBudgetProject,
+  type HomeBudgetSummary,
 } from './budget';
 export {
   RECOMMENDATION_KIND_LABEL,

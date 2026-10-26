@@ -104,6 +104,7 @@ function App() {
             <Stack.Screen name="home-log" options={{ title: t('Ev Hafızası') }} />
             <Stack.Screen name="cost" options={{ title: t('Maliyet Hesapla') }} />
             <Stack.Screen name="prices" options={{ title: t('Boya Fiyatları') }} />
+            <Stack.Screen name="usta/index" options={{ title: t('Usta Paneli') }} />
             <Stack.Screen name="usta/profile" options={{ title: t('Usta profili') }} />
             <Stack.Screen name="usta/project/[id]" options={{ title: t('Paylaşılan proje') }} />
             <Stack.Screen name="usta/survey/[id]" options={{ title: t('Keşif dosyası') }} />
@@ -116,6 +117,8 @@ function App() {
             <Stack.Screen name="admin/index" options={{ title: t('Yönetim paneli') }} />
             <Stack.Screen name="admin/guide/[id]" options={{ title: t('Yazı düzenle') }} />
             <Stack.Screen name="privacy" options={{ title: t('Gizlilik') }} />
+            <Stack.Screen name="account" options={{ title: t('Hesap Bilgileri') }} />
+            <Stack.Screen name="help" options={{ title: t('Yardım ve Destek') }} />
             <Stack.Screen name="plans" options={{ title: t('Planlar') }} />
             <Stack.Screen name="ask/index" options={{ title: t('Ustaya Sor') }} />
             <Stack.Screen name="ask/[id]" options={{ title: t('Soru') }} />

@@ -24,6 +24,35 @@ export const HOME_ACTIONS: HomeAction[] = [
   { key: 'ask', feature: 'ask', title: msg('Ustaya Sor'), subtitle: msg('Uzmana danış'), icon: 'chatbubbles', href: '/ask', phase: 8 },
 ];
 
+/** Shown on the home grid and service lists but not built yet; they open an honest "Yakında" screen. */
+export const SOON_ACTIONS: HomeAction[] = [
+  { key: 'ai-design', feature: 'color', title: msg('AI Tasarım'), subtitle: msg('Hayalindeki evi tasarla'), icon: 'sparkles', phase: 4 },
+  { key: 'notifications', feature: 'projects', title: msg('Bildirimler'), subtitle: msg('Proje ve teklif haberleri'), icon: 'notifications', phase: 2 },
+];
+
+/** Trades besides painting. BoyaCep starts with paint work; the others open later. */
+export interface ServiceCategory {
+  key: string;
+  title: string;
+  icon: IconName;
+  /** Only painting is open today. */
+  open: boolean;
+}
+
+export const SERVICE_CATEGORIES: ServiceCategory[] = [
+  { key: 'painter', title: msg('Boyacı'), icon: 'color-fill', open: true },
+  { key: 'electrician', title: msg('Elektrikçi'), icon: 'flash', open: false },
+  { key: 'plumber', title: msg('Tesisatçı'), icon: 'water', open: false },
+  { key: 'carpenter', title: msg('Marangoz'), icon: 'hammer', open: false },
+  { key: 'air-conditioning', title: msg('Klima'), icon: 'snow', open: false },
+  { key: 'cleaning', title: msg('Temizlik'), icon: 'sparkles', open: false },
+  { key: 'tiling', title: msg('Fayans'), icon: 'grid', open: false },
+];
+
 export function findAction(key: string): HomeAction | undefined {
-  return HOME_ACTIONS.find((a) => a.key === key);
+  return HOME_ACTIONS.find((a) => a.key === key) ?? SOON_ACTIONS.find((a) => a.key === key);
+}
+
+export function findService(key: string): ServiceCategory | undefined {
+  return SERVICE_CATEGORIES.find((c) => c.key === key);
 }

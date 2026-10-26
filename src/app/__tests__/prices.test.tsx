@@ -28,21 +28,22 @@ beforeEach(async () => {
   await AsyncStorage.setItem('boyacep.roles.v1', JSON.stringify(['homeowner']));
 });
 
-describe('city choice on the home screen', () => {
-  it('is offered, not forced, and remembers a pilot city', async () => {
+describe('city on the home screen', () => {
+  it('is offered from the location chip, never forced, and remembered', async () => {
     await renderRouter('./src/app', { initialUrl: '/' });
-    expect(await screen.findByText('Fiyatları şehrine göre görmek ister misin?')).toBeTruthy();
-    await fireEvent.press(screen.getByText('Manisa’yı seç'));
-    expect(await screen.findByText('Manisa usta fiyatları, kaynağı ve tarihiyle')).toBeTruthy();
-    expect(screen.queryByText('Fiyatları şehrine göre görmek ister misin?')).toBeNull();
-    expect(await savedCity()).toEqual({ province: '45', district: null, answered: true });
+    expect(await screen.findByText('Şehir seçilmedi')).toBeTruthy();
+    await fireEvent.press(screen.getByLabelText('Şehir seç'));
+    expect(screen).toHavePathname('/prices');
+    await fireEvent.changeText(await screen.findByTestId('province-search'), 'Manisa');
+    await fireEvent.press(screen.getByLabelText('Manisa'));
+    expect(await savedCity()).toMatchObject({ province: '45', answered: true });
   });
 
-  it('stops asking after "Şehir seçmeden devam et"', async () => {
+  it('shows the saved city and district', async () => {
+    await AsyncStorage.setItem(CITY_KEY, JSON.stringify({ province: '35', district: 'Bornova', answered: true }));
     await renderRouter('./src/app', { initialUrl: '/' });
-    await fireEvent.press(await screen.findByText('Şehir seçmeden devam et'));
-    expect(await screen.findByText('Usta fiyatları şehre göre, kaynağı ve tarihiyle')).toBeTruthy();
-    expect(await savedCity()).toEqual({ province: null, district: null, answered: true });
+    expect(await screen.findByText('İzmir / Bornova')).toBeTruthy();
+    expect(screen.getByLabelText('Konum: İzmir / Bornova. Değiştir')).toBeTruthy();
   });
 });
 
@@ -90,10 +91,11 @@ describe('Türkiye Boya Fiyatları', () => {
     await AsyncStorage.setItem(CITY_KEY, JSON.stringify({ province: '45', answered: true }));
     await renderRouter('./src/app', { initialUrl: '/profile' });
     expect(await screen.findByText('Manisa')).toBeTruthy();
+    await fireEvent.press(screen.getByTestId('menu-language'));
     await act(async () => {
       fireEvent.press(screen.getByLabelText('English'));
     });
-    expect(await screen.findByText('Change city')).toBeTruthy();
+    expect(await screen.findByText('My location')).toBeTruthy();
     expect(screen.getByText('Manisa')).toBeTruthy();
     expect(await savedCity()).toMatchObject({ province: '45' });
   });

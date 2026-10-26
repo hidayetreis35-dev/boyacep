@@ -1,4 +1,4 @@
-import { summarizeBudget, summarizeCost, type PricedMaterial } from '@/engine';
+import { summarizeBudget, summarizeCost, summarizeHomeBudget, type PricedMaterial } from '@/engine';
 
 const paint: PricedMaterial = { category: 'interior_paint', quantity: 2, unitPrice: 2000, priceSource: 'store' };
 const primer: PricedMaterial = { category: 'primer', quantity: 1, unitPrice: 800, priceSource: 'estimate' };
@@ -51,5 +51,53 @@ describe('summarizeBudget', () => {
     expect(over.status).toBe('over');
     expect(over.left).toBe(-500);
     expect(over.forecastOver).toBe(false);
+  });
+});
+
+describe('summarizeHomeBudget', () => {
+  it('adds budgets and spending across projects, largest category first', () => {
+    const s = summarizeHomeBudget(
+      [
+        { id: 'a', budget: 60000 },
+        { id: 'b', budget: 40000 },
+      ],
+      [
+        { projectId: 'a', category: 'paint', amount: 18500 },
+        { projectId: 'a', category: 'labor', amount: 12000 },
+        { projectId: 'b', category: 'material', amount: 8700 },
+        { projectId: 'b', category: 'other', amount: 7000 },
+      ],
+    );
+    expect(s.budget).toBe(100000);
+    expect(s.spent).toBe(46200);
+    expect(s.left).toBe(53800);
+    expect(s.usedShare).toBeCloseTo(0.462);
+    expect(s.categories.map((c) => c.category)).toEqual(['paint', 'labor', 'material', 'other']);
+    expect(s.categories[0].share).toBeCloseTo(18500 / 46200);
+    expect(s.projects).toEqual([
+      { id: 'a', budget: 60000, spent: 30500 },
+      { id: 'b', budget: 40000, spent: 15700 },
+    ]);
+  });
+
+  it('keeps spending in projects without a budget out of "left"', () => {
+    const s = summarizeHomeBudget(
+      [
+        { id: 'a', budget: 10000 },
+        { id: 'b', budget: null },
+      ],
+      [
+        { projectId: 'a', category: 'paint', amount: 4000 },
+        { projectId: 'b', category: 'paint', amount: 3000 },
+      ],
+    );
+    expect(s.spent).toBe(7000);
+    expect(s.left).toBe(6000);
+    expect(s.usedShare).toBeCloseTo(0.4);
+  });
+
+  it('has no budget figures when no project has a budget, and ignores unknown projects', () => {
+    const s = summarizeHomeBudget([{ id: 'a', budget: 0 }], [{ projectId: 'x', category: 'paint', amount: 500 }]);
+    expect(s).toMatchObject({ budget: null, left: null, usedShare: null, spent: 0, categories: [] });
   });
 });

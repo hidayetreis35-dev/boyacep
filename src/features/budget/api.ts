@@ -41,6 +41,13 @@ export async function listExpenses(db: DbClient, projectId: string): Promise<Exp
   return data.map((e) => ({ ...e, receiptUrl: e.receipt_path ? (urls.get(e.receipt_path) ?? null) : null }));
 }
 
+/** Every expense of the signed-in user (RLS keeps it to their own projects), for "Ev Bütçem". */
+export async function listAllExpenses(db: DbClient): Promise<Pick<ProjectExpenseRow, 'id' | 'project_id' | 'category' | 'amount'>[]> {
+  const { data, error } = await db.from('project_expenses').select('id, project_id, category, amount').limit(5000);
+  if (error) throw new Error(error.message);
+  return data;
+}
+
 /** Uploads the receipt first (if any), then records the expense; removes the file again if the record fails. */
 export async function addExpense(
   db: DbClient,

@@ -1,105 +1,184 @@
-import { router } from 'expo-router';
+import { router, type Href } from 'expo-router';
 import { ScrollView, StyleSheet, View } from 'react-native';
+import { SafeAreaView } from 'react-native-safe-area-context';
 
-import { useSession } from '@/features/account/session';
-import { HOME_ACTIONS, type HomeAction } from '@/features/home/actions';
-import { CityPrompt } from '@/features/market/components';
+import { initials } from '@/features/account/initials';
+import { useAccount, useSession } from '@/features/account/session';
+import { useCity } from '@/features/market/city';
+import { provinceByCode } from '@/features/market/provinces';
 import { ContinueProject } from '@/features/projects/continue-card';
 import { useProjects } from '@/features/projects/queries';
-import { STATUS_LABEL } from '@/features/projects/mapping';
-import { t } from '@/i18n';
-import { Gradient, PaintDrops, RollerMark, SectionTitle, SwatchFan } from '@/ui/brand';
-import { AppText, Badge, Button, Icon, Screen } from '@/ui/components';
-import { FadeIn, PressableScale } from '@/ui/motion';
-import { fonts, radius, shadowOf, space, useFeatureColour, usePalette } from '@/ui/theme';
+import { msg, t } from '@/i18n';
+import { InspirationArt } from '@/ui/art';
+import { AppText, Icon, type IconName } from '@/ui/components';
+import { PressableScale } from '@/ui/motion';
+import { MAX_CONTENT_WIDTH, fonts, radius, shadowOf, space, useFeatureColour, usePalette, type FeatureKey } from '@/ui/theme';
 
-function open(action: HomeAction) {
-  if (action.href) router.push(action.href);
-  else router.push({ pathname: '/soon/[feature]', params: { feature: action.key } });
+interface Tile {
+  key: string;
+  title: string;
+  subtitle: string;
+  icon: IconName;
+  feature: FeatureKey;
+  /** Coloured tiles are the two headline features; the rest are white. */
+  tinted?: boolean;
+  href: Href;
+  soon?: boolean;
 }
 
-function Hero() {
+const TILES: Tile[] = [
+  { key: 'calculate', title: msg('Boya Hesapla'), subtitle: msg('İhtiyacını öğren'), icon: 'color-fill', feature: 'calculate', tinted: true, href: '/calculate' },
+  { key: 'colour', title: msg('Renk Stüdyosu'), subtitle: msg('Renkleri keşfet'), icon: 'color-palette', feature: 'color', tinted: true, href: '/colour' },
+  { key: 'services', title: msg('Usta Bul'), subtitle: msg('Hizmet al'), icon: 'person', feature: 'projects', href: '/services' },
+  { key: 'renovation', title: msg('Tadilat & Yenileme'), subtitle: msg('Proje oluştur'), icon: 'hammer', feature: 'calculate', href: '/projects' },
+  { key: 'budget', title: msg('Ev Bütçesi'), subtitle: msg('Harcamalarını yönet'), icon: 'wallet', feature: 'cost', href: '/budget' },
+  { key: 'ai-design', title: msg('AI Tasarım'), subtitle: msg('Hayalindeki evi tasarla'), icon: 'sparkles', feature: 'inspect', href: { pathname: '/soon/[feature]', params: { feature: 'ai-design' } }, soon: true },
+];
+
+const TOOLS: { title: string; icon: IconName; href: Href }[] = [
+  { title: msg('Maliyet Hesapla'), icon: 'calculator', href: '/cost' },
+  { title: msg('Duvarını İncele'), icon: 'scan', href: '/inspect' },
+  { title: msg('Boya Fiyatları'), icon: 'stats-chart', href: '/prices' },
+  { title: msg('Ustaya Sor'), icon: 'chatbubbles', href: '/ask' },
+];
+
+function TopBar() {
   const p = usePalette();
+  const { session } = useSession();
+  const account = useAccount();
   return (
-    <View style={[styles.hero, shadowOf(p, 2)]}>
-      <Gradient from={p.heroFrom} to={p.heroTo} />
-      <PaintDrops colours={['#FF6B2C', '#C2367A', '#D99A1E']} style={{ opacity: 0.9 }} />
-      <View style={{ gap: space.sm, maxWidth: 420 }}>
-        <View style={styles.brandRow}>
-          <View style={[styles.brandMark, { backgroundColor: p.cta }]}>
-            <Icon name="color-fill" size={16} color={p.onCta} />
-          </View>
-          <AppText variant="overline" style={{ color: p.onHeroMuted }}>
-            BoyaCep
+    <View style={styles.topBar}>
+      <View style={[styles.logo, { backgroundColor: p.cta }]}>
+        <Icon name="color-fill" size={16} color={p.onCta} />
+      </View>
+      <AppText variant="heading" style={{ color: p.onHero, fontFamily: fonts.extrabold, flex: 1 }}>
+        BoyaCep
+      </AppText>
+      <PressableScale
+        accessibilityRole="button"
+        accessibilityLabel={t('Bildirimler')}
+        onPress={() => router.push({ pathname: '/soon/[feature]', params: { feature: 'notifications' } })}
+        style={styles.iconButton}>
+        <Icon name="notifications-outline" size={22} color={p.onHero} />
+      </PressableScale>
+      <PressableScale accessibilityRole="button" accessibilityLabel={t('Profil')} onPress={() => router.push('/profile')} style={[styles.avatar, { backgroundColor: p.onHeroMuted }]}>
+        {session ? (
+          <AppText variant="caption" style={{ color: p.heroFrom, fontFamily: fonts.bold }}>
+            {initials(account.data?.profile.display_name, session.user.email)}
           </AppText>
-        </View>
-        <AppText variant="display" style={{ color: p.onHero, paddingRight: 72 }}>
-          {t('Evini boyamanın en kolay yolu')}
-        </AppText>
-        <AppText style={{ color: p.onHeroMuted }}>{t('Ne kadar boya, hangi renk, ne kadar tutar: hepsi tek yerde.')}</AppText>
-      </View>
-      <View style={{ flexDirection: 'row', gap: space.sm, flexWrap: 'wrap' }}>
-        <Button label={t('Hesaplamaya başla')} icon="arrow-forward" variant="cta" onPress={() => router.push('/calculate')} />
-      </View>
+        ) : (
+          <Icon name="person" size={18} color={p.heroFrom} />
+        )}
+      </PressableScale>
     </View>
   );
 }
 
-/** The two headline features get a wide card with an illustration. */
-function WideCard({ action, art }: { action: HomeAction; art: React.ReactNode }) {
-  const f = useFeatureColour(action.feature);
-  return (
-    <PressableScale
-      accessibilityRole="button"
-      accessibilityLabel={t(action.title)}
-      onPress={() => open(action)}
-      style={[styles.wide, { backgroundColor: f.soft }]}>
-      <View style={{ flex: 1, gap: space.xs }}>
-        <View style={[styles.wideIcon, { backgroundColor: f.base }]}>
-          <Icon name={action.icon} size={22} color="#FFFFFF" />
-        </View>
-        <AppText variant="heading" style={{ color: f.ink, fontFamily: fonts.extrabold }}>
-          {t(action.title)}
-        </AppText>
-        <AppText variant="small" style={{ color: f.ink, opacity: 0.85 }}>
-          {t(action.subtitle)}
-        </AppText>
-        <View style={[styles.go, { backgroundColor: f.base }]}>
-          <AppText variant="caption" style={{ color: '#FFFFFF', fontFamily: fonts.bold }}>
-            {t('Başla')}
-          </AppText>
-          <Icon name="arrow-forward" size={14} color="#FFFFFF" />
-        </View>
-      </View>
-      <View style={{ justifyContent: 'center' }}>{art}</View>
-    </PressableScale>
-  );
-}
-
-function SmallCard({ action }: { action: HomeAction }) {
+function LocationChip() {
   const p = usePalette();
-  const f = useFeatureColour(action.feature);
+  const city = useCity();
+  if (city.loading) return <View style={styles.chip} />;
+  const name = city.province ? [provinceByCode(city.province)?.name, city.district].filter(Boolean).join(' / ') : t('Şehir seçilmedi');
   return (
     <PressableScale
       accessibilityRole="button"
-      accessibilityLabel={action.href ? t(action.title) : t('{title}, yakında', { title: t(action.title) })}
-      onPress={() => open(action)}
-      style={[styles.small, { backgroundColor: p.surface, borderColor: p.border }, shadowOf(p)]}>
-      <View style={[styles.smallIcon, { backgroundColor: f.soft }]}>
-        <Icon name={action.icon} size={22} color={f.ink} />
-      </View>
-      <AppText variant="bodyStrong" style={{ fontFamily: fonts.bold }}>
-        {t(action.title)}
+      accessibilityLabel={city.province ? t('Konum: {city}. Değiştir', { city: name }) : t('Şehir seç')}
+      onPress={() => router.push({ pathname: '/prices', params: { pick: '1' } })}
+      style={[styles.chip, { backgroundColor: p.surface }]}>
+      <Icon name="location-outline" size={16} color={p.text} />
+      <AppText variant="small" style={{ flex: 1, fontFamily: fonts.semibold }} numberOfLines={1}>
+        {name}
       </AppText>
-      <AppText variant="caption" tone="muted">
-        {t(action.subtitle)}
+      <AppText variant="small" style={{ fontFamily: fonts.bold }}>
+        {city.province ? t('Değiştir') : t('Seç')}
       </AppText>
-      {!action.href && <Badge label={t('Yakında')} />}
     </PressableScale>
   );
 }
 
-/** Returning users see their open project first. */
+function Greeting() {
+  const p = usePalette();
+  const account = useAccount();
+  const name = account.data?.profile.display_name?.trim().split(/\s+/)[0];
+  return (
+    <View style={{ gap: 4 }}>
+      <AppText variant="title" style={{ color: p.onHero }}>
+        {name ? t('Merhaba {name},', { name }) : t('Merhaba,')}
+      </AppText>
+      <AppText style={{ color: p.onHeroMuted }}>{t('Evin için bugün neler yapmak istersin?')}</AppText>
+    </View>
+  );
+}
+
+function TileCard({ tile }: { tile: Tile }) {
+  const p = usePalette();
+  const f = useFeatureColour(tile.feature);
+  const bg = tile.tinted ? f.soft : p.surface;
+  return (
+    <PressableScale
+      accessibilityRole="button"
+      accessibilityLabel={tile.soon ? t('{title}, yakında', { title: t(tile.title) }) : t(tile.title)}
+      onPress={() => router.push(tile.href)}
+      style={[styles.tile, { backgroundColor: bg }]}>
+      <View style={[styles.tileIcon, { backgroundColor: tile.tinted ? f.base : f.soft }]}>
+        <Icon name={tile.icon} size={22} color={tile.tinted ? '#FFFFFF' : f.ink} />
+      </View>
+      <AppText variant="bodyStrong" style={{ color: tile.tinted ? f.ink : p.text, fontFamily: fonts.bold }} numberOfLines={2}>
+        {t(tile.title)}
+      </AppText>
+      <AppText variant="caption" tone="muted" numberOfLines={1}>
+        {tile.soon ? t('Yakında') : t(tile.subtitle)}
+      </AppText>
+    </PressableScale>
+  );
+}
+
+function Inspiration() {
+  const p = usePalette();
+  return (
+    <PressableScale
+      accessibilityRole="button"
+      accessibilityLabel={t('Evin için ilham verici fikirler ve rehberler')}
+      onPress={() => router.push('/guide')}
+      style={[styles.banner, { backgroundColor: p.surface }]}>
+      <View style={{ flex: 1, gap: space.sm, padding: space.lg }}>
+        <AppText variant="bodyStrong" style={{ fontFamily: fonts.bold }}>
+          {t('Evin için ilham verici fikirler ve rehberler')}
+        </AppText>
+        <View style={[styles.go, { backgroundColor: p.cta }]}>
+          <AppText variant="caption" style={{ color: p.onCta, fontFamily: fonts.bold }}>
+            {t('Keşfet')}
+          </AppText>
+          <Icon name="arrow-forward" size={14} color={p.onCta} />
+        </View>
+      </View>
+      <InspirationArt width={140} height={120} />
+    </PressableScale>
+  );
+}
+
+function Tools() {
+  const p = usePalette();
+  return (
+    <View style={styles.tools}>
+      {TOOLS.map((tool) => (
+        <PressableScale
+          key={tool.title}
+          accessibilityRole="button"
+          accessibilityLabel={t(tool.title)}
+          onPress={() => router.push(tool.href)}
+          style={[styles.tool, { backgroundColor: 'rgba(255,255,255,0.10)' }]}>
+          <Icon name={tool.icon} size={18} color={p.onHero} />
+          <AppText variant="small" style={{ color: p.onHero, fontFamily: fonts.semibold }}>
+            {t(tool.title)}
+          </AppText>
+        </PressableScale>
+      ))}
+    </View>
+  );
+}
+
+/** Returning users see their open project. */
 function Continue() {
   const { session, db } = useSession();
   const projects = useProjects();
@@ -107,153 +186,50 @@ function Continue() {
   return <ContinueProject projects={projects.data} />;
 }
 
-function RecentProjects() {
-  const p = usePalette();
-  const { session, db } = useSession();
-  const projects = useProjects();
-
-  if (!db || !session) {
-    return (
-      <PressableScale
-        accessibilityRole="button"
-        accessibilityLabel={t('Projeni kaydet')}
-        onPress={() => router.push(db ? '/sign-in' : '/projects')}
-        style={[styles.saveCta, { backgroundColor: p.surface, borderColor: p.border }, shadowOf(p)]}>
-        <View style={[styles.smallIcon, { backgroundColor: p.primarySoft }]}>
-          <Icon name="bookmark" size={22} color={p.primary} />
-        </View>
-        <View style={{ flex: 1, gap: 2 }}>
-          <AppText variant="bodyStrong" style={{ fontFamily: fonts.bold }}>
-            {t('Projeni kaydet')}
-          </AppText>
-          <AppText variant="small" tone="muted">
-            {t('Oda ölçülerin, malzeme listen ve renklerin bir arada dursun.')}
-          </AppText>
-        </View>
-        <Icon name="chevron-forward" color={p.textMuted} />
-      </PressableScale>
-    );
-  }
-
-  const list = (projects.data ?? []).slice(0, 5);
-  return (
-    <View style={{ gap: space.md }}>
-      <SectionTitle
-        title={t('Son projelerin')}
-        action={
-          list.length > 0 ? (
-            <Button label={t('Tümü')} variant="ghost" onPress={() => router.push('/projects')} />
-          ) : undefined
-        }
-      />
-      {list.length === 0 ? (
-        <PressableScale
-          accessibilityRole="button"
-          accessibilityLabel={t('İlk projeni oluştur')}
-          onPress={() => router.push('/projects')}
-          style={[styles.saveCta, { backgroundColor: p.accentSoft, borderColor: 'transparent' }]}>
-          <View style={[styles.smallIcon, { backgroundColor: p.cta }]}>
-            <Icon name="add" size={24} color={p.onCta} />
-          </View>
-          <View style={{ flex: 1, gap: 2 }}>
-            <AppText variant="bodyStrong" style={{ fontFamily: fonts.bold }}>
-              {t('İlk projeni oluştur')}
-            </AppText>
-            <AppText variant="small" tone="muted">
-              {t('Odalarını ekle, malzeme ve maliyet kendiliğinden çıksın.')}
-            </AppText>
-          </View>
-        </PressableScale>
-      ) : (
-        <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={{ gap: space.md, paddingVertical: 4 }}>
-          {list.map((project) => (
-            <PressableScale
-              key={project.id}
-              accessibilityRole="button"
-              accessibilityLabel={project.title}
-              onPress={() => router.push({ pathname: '/projects/[id]', params: { id: project.id } })}
-              style={[styles.projectCard, { backgroundColor: p.surface, borderColor: p.border }, shadowOf(p)]}>
-              <View style={[styles.projectArt, { backgroundColor: p.primarySoft }]}>
-                <RollerMark colour={p.primary} size={36} />
-              </View>
-              <AppText variant="bodyStrong" numberOfLines={1} style={{ fontFamily: fonts.bold }}>
-                {project.title}
-              </AppText>
-              <Badge label={t(STATUS_LABEL[project.status])} tone="primary" />
-            </PressableScale>
-          ))}
-        </ScrollView>
-      )}
-    </View>
-  );
-}
-
 export default function HomeScreen() {
-  const [calculate, colour, ...rest] = HOME_ACTIONS;
-  const c = useFeatureColour('calculate');
+  const p = usePalette();
   return (
-    <Screen>
-      <FadeIn>
-        <Hero />
-      </FadeIn>
-      <Continue />
-      <FadeIn delay={80} style={{ gap: space.md }}>
-        <SectionTitle title={t('Ne yapmak istersin?')} />
-        <WideCard action={calculate} art={<RollerMark colour={c.base} size={76} />} />
-        <WideCard action={colour} art={<SwatchFan colours={['#2F5D6B', '#C2367A', '#D99A1E', '#A3B49A']} size={80} />} />
-        <View style={styles.grid}>
-          {rest.map((a) => (
-            <View key={a.key} style={styles.cell}>
-              <SmallCard action={a} />
-            </View>
-          ))}
+    <SafeAreaView edges={['top']} style={{ flex: 1, backgroundColor: p.heroFrom }}>
+      <ScrollView contentContainerStyle={styles.content} style={{ backgroundColor: p.heroFrom }}>
+        <View style={styles.inner}>
+          <TopBar />
+          <LocationChip />
+          <Greeting />
+          <View style={styles.grid}>
+            {TILES.map((tile) => (
+              <View key={tile.key} style={styles.cell}>
+                <TileCard tile={tile} />
+              </View>
+            ))}
+          </View>
+          <View style={shadowOf(p, 2)}>
+            <Inspiration />
+          </View>
+          <Continue />
+          <AppText variant="bodyStrong" style={{ color: p.onHero }}>
+            {t('Diğer araçlar')}
+          </AppText>
+          <Tools />
         </View>
-      </FadeIn>
-      <FadeIn delay={120}>
-        <CityPrompt />
-      </FadeIn>
-      <FadeIn delay={160}>
-        <RecentProjects />
-      </FadeIn>
-    </Screen>
+      </ScrollView>
+    </SafeAreaView>
   );
 }
 
 const styles = StyleSheet.create({
-  hero: { borderRadius: radius.xl, padding: space.xl, gap: space.lg, overflow: 'hidden' },
-  brandRow: { flexDirection: 'row', alignItems: 'center', gap: space.sm },
-  brandMark: { width: 28, height: 28, borderRadius: 9, alignItems: 'center', justifyContent: 'center' },
-  wide: { flexDirection: 'row', borderRadius: radius.xl, padding: space.lg + 2, gap: space.md, overflow: 'hidden', minHeight: 150 },
-  wideIcon: { width: 42, height: 42, borderRadius: 14, alignItems: 'center', justifyContent: 'center', marginBottom: space.xs },
-  go: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 4,
-    alignSelf: 'flex-start',
-    borderRadius: radius.pill,
-    paddingHorizontal: space.md,
-    paddingVertical: 6,
-    marginTop: space.sm,
-  },
+  content: { flexGrow: 1, alignItems: 'center', paddingBottom: space.xxl },
+  inner: { width: '100%', maxWidth: MAX_CONTENT_WIDTH, padding: space.lg, gap: space.lg },
+  topBar: { flexDirection: 'row', alignItems: 'center', gap: space.sm },
+  logo: { width: 30, height: 30, borderRadius: 9, alignItems: 'center', justifyContent: 'center' },
+  iconButton: { width: 40, height: 40, alignItems: 'center', justifyContent: 'center' },
+  avatar: { width: 34, height: 34, borderRadius: 17, alignItems: 'center', justifyContent: 'center' },
+  chip: { flexDirection: 'row', alignItems: 'center', gap: space.sm, borderRadius: radius.pill, paddingHorizontal: space.md, minHeight: 40 },
   grid: { flexDirection: 'row', flexWrap: 'wrap', margin: -space.xs },
   cell: { width: '50%', padding: space.xs },
-  small: {
-    borderRadius: radius.lg,
-    borderWidth: StyleSheet.hairlineWidth,
-    padding: space.lg,
-    gap: 4,
-    minHeight: 150,
-    overflow: 'hidden',
-  },
-  smallIcon: { width: 46, height: 46, borderRadius: 15, alignItems: 'center', justifyContent: 'center', marginBottom: space.sm },
-  saveCta: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: space.md,
-    borderRadius: radius.lg,
-    borderWidth: StyleSheet.hairlineWidth,
-    padding: space.lg,
-  },
-  projectCard: { width: 168, borderRadius: radius.lg, borderWidth: StyleSheet.hairlineWidth, padding: space.md, gap: space.sm },
-  projectArt: { height: 72, borderRadius: radius.md, alignItems: 'center', justifyContent: 'center' },
+  tile: { borderRadius: radius.lg, padding: space.md, gap: 4, minHeight: 128 },
+  tileIcon: { width: 42, height: 42, borderRadius: 12, alignItems: 'center', justifyContent: 'center', marginBottom: space.xs },
+  banner: { flexDirection: 'row', alignItems: 'center', borderRadius: radius.lg, overflow: 'hidden' },
+  go: { flexDirection: 'row', alignItems: 'center', gap: 4, alignSelf: 'flex-start', borderRadius: radius.pill, paddingHorizontal: space.md, paddingVertical: 6 },
+  tools: { flexDirection: 'row', flexWrap: 'wrap', gap: space.sm },
+  tool: { flexDirection: 'row', alignItems: 'center', gap: 6, borderRadius: radius.pill, paddingHorizontal: space.md, minHeight: 40 },
 });

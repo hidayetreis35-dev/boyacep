@@ -23,7 +23,7 @@ describe('first launch', () => {
     await fireEvent.press(screen.getByText('Devam'));
     expect(await screen.findByText('Hangi ildesin?')).toBeTruthy();
     await fireEvent.press(screen.getByText('Şehir seçmeden başla'));
-    expect(await screen.findByText('Evini boyamanın en kolay yolu')).toBeTruthy();
+    expect(await screen.findByText('Evin için bugün neler yapmak istersin?')).toBeTruthy();
     expect(JSON.parse((await AsyncStorage.getItem('boyacep.roles.v1')) ?? '[]')).toEqual(['pro']);
     // Skipping the city is remembered, so the home screen does not ask again.
     expect(JSON.parse((await AsyncStorage.getItem('boyacep.city.v1')) ?? '{}')).toMatchObject({ province: null, answered: true });
@@ -42,7 +42,7 @@ describe('first launch', () => {
     await fireEvent.press(screen.getByLabelText('Adıyaman'));
     expect(screen.getByText('Seçilen il: Adıyaman')).toBeTruthy();
     await fireEvent.press(screen.getByText('Başla'));
-    await screen.findByText('Evini boyamanın en kolay yolu');
+    await screen.findByText('Evin için bugün neler yapmak istersin?');
     expect(JSON.parse((await AsyncStorage.getItem('boyacep.city.v1')) ?? '{}')).toMatchObject({ province: '02', answered: true });
   });
 });
@@ -68,9 +68,10 @@ describe('language', () => {
     await AsyncStorage.setItem('boyacep.roles.v1', JSON.stringify(['homeowner']));
     await AsyncStorage.setItem('boyacep.locale.v1', 'en');
     await renderRouter('./src/app', { initialUrl: '/profile' });
-    expect(await screen.findByText('Your role')).toBeTruthy();
+    expect(await screen.findByText('My Profile')).toBeTruthy();
+    await fireEvent.press(screen.getByTestId('menu-language'));
     await fireEvent.press(screen.getByLabelText('Türkçe'));
-    expect(await screen.findByText('Rolün')).toBeTruthy();
+    expect(await screen.findByText('Profilim')).toBeTruthy();
     expect(screen).toHavePathname('/profile');
     expect(await AsyncStorage.getItem('boyacep.locale.v1')).toBe('tr');
   });
@@ -83,12 +84,30 @@ describe('app navigation', () => {
 
   it('shows the six home actions and opens the calculator', async () => {
     await renderRouter('./src/app', { initialUrl: '/' });
-    await screen.findByText('Evini boyamanın en kolay yolu');
-    for (const title of ['Ne Kadar Boya?', 'Renk Stüdyosu', 'Maliyet Hesapla', 'Duvarını İncele', 'Boya Rehberi', 'Ustaya Sor']) {
+    await screen.findByText('Evin için bugün neler yapmak istersin?');
+    for (const title of ['Boya Hesapla', 'Renk Stüdyosu', 'Usta Bul', 'Tadilat & Yenileme', 'Ev Bütçesi', 'AI Tasarım']) {
       expect(screen.getAllByText(title).length).toBeGreaterThan(0);
     }
-    await fireEvent.press(screen.getByLabelText('Ne Kadar Boya?'));
+    // The other tools stay one tap away.
+    for (const title of ['Maliyet Hesapla', 'Duvarını İncele', 'Boya Fiyatları', 'Ustaya Sor']) {
+      expect(screen.getByLabelText(title)).toBeTruthy();
+    }
+    await fireEvent.press(screen.getByLabelText('Boya Hesapla'));
     expect(screen).toHavePathname('/calculate');
+  });
+
+  it('marks AI design as coming soon instead of pretending it works', async () => {
+    await renderRouter('./src/app', { initialUrl: '/' });
+    await fireEvent.press(await screen.findByLabelText('AI Tasarım, yakında'));
+    expect(screen).toHavePathname('/soon/ai-design');
+  });
+
+  it('shows the five tabs', async () => {
+    await renderRouter('./src/app', { initialUrl: '/' });
+    await screen.findByText('Evin için bugün neler yapmak istersin?');
+    for (const tab of ['Ana Sayfa', 'Projelerim', 'Hizmetler', 'Bütçe', 'Profil']) {
+      expect(screen.getAllByText(tab).length).toBeGreaterThan(0);
+    }
   });
 
   it('opens Ustaya Sor and explains it needs the server', async () => {

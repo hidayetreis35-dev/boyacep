@@ -9,9 +9,10 @@ import { usePalette } from '@/ui/theme';
 
 const TABS: { name: string; title: string; icon: TabIcon }[] = [
   { name: 'index', title: msg('Ana Sayfa'), icon: { active: 'home', inactive: 'home-outline' } },
-  { name: 'projects', title: msg('Projelerim'), icon: { active: 'albums', inactive: 'albums-outline' } },
-  { name: 'usta', title: msg('Usta'), icon: { active: 'construct', inactive: 'construct-outline' } },
-  { name: 'profile', title: msg('Profil'), icon: { active: 'person-circle', inactive: 'person-circle-outline' } },
+  { name: 'projects', title: msg('Projelerim'), icon: { active: 'briefcase', inactive: 'briefcase-outline' } },
+  { name: 'services', title: msg('Hizmetler'), icon: { active: 'construct', inactive: 'construct-outline' } },
+  { name: 'budget', title: msg('Bütçe'), icon: { active: 'wallet', inactive: 'wallet-outline' } },
+  { name: 'profile', title: msg('Profil'), icon: { active: 'person', inactive: 'person-outline' } },
 ];
 
 const ICONS = Object.fromEntries(TABS.map((value) => [value.name, value.icon]));

@@ -5,7 +5,7 @@ import { Animated, Platform, StyleSheet, View } from 'react-native';
 
 import { AppText } from './components';
 import { PressableScale } from './motion';
-import { fonts, radius, shadowOf, space, usePalette } from './theme';
+import { fonts, shadowOf, space, usePalette } from './theme';
 
 type IconName = ComponentProps<typeof Ionicons>['name'];
 
@@ -38,32 +38,25 @@ function TabButton({
       onPress={onPress}
       onLongPress={onLongPress}
       style={styles.tab}>
-      <View style={styles.pillWrap}>
-        <Animated.View
-          style={[
-            StyleSheet.absoluteFill,
-            styles.pill,
-            { backgroundColor: p.accentSoft, opacity: progress, transform: [{ scaleX: progress.interpolate({ inputRange: [0, 1], outputRange: [0.6, 1] }) }] },
-          ]}
-        />
-        <Ionicons name={focused ? icon.active : icon.inactive} size={22} color={focused ? p.cta : p.textMuted} />
-      </View>
+      <Animated.View style={{ transform: [{ scale: progress.interpolate({ inputRange: [0, 1], outputRange: [1, 1.1] }) }] }}>
+        <Ionicons name={focused ? icon.active : icon.inactive} size={23} color={focused ? p.cta : p.textMuted} />
+      </Animated.View>
       <AppText
         variant="caption"
         numberOfLines={1}
-        style={{ color: focused ? p.text : p.textMuted, fontFamily: focused ? fonts.bold : fonts.medium }}>
+        style={{ fontSize: 11, color: focused ? p.accent : p.textMuted, fontFamily: focused ? fonts.bold : fonts.medium }}>
         {label}
       </AppText>
     </PressableScale>
   );
 }
 
-/** Rounded bottom navigation with an animated pill behind the active tab. */
+/** Flat bottom navigation; the active tab is orange. */
 export function AppTabBar({ state, descriptors, emitter, navigateToTab, insets, icons }: BottomTabBarProps & { icons: Record<string, TabIcon> }) {
   const p = usePalette();
   return (
-    <View style={[styles.outer, { paddingBottom: Math.max(insets.bottom, space.sm), backgroundColor: p.background }]}>
-      <View style={[styles.bar, { backgroundColor: p.surface, borderColor: p.border }, shadowOf(p, 2)]} accessibilityRole="tablist">
+    <View style={[styles.outer, { paddingBottom: Math.max(insets.bottom, space.sm), backgroundColor: p.surface, borderColor: p.border }, shadowOf(p, 2)]}>
+      <View style={styles.bar} accessibilityRole="tablist">
         {state.routes.map((route, index) => {
           const { options } = descriptors[route.key];
           const label = typeof options.title === 'string' ? options.title : route.name;
@@ -88,19 +81,7 @@ export function AppTabBar({ state, descriptors, emitter, navigateToTab, insets, 
 }
 
 const styles = StyleSheet.create({
-  outer: { paddingHorizontal: space.md, paddingTop: space.xs },
-  bar: {
-    flexDirection: 'row',
-    borderRadius: radius.xl,
-    borderWidth: StyleSheet.hairlineWidth,
-    paddingVertical: space.sm,
-    paddingHorizontal: space.xs,
-    alignSelf: 'center',
-    width: '100%',
-    maxWidth: 560,
-    ...(Platform.OS === 'web' ? { marginBottom: space.sm } : null),
-  },
-  tab: { flex: 1, alignItems: 'center', gap: 2, minHeight: 52, justifyContent: 'center' },
-  pillWrap: { width: 54, height: 30, alignItems: 'center', justifyContent: 'center' },
-  pill: { borderRadius: radius.pill },
+  outer: { paddingHorizontal: space.xs, paddingTop: space.sm, borderTopWidth: StyleSheet.hairlineWidth },
+  bar: { flexDirection: 'row', alignSelf: 'center', width: '100%', maxWidth: 640 },
+  tab: { flex: 1, alignItems: 'center', gap: 3, minHeight: 50, justifyContent: 'center' },
 });

@@ -6,9 +6,9 @@ import { msg, t } from '@/i18n';
 import { AppText, Badge, Button, Icon, Notice, Row, TextField } from '@/ui/components';
 import { fonts, radius, space, usePalette } from '@/ui/theme';
 
-import { chooseCity, skipCity, useCity } from './city';
+import { chooseCity, useCity } from './city';
 import { formatLiraRange, formatResearchDate, QUALITY_HELP, QUALITY_TONE, qualityLabel } from './format';
-import { PILOT_PROVINCES, provinceByCode, searchProvinces, type ProvinceCode } from './provinces';
+import { provinceByCode, searchProvinces, type ProvinceCode } from './provinces';
 import { hasProvinceData, homeTotal, shownRange, snapshotAge, SNAPSHOT_FRESH_DAYS, type MarketReference } from './regional';
 import { sourceName } from './sources';
 import type { MarketScope } from './types';
@@ -16,12 +16,6 @@ import type { MarketScope } from './types';
 export const SCOPE_LABEL: Record<MarketScope, string> = {
   labour: msg('Sadece işçilik'),
   materials: msg('Malzeme dahil'),
-};
-
-/** Turkish case endings differ by name, so each pilot city has its own label. */
-const PICK_LABEL: Record<ProvinceCode, string> = {
-  '45': msg('Manisa’yı seç'),
-  '35': msg('İzmir’i seç'),
 };
 
 export function placeName(code: ProvinceCode | 'TR'): string {
@@ -167,66 +161,6 @@ export function ProvincePicker({ onPick, scope = 'labour' }: { onPick: (code: Pr
   );
 }
 
-/**
- * Asks once, on the home screen, whether the user wants prices for their
- * city. Never required: "Şehir seçmeden devam et" hides it for good.
- */
-export function CityPrompt() {
-  const p = usePalette();
-  const city = useCity();
-  if (city.loading) return null;
-
-  if (city.answered) {
-    const name = city.province ? provinceByCode(city.province)?.name : undefined;
-    return (
-      <Pressable
-        accessibilityRole="button"
-        accessibilityLabel={t('Türkiye Boya Fiyatları')}
-        onPress={() => router.push('/prices')}
-        style={[styles.prompt, { backgroundColor: p.tealSoft }]}>
-        <View style={styles.headerRow}>
-          <Icon name="stats-chart" color={p.teal} />
-          <View style={{ flex: 1, gap: 2 }}>
-            <AppText variant="bodyStrong" style={{ fontFamily: fonts.bold }}>
-              {t('Türkiye Boya Fiyatları')}
-            </AppText>
-            <AppText variant="small" tone="muted">
-              {name ? t('{city} usta fiyatları, kaynağı ve tarihiyle', { city: name }) : t('Usta fiyatları şehre göre, kaynağı ve tarihiyle')}
-            </AppText>
-          </View>
-          <Icon name="chevron-forward" color={p.textMuted} />
-        </View>
-      </Pressable>
-    );
-  }
-
-  return (
-    <View style={[styles.prompt, { backgroundColor: p.tealSoft }]} testID="city-prompt">
-      <View style={styles.headerRow}>
-        <Icon name="location" color={p.teal} />
-        <AppText variant="bodyStrong" style={{ flex: 1, fontFamily: fonts.bold }}>
-          {t('Fiyatları şehrine göre görmek ister misin?')}
-        </AppText>
-      </View>
-      <AppText variant="small" tone="muted">
-        {t('Konum izni istemiyoruz. Şehrini sen seç; istediğin zaman Profil’den değiştirebilirsin.')}
-      </AppText>
-      <View style={{ flexDirection: 'row', flexWrap: 'wrap', gap: space.sm }}>
-        {PILOT_PROVINCES.map((code) => (
-          <Button
-            key={code}
-            label={t(PICK_LABEL[code])}
-            variant="secondary"
-            onPress={() => chooseCity(code)}
-          />
-        ))}
-        <Button label={t('Başka il seç')} variant="ghost" icon="search" onPress={() => router.push({ pathname: '/prices', params: { pick: '1' } })} />
-      </View>
-      <Button label={t('Şehir seçmeden devam et')} variant="ghost" onPress={() => skipCity()} />
-    </View>
-  );
-}
-
 /** The city setting on the profile screen. */
 export function CitySetting() {
   const city = useCity();
@@ -259,5 +193,4 @@ const styles = StyleSheet.create({
   reference: { borderRadius: radius.lg, borderWidth: 1.5, borderStyle: 'dashed', padding: space.lg, gap: space.sm },
   headerRow: { flexDirection: 'row', alignItems: 'center', gap: space.sm },
   provinceRow: { flexDirection: 'row', alignItems: 'center', gap: space.md, minHeight: 44, paddingHorizontal: space.sm, borderRadius: radius.sm },
-  prompt: { borderRadius: radius.lg, padding: space.lg, gap: space.md },
 });

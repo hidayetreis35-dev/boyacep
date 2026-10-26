@@ -39,7 +39,7 @@ beforeEach(async () => {
 
 describe('the app in English', () => {
   it.each([
-    ['/', 'The easiest way to paint your home'],
+    ['/', 'What would you like to do for your home today?'],
     ['/calculate', 'What are you painting?'],
     ['/colour', 'Colour catalogue'],
     ['/inspect', 'Continue without a photo'],
@@ -47,6 +47,11 @@ describe('the app in English', () => {
     ['/plans', 'BoyaCep Pro'],
     ['/privacy', 'Privacy'],
     ['/profile', 'Language'],
+    ['/account', 'Language'],
+    ['/services', 'Find a Pro'],
+    ['/budget', 'My Home Budget'],
+    ['/help', 'Frequently asked questions'],
+    ['/soon/plumber', 'Plumber'],
     ['/projects', 'My projects'],
     ['/usta', 'Painter'],
     ['/ask', 'Ask a Painter'],

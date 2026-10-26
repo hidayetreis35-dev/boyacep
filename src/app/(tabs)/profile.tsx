@@ -1,186 +1,139 @@
-import { useQueryClient } from '@tanstack/react-query';
 import { router } from 'expo-router';
-import { useEffect, useState } from 'react';
-import { View } from 'react-native';
+import { useState, type ReactNode } from 'react';
+import { StyleSheet, View } from 'react-native';
 
-import {
-  disableRole,
-  enableRoles,
-  ROLE_LABEL,
-  setActiveRole,
-  signOut,
-  updateDisplayName,
-  type SelectableRole,
-} from '@/features/account/api';
+import { initials } from '@/features/account/initials';
 import { LanguagePicker } from '@/features/account/language-picker';
-import { readLocalRoles, writeLocalRoles } from '@/features/account/local-role';
-import { PrivacyActions } from '@/features/account/privacy-actions';
-import { RolePicker } from '@/features/account/role-picker';
 import { useAccount, useSession } from '@/features/account/session';
-import { CitySetting } from '@/features/market/components';
-import { t } from '@/i18n';
-import {
-  AppText,
-  Button,
-  Card,
-  ChoiceChips,
-  ErrorState,
-  LoadingState,
-  Notice,
-  Screen,
-  TextField,
-} from '@/ui/components';
-import { space } from '@/ui/theme';
+import { useCity } from '@/features/market/city';
+import { provinceByCode } from '@/features/market/provinces';
+import { LOCALES, t } from '@/i18n';
+import { useLocale } from '@/i18n/provider';
+import { AppText, Button, Icon, Screen, type IconName } from '@/ui/components';
+import { PressableScale } from '@/ui/motion';
+import { fonts, radius, shadowOf, space, usePalette } from '@/ui/theme';
 
-/** Signed out: the role choice lives on the device only. */
-function GuestProfile({ hasBackend }: { hasBackend: boolean }) {
-  const [roles, setRoles] = useState<SelectableRole[]>([]);
-  useEffect(() => {
-    readLocalRoles().then((r) => setRoles(r ?? []));
-  }, []);
-
-  const toggle = (role: SelectableRole) => {
-    const next = roles.includes(role) ? roles.filter((r) => r !== role) : [...roles, role];
-    if (next.length === 0) return;
-    setRoles(next);
-    writeLocalRoles(next);
-  };
-
+function MenuRow({ icon, label, value, onPress, testID }: { icon: IconName; label: string; value?: string; onPress: () => void; testID?: string }) {
+  const p = usePalette();
   return (
-    <>
-      <Card>
-        <AppText variant="heading">{t('Hesabın yok')}</AppText>
-        <AppText tone="muted">
-          {hasBackend
-            ? t('Projelerini kaydetmek ve her cihazdan görmek için giriş yap.')
-            : t('Hesap sistemi henüz bağlı değil. Ne Kadar Boya? hesapsız çalışıyor.')}
+    <PressableScale accessibilityRole="button" accessibilityLabel={value ? `${label}, ${value}` : label} onPress={onPress} style={styles.row} testID={testID}>
+      <Icon name={icon} size={20} color={p.textMuted} />
+      <AppText style={{ flex: 1 }}>{label}</AppText>
+      {value ? (
+        <AppText variant="small" tone="muted" numberOfLines={1} style={{ maxWidth: 150 }}>
+          {value}
         </AppText>
-        {hasBackend ? <Button label={t('Giriş yap / Hesap aç')} icon="log-in" onPress={() => router.push('/sign-in')} /> : null}
-      </Card>
-      <AppText variant="heading">{t('Rolün')}</AppText>
-      <RolePicker selected={roles} onToggle={toggle} />
-      <Button label={t('Gizlilik bilgileri')} icon="shield-checkmark" variant="ghost" onPress={() => router.push('/privacy')} />
-    </>
+      ) : null}
+      <Icon name="chevron-forward" size={18} color={p.textMuted} />
+    </PressableScale>
   );
 }
 
-function NameEditor({ initial, onSave }: { initial: string; onSave: (name: string) => Promise<void> }) {
-  const [name, setName] = useState(initial);
-  const [busy, setBusy] = useState(false);
-  return (
-    <>
-      <TextField label={t('Adın')} value={name} onChangeText={setName} maxLength={80} autoCapitalize="words" testID="display-name" />
-      <Button
-        label={t('Adı kaydet')}
-        variant="secondary"
-        loading={busy}
-        disabled={name.trim() === initial.trim()}
-        onPress={async () => {
-          setBusy(true);
-          await onSave(name);
-          setBusy(false);
-        }}
-      />
-    </>
-  );
+function Menu({ children }: { children: ReactNode }) {
+  const p = usePalette();
+  return <View style={[styles.menu, { backgroundColor: p.surface, borderColor: p.border }, shadowOf(p)]}>{children}</View>;
 }
 
-function AccountProfile() {
+function Header() {
+  const p = usePalette();
   const { db, session } = useSession();
   const account = useAccount();
-  const queryClient = useQueryClient();
-  const [busy, setBusy] = useState(false);
-  const [error, setError] = useState<string | null>(null);
-
-  if (account.isPending) return <LoadingState />;
-  if (account.isError || !db || !session) {
-    return <ErrorState message={t('Profil yüklenemedi. İnternet bağlantını kontrol et.')} onRetry={() => account.refetch()} />;
-  }
-
-  const userId = session.user.id;
-  const { roles } = account.data;
-  const selectable = roles.filter((r): r is SelectableRole => r !== 'admin');
-
-  const run = async (task: () => Promise<void>) => {
-    setBusy(true);
-    setError(null);
-    try {
-      await task();
-      await queryClient.invalidateQueries({ queryKey: ['account', userId] });
-    } catch (e) {
-      setError(e instanceof Error ? e.message : t('Kaydedilemedi.'));
-    } finally {
-      setBusy(false);
-    }
-  };
-
-  const toggleRole = (role: SelectableRole) =>
-    run(async () => {
-      if (selectable.includes(role)) {
-        if (selectable.length === 1) throw new Error(t('En az bir rolün olmalı.'));
-        if (account.data.profile.active_role === role) {
-          await setActiveRole(db, userId, selectable.find((r) => r !== role)!);
-        }
-        await disableRole(db, userId, role);
-        await writeLocalRoles(selectable.filter((r) => r !== role));
-      } else {
-        await enableRoles(db, userId, [role]);
-        await writeLocalRoles([...selectable, role]);
-      }
-    });
-
+  const name = account.data?.profile.display_name ?? null;
+  const email = session?.user.email ?? null;
   return (
-    <>
-      <Card>
-        <AppText variant="small" tone="muted">
-          {session.user.email}
+    <View style={{ gap: space.md }}>
+      <View style={styles.header}>
+        <View style={[styles.avatar, { backgroundColor: p.primarySoft }]}>
+          {session ? (
+            <AppText variant="heading" style={{ color: p.primary, fontFamily: fonts.bold }}>
+              {initials(name, email)}
+            </AppText>
+          ) : (
+            <Icon name="person" size={28} color={p.primary} />
+          )}
+        </View>
+        <View style={{ flex: 1, gap: 2 }}>
+          <AppText variant="heading" numberOfLines={1}>
+            {session ? name || t('Adını ekle') : t('Misafir')}
+          </AppText>
+          <AppText variant="small" tone="muted" numberOfLines={session ? 1 : 2}>
+            {session ? email : t('Projelerini kaydetmek için giriş yap.')}
+          </AppText>
+        </View>
+      </View>
+      {!session && db ? <Button label={t('Giriş yap')} icon="log-in" variant="secondary" onPress={() => router.push('/sign-in')} /> : null}
+    </View>
+  );
+}
+
+function PremiumCard() {
+  const p = usePalette();
+  return (
+    <PressableScale
+      accessibilityRole="button"
+      accessibilityLabel={t('BoyaCep Premium')}
+      onPress={() => router.push('/plans')}
+      style={[styles.premium, { backgroundColor: p.heroFrom }]}>
+      <View style={[styles.premiumIcon, { backgroundColor: p.cta }]}>
+        <Icon name="diamond" size={20} color={p.onCta} />
+      </View>
+      <View style={{ flex: 1, gap: 2 }}>
+        <AppText variant="bodyStrong" style={{ color: p.onHero, fontFamily: fonts.bold }}>
+          {t('BoyaCep Premium')}
         </AppText>
-        <NameEditor
-          key={account.data.profile.updated_at}
-          initial={account.data.profile.display_name ?? ''}
-          onSave={(name) => run(() => updateDisplayName(db, userId, name))}
-        />
-      </Card>
-
-      <AppText variant="heading">{t('Rollerin')}</AppText>
-      <RolePicker selected={selectable} onToggle={toggleRole} />
-      {selectable.length > 1 ? (
-        <ChoiceChips
-          label={t('Uygulama hangi rolle açılsın?')}
-          options={selectable.map((r) => ({ value: r, label: t(ROLE_LABEL[r]) }))}
-          value={(account.data.profile.active_role as SelectableRole | null) ?? selectable[0]}
-          onChange={(r) => run(() => setActiveRole(db, userId, r))}
-        />
-      ) : null}
-
-      <Button label={t('Ev Hafızası')} icon="color-palette" variant="ghost" onPress={() => router.push('/home-log')} />
-      <Button label={t('Planlar')} icon="star" variant="ghost" onPress={() => router.push('/plans')} />
-      {roles.includes('admin') ? (
-        <Button label={t('Yönetim paneli')} icon="settings" variant="secondary" onPress={() => router.push('/admin')} />
-      ) : null}
-
-      {error ? (
-        <Notice tone="danger" icon="alert-circle">
-          {error}
-        </Notice>
-      ) : null}
-
-      <Button label={t('Çıkış yap')} icon="log-out" variant="ghost" loading={busy} onPress={() => run(() => signOut(db))} />
-      <PrivacyActions db={db} userId={userId} />
-    </>
+        <AppText variant="small" style={{ color: p.onHeroMuted }}>
+          {t('Daha fazla proje ve özellik. Ödeme henüz açılmadı.')}
+        </AppText>
+      </View>
+      <View style={[styles.premiumGo, { backgroundColor: p.cta }]}>
+        <AppText variant="caption" style={{ color: p.onCta, fontFamily: fonts.bold }}>
+          {t('Keşfet')}
+        </AppText>
+      </View>
+    </PressableScale>
   );
 }
 
 export default function ProfileScreen() {
-  const { db, session, loading } = useSession();
+  const { session } = useSession();
+  const account = useAccount();
+  const { locale } = useLocale();
+  const city = useCity();
+  const [language, setLanguage] = useState(false);
+  const cityName = !city.loading && city.province ? [provinceByCode(city.province)?.name, city.district].filter(Boolean).join(' / ') : t('Seçilmedi');
+  const roles = account.data?.roles ?? [];
+
   return (
     <Screen>
-      <AppText variant="title">{t('Profil')}</AppText>
-      <View style={{ gap: space.lg }}>
-        {loading ? <LoadingState /> : session ? <AccountProfile /> : <GuestProfile hasBackend={!!db} />}
-        <LanguagePicker />
-        <CitySetting />
-      </View>
+      <AppText variant="title">{t('Profilim')}</AppText>
+      <Header />
+      <Menu>
+        <MenuRow icon="person-outline" label={t('Hesap Bilgileri')} onPress={() => router.push('/account')} testID="menu-account" />
+        <MenuRow icon="location-outline" label={t('Konumum')} value={cityName} onPress={() => router.push({ pathname: '/prices', params: { pick: '1' } })} />
+        <MenuRow icon="notifications-outline" label={t('Bildirim Ayarları')} onPress={() => router.push({ pathname: '/soon/[feature]', params: { feature: 'notifications' } })} />
+        <MenuRow icon="globe-outline" label={t('Dil Seçimi')} value={LOCALES.find((l) => l.value === locale)?.label} onPress={() => setLanguage((v) => !v)} testID="menu-language" />
+        {language ? (
+          <View style={{ paddingHorizontal: space.md, paddingBottom: space.md }}>
+            <LanguagePicker />
+          </View>
+        ) : null}
+        <MenuRow icon="color-palette-outline" label={t('Ev Hafızası')} onPress={() => router.push('/home-log')} />
+        <MenuRow icon="construct-outline" label={t('Usta Paneli')} onPress={() => router.push('/usta')} />
+        <MenuRow icon="help-circle-outline" label={t('Yardım ve Destek')} onPress={() => router.push('/help')} />
+        <MenuRow icon="shield-checkmark-outline" label={t('Gizlilik')} onPress={() => router.push('/privacy')} />
+        {session && roles.includes('admin') ? <MenuRow icon="settings-outline" label={t('Yönetim paneli')} onPress={() => router.push('/admin')} /> : null}
+      </Menu>
+      <PremiumCard />
     </Screen>
   );
 }
+
+const styles = StyleSheet.create({
+  header: { flexDirection: 'row', alignItems: 'center', gap: space.md },
+  avatar: { width: 60, height: 60, borderRadius: 30, alignItems: 'center', justifyContent: 'center' },
+  menu: { borderRadius: radius.lg, borderWidth: StyleSheet.hairlineWidth, overflow: 'hidden' },
+  row: { flexDirection: 'row', alignItems: 'center', gap: space.md, paddingHorizontal: space.lg, minHeight: 54 },
+  premium: { flexDirection: 'row', alignItems: 'center', gap: space.md, padding: space.lg, borderRadius: radius.lg },
+  premiumIcon: { width: 40, height: 40, borderRadius: 20, alignItems: 'center', justifyContent: 'center' },
+  premiumGo: { borderRadius: radius.pill, paddingHorizontal: space.md, paddingVertical: 8 },
+});

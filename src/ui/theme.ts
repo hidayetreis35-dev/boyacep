@@ -9,10 +9,10 @@ import { useColorScheme } from 'react-native';
  */
 
 const light = {
-  background: '#FAF7F2',
+  background: '#F6F7F9',
   surface: '#FFFFFF',
-  surfaceMuted: '#F2EDE5',
-  border: '#E6DFD4',
+  surfaceMuted: '#EEF1F5',
+  border: '#E2E6ED',
   text: '#141B2D',
   textMuted: '#585F70',
   /** Navy: buttons, links, selected states. */
@@ -34,8 +34,8 @@ const light = {
   success: '#1E7A3E',
   successSoft: '#DEF3E5',
   /** Hero gradient. */
-  heroFrom: '#1B2B4B',
-  heroTo: '#0B5F6B',
+  heroFrom: '#14213D',
+  heroTo: '#1F3358',
   onHero: '#FFFFFF',
   onHeroMuted: '#C9D4E8',
   shadow: 'rgba(20, 27, 45, 0.08)',
@@ -65,8 +65,8 @@ const dark: Palette = {
   dangerSoft: '#3D1A17',
   success: '#5BC983',
   successSoft: '#163323',
-  heroFrom: '#16223D',
-  heroTo: '#0B4650',
+  heroFrom: '#111A2E',
+  heroTo: '#1A2A48',
   onHero: '#FFFFFF',
   onHeroMuted: '#B9C6DD',
   shadow: 'rgba(0, 0, 0, 0.35)',

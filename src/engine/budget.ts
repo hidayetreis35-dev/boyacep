@@ -101,3 +101,61 @@ export function summarizeBudget(plan: CostSummary, expenses: Expense[], budget: 
     missingPrices: plan.missingPrices,
   };
 }
+
+/** One project's money for the home-wide view ("Ev Bütçem"). */
+export interface HomeBudgetProject {
+  id: string;
+  budget: number | null;
+}
+
+export interface HomeBudgetExpense extends Expense {
+  projectId: string;
+}
+
+export interface HomeBudgetSummary {
+  /** Sum of the budgets the user wrote; null when no project has one. */
+  budget: number | null;
+  spent: number;
+  /** Budget minus what was spent in the projects that have a budget; null without a budget. */
+  left: number | null;
+  /** Spent in budgeted projects as a share of their budgets, 0..1+; null without a budget. */
+  usedShare: number | null;
+  /** Spending per category, largest first; share is of all spending. */
+  categories: { category: ExpenseCategory; amount: number; share: number }[];
+  projects: { id: string; budget: number | null; spent: number }[];
+}
+
+/**
+ * All projects together. Spending in a project without a budget counts towards
+ * "spent" but not against any budget, so "left" never mixes the two.
+ */
+export function summarizeHomeBudget(projects: HomeBudgetProject[], expenses: HomeBudgetExpense[]): HomeBudgetSummary {
+  const byProject = new Map(projects.map((p) => [p.id, 0]));
+  const byCategory = new Map<ExpenseCategory, number>(EXPENSE_CATEGORY_ORDER.map((c) => [c, 0]));
+  for (const e of expenses) {
+    if (!byProject.has(e.projectId)) continue;
+    byProject.set(e.projectId, byProject.get(e.projectId)! + e.amount);
+    byCategory.set(e.category, byCategory.get(e.category)! + e.amount);
+  }
+  const rows = projects.map((p) => ({
+    id: p.id,
+    budget: p.budget !== null && p.budget > 0 ? p.budget : null,
+    spent: round(byProject.get(p.id)!),
+  }));
+  const spent = round(rows.reduce((s, r) => s + r.spent, 0));
+  const budgeted = rows.filter((r) => r.budget !== null);
+  const budget = budgeted.length ? round(budgeted.reduce((s, r) => s + r.budget!, 0)) : null;
+  const spentInBudgeted = round(budgeted.reduce((s, r) => s + r.spent, 0));
+  const categories = EXPENSE_CATEGORY_ORDER.map((category) => ({ category, amount: round(byCategory.get(category)!) }))
+    .filter((c) => c.amount > 0)
+    .sort((a, b) => b.amount - a.amount)
+    .map((c) => ({ ...c, share: spent > 0 ? c.amount / spent : 0 }));
+  return {
+    budget,
+    spent,
+    left: budget === null ? null : round(budget - spentInBudgeted),
+    usedShare: budget === null ? null : spentInBudgeted / budget,
+    categories,
+    projects: rows,
+  };
+}
