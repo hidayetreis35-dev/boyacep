@@ -169,6 +169,11 @@ export function InspectResult({
         </View>
       ) : (
         <>
+          {photo ? (
+            <View testID="inspect-photo-header">
+              <SpotPhoto uri={photo.uri} aspect={photo.width / photo.height} spots={spots} marking={false} maxHeight={200} />
+            </View>
+          ) : null}
           <View style={styles.hero}>
             <Gradient from={verdict.from} to={verdict.to} />
             <View style={{ flexDirection: 'row', alignItems: 'center', gap: space.sm }}>
