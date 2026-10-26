@@ -11,7 +11,7 @@ import { fonts, radius, space, useFeatureColour, usePalette } from '@/ui/theme';
 
 import { isReadyProject, nextStep, PROJECT_STEPS, STEP_LABEL, stepStates, type ProjectStep, type StepState } from './progress';
 
-const NEXT: Record<ProjectStep, { title: string; action: string; icon: IconName }> = {
+export const NEXT: Record<ProjectStep, { title: string; action: string; icon: IconName }> = {
   measure: { title: msg('Odalarını ölç'), action: msg('Oda ekle'), icon: 'add-circle' },
   materials: { title: msg('Malzeme listeni çıkar'), action: msg('Malzeme listesi'), icon: 'list' },
   colour: { title: msg('Rengini seç'), action: msg('Renk Stüdyosu'), icon: 'color-palette' },
@@ -19,7 +19,7 @@ const NEXT: Record<ProjectStep, { title: string; action: string; icon: IconName 
   file: { title: msg('Keşif dosyasını ustaya gönder'), action: msg('Keşif dosyası'), icon: 'document-text' },
 };
 
-function go(step: ProjectStep, id: string) {
+export function goToStep(step: ProjectStep, id: string) {
   if (step === 'measure') router.push({ pathname: '/projects/[id]/room', params: { id } });
   else if (step === 'materials') router.push({ pathname: '/projects/[id]/cost', params: { id } });
   else if (step === 'budget') router.push({ pathname: '/projects/[id]/budget', params: { id } });
@@ -53,8 +53,18 @@ function StepDot({ state, label, index }: { state: StepState; label: string; ind
   );
 }
 
-/** Ölç → Malzeme → Renk → Bütçe → Dosya, with the next thing to do. */
-export function ProjectSteps({ projectId, rooms, budget }: { projectId: string; rooms: number; budget: number | null }) {
+export function StepBar({ states }: { states: Record<ProjectStep, StepState> }) {
+  return (
+    <View style={styles.bar} testID="project-steps">
+      {PROJECT_STEPS.map((step, i) => (
+        <StepDot key={step} state={states[step]} label={t(STEP_LABEL[step])} index={i} />
+      ))}
+    </View>
+  );
+}
+
+/** Where a project stands on Ölç → Malzeme → Renk → Bütçe → Dosya. */
+export function useProjectProgress(projectId: string, rooms: number, budget: number | null) {
   const materials = useMaterials(projectId);
   const costs = useCosts(projectId);
   const colours = useProjectColours(projectId);
@@ -67,18 +77,20 @@ export function ProjectSteps({ projectId, rooms, budget }: { projectId: string; 
   const next = nextStep(states);
   const ready = isReadyProject(states);
   const done = PROJECT_STEPS.filter((s) => states[s] === 'done').length;
+  return { states, next, ready, done };
+}
+
+/** Ölç → Malzeme → Renk → Bütçe → Dosya, with the next thing to do. */
+export function ProjectSteps({ projectId, rooms, budget }: { projectId: string; rooms: number; budget: number | null }) {
+  const { states, next, ready, done } = useProjectProgress(projectId, rooms, budget);
 
   return (
     <Card>
-      <View style={styles.bar} testID="project-steps">
-        {PROJECT_STEPS.map((step, i) => (
-          <StepDot key={step} state={states[step]} label={t(STEP_LABEL[step])} index={i} />
-        ))}
-      </View>
+      <StepBar states={states} />
       {next ? (
         <View style={{ gap: space.sm }}>
           <AppText variant="bodyStrong">{t('Sıradaki adım: {step}', { step: t(NEXT[next].title) })}</AppText>
-          <Button label={t(NEXT[next].action)} icon={NEXT[next].icon} variant="secondary" onPress={() => go(next, projectId)} />
+          <Button label={t(NEXT[next].action)} icon={NEXT[next].icon} variant="secondary" onPress={() => goToStep(next, projectId)} />
         </View>
       ) : ready ? (
         <AppText tone="muted">

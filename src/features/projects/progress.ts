@@ -1,4 +1,5 @@
 import { msg } from '@/i18n';
+import type { ProjectRow } from '@/lib/database.types';
 
 /** The five steps of a painting project, in the order the project screen suggests them. */
 export const PROJECT_STEPS = ['measure', 'materials', 'colour', 'budget', 'file'] as const;
@@ -54,4 +55,10 @@ export function nextStep(states: Record<ProjectStep, StepState>): ProjectStep | 
  */
 export function isReadyProject(states: Record<ProjectStep, StepState>): boolean {
   return states.measure === 'done' && (states.materials === 'done' || states.budget === 'done') && states.file === 'done';
+}
+
+/** The project to continue: the most recently updated one that is not finished or cancelled. */
+export function activeProject<T extends Pick<ProjectRow, 'status' | 'updated_at'>>(projects: T[]): T | null {
+  const open = projects.filter((p) => p.status !== 'completed' && p.status !== 'cancelled');
+  return open.reduce<T | null>((best, p) => (!best || p.updated_at > best.updated_at ? p : best), null);
 }

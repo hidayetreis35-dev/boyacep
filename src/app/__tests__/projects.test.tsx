@@ -216,6 +216,29 @@ describe('Project steps', () => {
   });
 });
 
+describe('Ana sayfa: devam eden proje', () => {
+  it('shows the open project with its next step', async () => {
+    api.listProjects.mockResolvedValue([
+      project({ id: 'p0', title: 'Eski iş', status: 'completed', updated_at: '2026-10-26' }),
+      project({ updated_at: '2026-10-20' }),
+    ]);
+    api.getProject.mockResolvedValue({ project: project(), rooms: [] });
+    await renderRouter('./src/app', { initialUrl: '/' });
+    expect(await screen.findByText('DEVAM EDEN PROJEN')).toBeTruthy();
+    expect(await screen.findByText('Sıradaki adım: Odalarını ölç')).toBeTruthy();
+    expect(api.getProject).toHaveBeenCalledWith(expect.anything(), 'p1');
+    await fireEvent.press(screen.getByText('Oda ekle'));
+    expect(screen).toHavePathname('/projects/p1/room');
+  });
+
+  it('shows nothing when every project is finished', async () => {
+    api.listProjects.mockResolvedValue([project({ status: 'completed' })]);
+    await renderRouter('./src/app', { initialUrl: '/' });
+    expect(await screen.findByText('Son projelerin')).toBeTruthy();
+    expect(screen.queryByText('DEVAM EDEN PROJEN')).toBeNull();
+  });
+});
+
 describe('Malzeme ve maliyet', () => {
   beforeEach(() => {
     api.getProject.mockResolvedValue({ project: project({ budget: 2000 }), rooms: [salon] });

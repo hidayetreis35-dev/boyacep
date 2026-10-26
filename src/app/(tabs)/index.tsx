@@ -4,6 +4,7 @@ import { ScrollView, StyleSheet, View } from 'react-native';
 import { useSession } from '@/features/account/session';
 import { HOME_ACTIONS, type HomeAction } from '@/features/home/actions';
 import { CityPrompt } from '@/features/market/components';
+import { ContinueProject } from '@/features/projects/continue-card';
 import { useProjects } from '@/features/projects/queries';
 import { STATUS_LABEL } from '@/features/projects/mapping';
 import { t } from '@/i18n';
@@ -98,6 +99,14 @@ function SmallCard({ action }: { action: HomeAction }) {
   );
 }
 
+/** Returning users see their open project first. */
+function Continue() {
+  const { session, db } = useSession();
+  const projects = useProjects();
+  if (!db || !session || !projects.isSuccess) return null;
+  return <ContinueProject projects={projects.data} />;
+}
+
 function RecentProjects() {
   const p = usePalette();
   const { session, db } = useSession();
@@ -187,6 +196,7 @@ export default function HomeScreen() {
       <FadeIn>
         <Hero />
       </FadeIn>
+      <Continue />
       <FadeIn delay={80} style={{ gap: space.md }}>
         <SectionTitle title={t('Ne yapmak istersin?')} />
         <WideCard action={calculate} art={<RollerMark colour={c.base} size={76} />} />

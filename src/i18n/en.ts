@@ -1632,4 +1632,11 @@ export const en: Record<string, Translation> = {
   "Kiracı çıkışı için sıra": "Order of work for moving out",
   "Yeni eve taşınırken sıra": "Order of work for moving in",
   "Önce ve sonra fotoğrafları için proje aç": "Open a project for before and after photos",
+  "Hangi ildesin?": "Which province are you in?",
+  "Usta ve boya fiyatlarını şehrine göre gösteririz. Konum izni istemiyoruz; seçmek zorunda değilsin, sonra Profil’den değiştirebilirsin.": "We show painter and paint prices for your city. We don't ask for location access; choosing is optional and you can change it later in Profile.",
+  "Başka il": "Other province",
+  "Seçilen il: {city}": "Selected province: {city}",
+  "Şehir seçmeden başla": "Start without a city",
+  "Devam eden projen": "Your current project",
+  "Projeyi aç": "Open project",
 };
