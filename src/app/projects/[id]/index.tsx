@@ -8,6 +8,7 @@ import { AssumptionList, packageText } from '@/features/calculator/results';
 import { useProjectColours } from '@/features/colour/project-colours';
 import { ProjectPhotos } from '@/features/photos/project-photos';
 import { ReceivedQuotes } from '@/features/quotes/received-quotes';
+import { ProjectSteps } from '@/features/projects/project-steps';
 import { roomToInput, STATUS_LABEL, STATUS_ORDER, type RoomWithOpenings } from '@/features/projects/mapping';
 import { useDeleteProject, useProject, useSetProjectStatus } from '@/features/projects/queries';
 import { t } from '@/i18n';
@@ -200,6 +201,8 @@ export default function ProjectScreen() {
           {project.budget ? <HeroStat label={t('Bütçe')} value={formatMoney(project.budget)} /> : null}
         </View>
       </View>
+
+      <ProjectSteps projectId={project.id} rooms={rooms.length} budget={project.budget} />
 
       <View style={styles.quickRow}>
         <QuickAction icon="add-circle" label={t('Oda ekle')} feature="calculate" onPress={() => router.push({ pathname: '/projects/[id]/room', params: { id: project.id } })} />

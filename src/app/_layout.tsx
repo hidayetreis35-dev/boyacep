@@ -93,6 +93,7 @@ function App() {
             <Stack.Screen name="welcome" options={{ headerShown: false, gestureEnabled: false }} />
             <Stack.Screen name="sign-in" options={{ title: t('Giriş yap') }} />
             <Stack.Screen name="calculate" options={{ title: t('Ne Kadar Boya?') }} />
+            <Stack.Screen name="projects/save" options={{ title: t('Projeye kaydet') }} />
             <Stack.Screen name="projects/[id]/index" options={{ title: t('Proje') }} />
             <Stack.Screen name="projects/[id]/room" options={{ title: t('Oda') }} />
             <Stack.Screen name="projects/[id]/cost" options={{ title: t('Malzeme ve maliyet') }} />

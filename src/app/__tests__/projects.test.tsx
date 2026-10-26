@@ -3,7 +3,9 @@ import { fireEvent, screen } from '@testing-library/react-native';
 import { renderRouter } from 'expo-router/testing-library';
 
 import * as materialsApi from '@/features/materials/api';
+import { EMPTY_ROOM_FORM } from '@/features/calculator/form';
 import * as projectsApi from '@/features/projects/api';
+import { clearPendingRoom, getPendingRoom, setPendingRoom } from '@/features/projects/pending-room';
 import type { ProjectRow } from '@/lib/database.types';
 
 // A signed-in session against a fake backend; the data layer is mocked below.
@@ -187,6 +189,23 @@ const paintRow = {
   updated_at: '1',
 };
 
+describe('Project steps', () => {
+  it('suggests measuring a new project first', async () => {
+    api.getProject.mockResolvedValue({ project: project(), rooms: [] });
+    await renderRouter('./src/app', { initialUrl: '/projects/p1' });
+    expect(await screen.findByText('Sıradaki adım: Odalarını ölç')).toBeTruthy();
+  });
+
+  it('moves on to the material list once a room is measured', async () => {
+    api.getProject.mockResolvedValue({ project: project(), rooms: [salon] });
+    mapi.listMaterials.mockResolvedValue([]);
+    mapi.listCosts.mockResolvedValue([]);
+    await renderRouter('./src/app', { initialUrl: '/projects/p1' });
+    expect(await screen.findByLabelText('Ölç: tamam')).toBeTruthy();
+    expect(await screen.findByText('Sıradaki adım: Malzeme listeni çıkar')).toBeTruthy();
+  });
+});
+
 describe('Malzeme ve maliyet', () => {
   beforeEach(() => {
     api.getProject.mockResolvedValue({ project: project({ budget: 2000 }), rooms: [salon] });
@@ -249,5 +268,74 @@ describe('Maliyet Hesapla (no account needed)', () => {
     expect(await screen.findByText('Hesaplanan: 13,9 L boya')).toBeTruthy();
     await fireEvent.changeText(screen.getByTestId('cost-paint'), '200');
     expect(screen.getByTestId('cost-total')).toHaveTextContent('2.780,00 ₺');
+  });
+});
+
+describe('Projeye kaydet (from Ne Kadar Boya?)', () => {
+  const form = { ...EMPTY_ROOM_FORM, length: '4', width: '3' };
+  beforeEach(() => clearPendingRoom());
+
+  it('says there is nothing to save without a calculation', async () => {
+    api.listProjects.mockResolvedValue([]);
+    await renderRouter('./src/app', { initialUrl: '/projects/save' });
+    expect(await screen.findByText('Kaydedilecek hesap yok')).toBeTruthy();
+  });
+
+  it('finds the room again after the sign-in link reloads the app', async () => {
+    await AsyncStorage.setItem('boyacep.pending-room.v1', JSON.stringify({ name: 'Koridor', form }));
+    api.listProjects.mockResolvedValue([]);
+    await renderRouter('./src/app', { initialUrl: '/projects/save' });
+    expect(await screen.findByTestId('save-room-name')).toHaveDisplayValue('Koridor');
+  });
+
+  it('saves the calculated room into a new project and opens it', async () => {
+    setPendingRoom({ name: 'Salon', form });
+    api.listProjects.mockResolvedValue([]);
+    api.createProject.mockResolvedValue(project({ id: 'p9', title: 'Ev boyası' }));
+    api.saveRoom.mockResolvedValue('r1');
+    api.getProject.mockResolvedValue({ project: project({ id: 'p9', title: 'Ev boyası' }), rooms: [] });
+    await renderRouter('./src/app', { initialUrl: '/projects/save' });
+    expect(await screen.findByTestId('save-room-name')).toHaveDisplayValue('Salon');
+    await fireEvent.press(screen.getByText('Projeye kaydet', { exact: true }));
+    expect(api.createProject).toHaveBeenCalledWith(expect.anything(), 'Ev boyası');
+    expect(api.saveRoom).toHaveBeenCalledWith(
+      expect.anything(),
+      expect.objectContaining({ projectId: 'p9', name: 'Salon', room: expect.objectContaining({ length_m: 4, width_m: 3 }) }),
+    );
+    expect(await screen.findByText('Henüz oda yok')).toBeTruthy();
+    expect(screen).toHavePathname('/projects/p9');
+    expect(getPendingRoom()).toBeNull();
+  });
+
+  it('adds the room to an existing project', async () => {
+    setPendingRoom({ name: 'Mutfak', form });
+    api.listProjects.mockResolvedValue([project()]);
+    api.saveRoom.mockResolvedValue('r2');
+    api.getProject.mockResolvedValue({ project: project(), rooms: [] });
+    await renderRouter('./src/app', { initialUrl: '/projects/save' });
+    await fireEvent.press(await screen.findByText('Salon boyası'));
+    expect(screen.queryByTestId('save-project-title')).toBeNull();
+    await fireEvent.press(screen.getByText('Projeye kaydet', { exact: true }));
+    expect(api.createProject).not.toHaveBeenCalled();
+    expect(api.saveRoom).toHaveBeenCalledWith(expect.anything(), expect.objectContaining({ projectId: 'p1', name: 'Mutfak' }));
+  });
+
+  it('offers only existing projects at the plan limit', async () => {
+    setPendingRoom({ name: 'Salon', form });
+    api.listProjects.mockResolvedValue([project({ id: 'a' }), project({ id: 'b', title: 'Banyo' }), project({ id: 'c', title: 'Koridor' })]);
+    await renderRouter('./src/app', { initialUrl: '/projects/save' });
+    expect(await screen.findByText(/Proje sınırına ulaştın/)).toBeTruthy();
+    expect(screen.queryByTestId('save-new')).toBeNull();
+  });
+
+  it('shows the error and keeps the room when saving fails', async () => {
+    setPendingRoom({ name: 'Salon', form });
+    api.listProjects.mockResolvedValue([project()]);
+    api.saveRoom.mockRejectedValue(new Error('offline'));
+    await renderRouter('./src/app', { initialUrl: '/projects/save' });
+    await fireEvent.press(await screen.findByText('Salon boyası'));
+    await fireEvent.press(screen.getByText('Projeye kaydet', { exact: true }));
+    expect(await screen.findByText('Kaydedilemedi: offline')).toBeTruthy();
+    expect(getPendingRoom()).not.toBeNull();
   });
 });

@@ -4,13 +4,24 @@ import { useSession } from '@/features/account/session';
 import { shareQuotePdf } from '@/features/quotes/export';
 import { t } from '@/i18n';
 
-import { addInspection, listInspections, removeInspection, saveSnapshot, type InspectionRecord } from './api';
+import { addInspection, latestSnapshot, listInspections, removeInspection, saveSnapshot, type InspectionRecord } from './api';
 import type { SurveyModel } from './model';
 import { surveyHtml } from './pdf';
 
 export const surveyKeys = {
   inspections: (projectId: string) => ['inspections', projectId] as const,
+  snapshot: (projectId: string) => ['survey-snapshot', projectId] as const,
 };
+
+/** The last survey snapshot; one exists once the homeowner has shared the survey file. */
+export function useLatestSnapshot(projectId: string) {
+  const { db, session } = useSession();
+  return useQuery({
+    queryKey: surveyKeys.snapshot(projectId),
+    enabled: !!db && !!session && !!projectId,
+    queryFn: () => latestSnapshot(db!, projectId),
+  });
+}
 
 export function useInspections(projectId: string) {
   const { db, session } = useSession();
@@ -40,7 +51,9 @@ export function useInspectionActions() {
  */
 export function useShareSurvey(projectId: string, { snapshot }: { snapshot: boolean }) {
   const { db } = useSession();
+  const queryClient = useQueryClient();
   return useMutation({
+    onSettled: () => queryClient.invalidateQueries({ queryKey: surveyKeys.snapshot(projectId) }),
     mutationFn: async (model: SurveyModel) => {
       if (snapshot && db && model.snapshot) {
         await saveSnapshot(db, projectId, model.snapshot).catch(() => false);

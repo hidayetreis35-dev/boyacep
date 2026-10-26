@@ -3,6 +3,7 @@ import { StyleSheet, View } from 'react-native';
 
 import { DEFAULT_CAN_SIZES, planPackages, type MaterialCategory, type MaterialItem, type PackagePlan, type ProjectCalculation, type QuickEstimate } from '@/engine';
 import { useSession } from '@/features/account/session';
+import { setPendingRoom } from '@/features/projects/pending-room';
 import { RegionalCostCard } from '@/features/market/regional-cost';
 import { t } from '@/i18n';
 import { formatNumber, parseDecimal } from '@/lib/number';
@@ -147,14 +148,22 @@ function CostTeaser({ paintLitres, primerLitres }: { paintLitres: number; primer
   );
 }
 
-function Actions({ onEdit, onRestart }: { onEdit: () => void; onRestart: () => void }) {
+/** `onSave` saves the calculated room; without it (whole-home estimate) the button opens the projects list. */
+function Actions({ onEdit, onRestart, onSave }: { onEdit: () => void; onRestart: () => void; onSave?: () => void }) {
   const { session, db } = useSession();
   return (
     <View style={{ gap: space.sm }}>
-      {db ? (
+      {db && onSave ? (
         <Button
-          label={session ? t('Projelerime kaydet') : t('Giriş yap ve kaydet')}
+          label={session ? t('Projeye kaydet') : t('Giriş yap ve kaydet')}
           icon="bookmark"
+          variant="cta"
+          onPress={onSave}
+        />
+      ) : db ? (
+        <Button
+          label={session ? t('Proje başlat') : t('Giriş yap ve proje başlat')}
+          icon="add-circle"
           variant="cta"
           onPress={() => router.push(session ? '/projects' : '/sign-in')}
         />
@@ -266,7 +275,14 @@ export function RoomResult({
         {t('Sonuçlar tahminidir. Kesin miktar için boyanın teknik föyündeki sarfiyatı gir; duvarın emiciliği ve uygulama şekli sonucu değiştirebilir.')}
       </Notice>
 
-      <Actions onEdit={onEdit} onRestart={onRestart} />
+      <Actions
+        onEdit={onEdit}
+        onRestart={onRestart}
+        onSave={() => {
+          setPendingRoom({ name: t(SPACE_LABEL[kind]), form });
+          router.push('/projects/save');
+        }}
+      />
     </View>
   );
 }
