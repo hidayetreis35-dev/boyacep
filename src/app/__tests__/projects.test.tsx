@@ -289,7 +289,7 @@ describe('Alışveriş listesi', () => {
   });
 
   it('ticks items, remembers them and sends only what is left', async () => {
-    const open = jest.spyOn(Linking, 'openURL').mockResolvedValue(true);
+    const open = jest.spyOn(Linking, 'openURL').mockResolvedValue(undefined);
     await renderRouter('./src/app', { initialUrl: '/projects/p1/shopping' });
     expect(await screen.findByText('0 / 2 alındı')).toBeTruthy();
     await fireEvent.press(screen.getByRole('checkbox', { name: /İç cephe boyası/ }));
