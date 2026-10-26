@@ -445,7 +445,7 @@ const styles = StyleSheet.create({
   disclosure: { borderRadius: radius.lg, borderWidth: StyleSheet.hairlineWidth, overflow: 'hidden' },
   disclosureHead: { flexDirection: 'row', alignItems: 'center', gap: space.sm, padding: space.lg, minHeight: 56 },
   segmented: { flexDirection: 'row', borderRadius: radius.pill, padding: 4, gap: 4 },
-  segment: { flex: 1, minHeight: 40, borderRadius: radius.pill, flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 6, paddingHorizontal: space.sm },
+  segment: { flexGrow: 1, flexShrink: 1, flexBasis: 'auto', minHeight: 40, borderRadius: radius.pill, flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 6, paddingHorizontal: space.sm },
   wizardNav: { flexDirection: 'row', gap: space.md, alignItems: 'center' },
   backBtn: { width: 56, height: 56, borderRadius: 28, alignItems: 'center', justifyContent: 'center' },
   nextBtn: {
