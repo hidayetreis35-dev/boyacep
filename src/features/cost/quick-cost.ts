@@ -6,8 +6,8 @@ import { parseDecimal } from '@/lib/number';
 export type WhoPaints = 'self' | 'pro';
 
 export const WHO_OPTIONS: { value: WhoPaints; label: string; hint: string }[] = [
-  { value: 'self', label: msg('Kendim boyayacağım'), hint: msg('Sadece malzeme') },
-  { value: 'pro', label: msg('Usta boyayacak'), hint: msg('Malzeme ve işçilik') },
+  { value: 'self', label: msg('Kendim Yapacağım'), hint: msg('Sadece malzeme') },
+  { value: 'pro', label: msg('Usta ile Yaptıracağım'), hint: msg('Malzeme ve işçilik') },
 ];
 
 /** Optional extras the user can switch on. */

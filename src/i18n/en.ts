@@ -1792,4 +1792,13 @@ export const en: Record<string, Translation> = {
   "Öneriler": "What to do",
   "Raporu kısalt": "Shorter report",
   "Detaylı Rapor": "Detailed report",
+  "{place} için usta ve boya fiyat aralıklarını, kaynağı ve tarihiyle karşılaştır.": "Compare with painter and paint price ranges for {place}, with source and date.",
+  "Şehrini seçersen usta ve boya fiyat aralıklarını, kaynağı ve tarihiyle karşılaştırabilirsin.": "Choose your city to compare with painter and paint price ranges, with source and date.",
+  "Fiyat Detaylarını Gör": "See price details",
+  "Malzeme fiyatlarını yaz, toplamı anında gör.": "Enter material prices and see the total right away.",
+  "Malzeme ve ustanın işçilik ücretini yaz, toplamı anında gör.": "Enter materials and the painter's labour fee and see the total right away.",
+  "15 L kutu fiyatını 15’e bölerek bulabilirsin. Mağazalarda iç cephe boyası yaklaşık {range}/L.": "Divide the price of a 15 L can by 15. In shops, interior paint is about {range}/L.",
+  "Maliyet Kalemleri": "Cost items",
+  "Kendim Yapacağım": "I'll do it myself",
+  "Usta ile Yaptıracağım": "With a painter",
 };

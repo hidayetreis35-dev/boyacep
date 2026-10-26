@@ -400,7 +400,7 @@ describe('Maliyet Hesapla (no account needed)', () => {
     await renderRouter('./src/app', { initialUrl: '/cost' });
     await fireEvent.changeText(await screen.findByTestId('cost-paint'), '2500');
     expect(screen.queryByTestId('cost-labor')).toBeNull();
-    await fireEvent.press(screen.getByText('Usta boyayacak'));
+    await fireEvent.press(screen.getByLabelText('Usta ile Yaptıracağım'));
     await fireEvent.changeText(screen.getByTestId('cost-labor'), '4000,50');
     expect(screen.getByTestId('cost-total')).toHaveTextContent('6.500,50 ₺');
   });

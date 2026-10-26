@@ -14,10 +14,14 @@ import {
   type Price,
   type QuickCostForm,
 } from '@/features/cost/quick-cost';
+import { useCity } from '@/features/market/city';
+import { formatLiraRange } from '@/features/market/format';
+import { provinceByCode } from '@/features/market/provinces';
+import { MATERIAL_PRICES } from '@/features/market/sources';
 import { CostSummaryCard } from '@/features/materials/cost-summary';
 import { t } from '@/i18n';
 import { formatNumber, parseDecimal } from '@/lib/number';
-import { Disclosure, FeatureHeader, OptionCard, OptionGrid, SectionTitle } from '@/ui/brand';
+import { Disclosure, Segmented, SectionTitle } from '@/ui/brand';
 import { AppText, Button, Card, FieldRow, Icon, Notice, NumberField, Screen, Toggle } from '@/ui/components';
 import { fonts, radius, space, usePalette } from '@/ui/theme';
 
@@ -65,6 +69,27 @@ function PriceField({
   );
 }
 
+/** Where to check the prices the user typed against their city's market references. */
+function RegionCard() {
+  const p = usePalette();
+  const city = useCity();
+  if (city.loading) return null;
+  const place = city.province ? [provinceByCode(city.province)?.name, city.district].filter(Boolean).join(' / ') : null;
+  return (
+    <Card>
+      <View style={{ flexDirection: 'row', gap: space.sm, alignItems: 'flex-start' }}>
+        <Icon name="location-outline" size={20} color={p.textMuted} />
+        <AppText variant="small" tone="muted" style={{ flex: 1 }}>
+          {place
+            ? t('{place} için usta ve boya fiyat aralıklarını, kaynağı ve tarihiyle karşılaştır.', { place })
+            : t('Şehrini seçersen usta ve boya fiyat aralıklarını, kaynağı ve tarihiyle karşılaştırabilirsin.')}
+        </AppText>
+      </View>
+      <Button label={t('Fiyat Detaylarını Gör')} icon="stats-chart" variant="secondary" onPress={() => router.push('/prices')} />
+    </Card>
+  );
+}
+
 /** Quick cost estimate without an account. Prices are always the user's own: we never invent market prices. */
 export default function QuickCostScreen() {
   const p = usePalette();
@@ -92,22 +117,10 @@ export default function QuickCostScreen() {
 
   return (
     <Screen edges={['bottom']}>
-      <FeatureHeader feature="cost" icon="wallet" title={t('Ne kadar tutar?')} subtitle={t('Fiyatları yaz, toplamı anında gör.')} />
-
-      <SectionTitle title={t('Kim boyayacak?')} />
-      <OptionGrid>
-        {WHO_OPTIONS.map((o) => (
-          <OptionCard
-            key={o.value}
-            feature="cost"
-            title={t(o.label)}
-            subtitle={t(o.hint)}
-            icon={o.value === 'self' ? 'hand-left' : 'person'}
-            selected={form.who === o.value}
-            onPress={() => set('who', o.value)}
-          />
-        ))}
-      </OptionGrid>
+      <Segmented options={WHO_OPTIONS} value={form.who} onChange={(who) => set('who', who)} />
+      <AppText tone="muted">
+        {form.who === 'self' ? t('Malzeme fiyatlarını yaz, toplamı anında gör.') : t('Malzeme ve ustanın işçilik ücretini yaz, toplamı anında gör.')}
+      </AppText>
 
       <SectionTitle title={t('Boya')} />
       <Card>
@@ -136,7 +149,13 @@ export default function QuickCostScreen() {
           unit={hasLitres ? '₺/L' : '₺'}
           price={form.paintPrice}
           onChange={(v) => set('paintPrice', v)}
-          hint={hasLitres ? t('15 L kutu fiyatını 15’e bölerek bulabilirsin.') : undefined}
+          hint={
+            hasLitres
+              ? t('15 L kutu fiyatını 15’e bölerek bulabilirsin. Mağazalarda iç cephe boyası yaklaşık {range}/L.', {
+                  range: formatLiraRange(MATERIAL_PRICES.interior_paint),
+                })
+              : undefined
+          }
           testID="cost-paint"
         />
         {!fromWizard ? (
@@ -195,8 +214,9 @@ export default function QuickCostScreen() {
         <NumberField label={t('Bütçen (isteğe bağlı)')} unit="₺" value={form.budget} onChangeText={(value) => set('budget', value)} testID="quick-budget" />
       </Disclosure>
 
-      <SectionTitle title={t('Sonuç')} />
+      <SectionTitle title={t('Maliyet Kalemleri')} />
       <CostSummaryCard summary={summary} />
+      <RegionCard />
 
       <Notice>
         {t('Tutarlar senin yazdığın fiyatlarla hesaplanır. BoyaCep piyasa fiyatı uydurmaz; mağazadan ya da ustadan teyit ettiğin fiyatları “Kesin” olarak işaretle.')}

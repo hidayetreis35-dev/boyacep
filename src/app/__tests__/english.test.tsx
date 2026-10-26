@@ -43,7 +43,7 @@ describe('the app in English', () => {
     ['/calculate', 'Wall area'],
     ['/colour', 'Colour catalogue'],
     ['/inspect', 'Continue without a photo'],
-    ['/cost', 'How much will it cost?'],
+    ['/cost', 'Cost items'],
     ['/plans', 'BoyaCep Pro'],
     ['/privacy', 'Privacy'],
     ['/profile', 'Language'],
