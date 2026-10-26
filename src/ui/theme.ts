@@ -9,10 +9,10 @@ import { useColorScheme } from 'react-native';
  */
 
 const light = {
-  background: '#F6F7F9',
+  background: '#F7F5F1',
   surface: '#FFFFFF',
-  surfaceMuted: '#EEF1F5',
-  border: '#E2E6ED',
+  surfaceMuted: '#F0EDE7',
+  border: '#E7E2DA',
   text: '#141B2D',
   textMuted: '#585F70',
   /** Navy: buttons, links, selected states. */

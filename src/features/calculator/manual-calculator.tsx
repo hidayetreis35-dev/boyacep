@@ -8,7 +8,7 @@ import { MATERIAL_PRICES, sourceName } from '@/features/market/sources';
 import { msg, t } from '@/i18n';
 import { formatNumber, parseDecimal } from '@/lib/number';
 import { StatTile, TileRow } from '@/ui/brand';
-import { AppText, Button, Card, ChoiceChips, Notice, NumberField, Stepper, Toggle } from '@/ui/components';
+import { AppText, Button, Card, Checkbox, Notice, NumberField, SelectField, Stepper } from '@/ui/components';
 import { FadeIn } from '@/ui/motion';
 import { space } from '@/ui/theme';
 
@@ -102,11 +102,11 @@ export function ManualCalculator({ onMeasure }: { onMeasure: () => void }) {
           hint={t('Boyanacak duvarların toplamı; kapı ve pencereleri çıkar.')}
           testID="manual-wall"
         />
-        <ChoiceChips label={t('Boya türü')} options={PAINTS} value={paint} onChange={edit(setPaint)} />
+        {paint === 'interior' ? <SelectField label={t('Oda tipi')} options={ROOMS} value={room} onChange={edit(setRoom)} testID="manual-room" /> : null}
+        <SelectField label={t('Boya türü')} options={PAINTS} value={paint} onChange={edit(setPaint)} testID="manual-paint" />
         {paint === 'interior' ? (
           <>
-            <ChoiceChips label={t('Oda tipi')} options={ROOMS} value={room} onChange={edit(setRoom)} />
-            <Toggle label={t('Tavan dahil')} value={ceiling} onChange={edit(setCeiling)} />
+            <Checkbox label={t('Tavan dahil')} value={ceiling} onChange={edit(setCeiling)} />
             {ceiling ? (
               <NumberField
                 label={t('Tavan alanı')}

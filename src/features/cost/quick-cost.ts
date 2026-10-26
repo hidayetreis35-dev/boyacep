@@ -94,3 +94,31 @@ export function quickCostSummary(form: QuickCostForm): CostSummary {
   const budget = value(form.budget);
   return summarizeCost(materials, extras, budget);
 }
+
+export interface LineAmounts {
+  paint: number | null;
+  primer: number | null;
+  filler: number | null;
+  supplies: number | null;
+  /** Null when the user paints it themselves or has not typed it yet. */
+  labour: number | null;
+  extras: Partial<Record<ExtraKind, number | null>>;
+}
+
+/** Each cost line's total, for the item list. Null means no price typed yet; same rules as quickCostSummary. */
+export function lineAmounts(form: QuickCostForm): LineAmounts {
+  const litres = value(form.paintLitres);
+  const paintPrice = value(form.paintPrice.amount);
+  const primerLitres = value(form.primerLitres);
+  const primerPrice = value(form.primerPrice.amount);
+  const extras: Partial<Record<ExtraKind, number | null>> = {};
+  for (const [kind, price] of Object.entries(form.extras) as [ExtraKind, Price][]) extras[kind] = value(price.amount);
+  return {
+    paint: paintPrice === null ? null : litres === null ? paintPrice : litres * paintPrice,
+    primer: primerLitres !== null && primerLitres > 0 && primerPrice !== null ? primerLitres * primerPrice : null,
+    filler: value(form.filler.amount),
+    supplies: value(form.supplies.amount),
+    labour: form.who === 'self' ? null : value(form.labour.amount),
+    extras,
+  };
+}

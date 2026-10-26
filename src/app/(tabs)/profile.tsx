@@ -16,7 +16,7 @@ import { fonts, radius, shadowOf, space, usePalette } from '@/ui/theme';
 function MenuRow({ icon, label, value, onPress, testID }: { icon: IconName; label: string; value?: string; onPress: () => void; testID?: string }) {
   const p = usePalette();
   return (
-    <PressableScale accessibilityRole="button" accessibilityLabel={value ? `${label}, ${value}` : label} onPress={onPress} style={styles.row} testID={testID}>
+    <PressableScale accessibilityRole="button" accessibilityLabel={value ? `${label}, ${value}` : label} onPress={onPress} style={[styles.row, { borderColor: p.border }]} testID={testID}>
       <Icon name={icon} size={20} color={p.textMuted} />
       <AppText style={{ flex: 1 }}>{label}</AppText>
       {value ? (
@@ -41,15 +41,15 @@ function Header() {
   const name = account.data?.profile.display_name ?? null;
   const email = session?.user.email ?? null;
   return (
-    <View style={{ gap: space.md }}>
+    <View style={{ gap: space.md, padding: space.lg }}>
       <View style={styles.header}>
-        <View style={[styles.avatar, { backgroundColor: p.primarySoft }]}>
+        <View style={[styles.avatar, { backgroundColor: p.surfaceMuted }]}>
           {session ? (
-            <AppText variant="heading" style={{ color: p.primary, fontFamily: fonts.bold }}>
+            <AppText variant="heading" style={{ color: p.textMuted, fontFamily: fonts.bold }}>
               {initials(name, email)}
             </AppText>
           ) : (
-            <Icon name="person" size={28} color={p.primary} />
+            <Icon name="person" size={28} color={p.textMuted} />
           )}
         </View>
         <View style={{ flex: 1, gap: 2 }}>
@@ -106,8 +106,8 @@ export default function ProfileScreen() {
   return (
     <Screen>
       <AppText variant="title">{t('Profilim')}</AppText>
-      <Header />
       <Menu>
+        <Header />
         <MenuRow icon="person-outline" label={t('Hesap Bilgileri')} onPress={() => router.push('/account')} testID="menu-account" />
         <MenuRow icon="location-outline" label={t('Konumum')} value={cityName} onPress={() => router.push({ pathname: '/prices', params: { pick: '1' } })} />
         <MenuRow icon="notifications-outline" label={t('Bildirim Ayarları')} onPress={() => router.push({ pathname: '/soon/[feature]', params: { feature: 'notifications' } })} />
@@ -132,7 +132,7 @@ const styles = StyleSheet.create({
   header: { flexDirection: 'row', alignItems: 'center', gap: space.md },
   avatar: { width: 60, height: 60, borderRadius: 30, alignItems: 'center', justifyContent: 'center' },
   menu: { borderRadius: radius.lg, borderWidth: StyleSheet.hairlineWidth, overflow: 'hidden' },
-  row: { flexDirection: 'row', alignItems: 'center', gap: space.md, paddingHorizontal: space.lg, minHeight: 54 },
+  row: { flexDirection: 'row', alignItems: 'center', gap: space.md, paddingHorizontal: space.lg, minHeight: 54, borderTopWidth: StyleSheet.hairlineWidth },
   premium: { flexDirection: 'row', alignItems: 'center', gap: space.md, padding: space.lg, borderRadius: radius.lg },
   premiumIcon: { width: 40, height: 40, borderRadius: 20, alignItems: 'center', justifyContent: 'center' },
   premiumGo: { borderRadius: radius.pill, paddingHorizontal: space.md, paddingVertical: 8 },

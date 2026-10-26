@@ -114,21 +114,29 @@ function TileCard({ tile }: { tile: Tile }) {
   const p = usePalette();
   const f = useFeatureColour(tile.feature);
   const bg = tile.tinted ? f.soft : p.surface;
+  const icon = (
+    <View style={[styles.tileIcon, { backgroundColor: tile.tinted ? f.base : f.soft }]}>
+      <Icon name={tile.icon} size={22} color={tile.tinted ? '#FFFFFF' : f.ink} />
+    </View>
+  );
+  const text = (
+    <View style={{ flex: tile.tinted ? undefined : 1, gap: 2 }}>
+      <AppText variant="bodyStrong" style={{ color: tile.tinted ? f.ink : p.text, fontFamily: fonts.bold }} numberOfLines={2}>
+        {t(tile.title)}
+      </AppText>
+      <AppText variant="caption" tone="muted" numberOfLines={2}>
+        {tile.soon ? t('Yakında') : t(tile.subtitle)}
+      </AppText>
+    </View>
+  );
   return (
     <PressableScale
       accessibilityRole="button"
       accessibilityLabel={tile.soon ? t('{title}, yakında', { title: t(tile.title) }) : t(tile.title)}
       onPress={() => router.push(tile.href)}
-      style={[styles.tile, { backgroundColor: bg }]}>
-      <View style={[styles.tileIcon, { backgroundColor: tile.tinted ? f.base : f.soft }]}>
-        <Icon name={tile.icon} size={22} color={tile.tinted ? '#FFFFFF' : f.ink} />
-      </View>
-      <AppText variant="bodyStrong" style={{ color: tile.tinted ? f.ink : p.text, fontFamily: fonts.bold }} numberOfLines={2}>
-        {t(tile.title)}
-      </AppText>
-      <AppText variant="caption" tone="muted" numberOfLines={1}>
-        {tile.soon ? t('Yakında') : t(tile.subtitle)}
-      </AppText>
+      style={[tile.tinted ? styles.tile : styles.tileRow, { backgroundColor: bg }]}>
+      {icon}
+      {text}
     </PressableScale>
   );
 }
@@ -226,8 +234,9 @@ const styles = StyleSheet.create({
   chip: { flexDirection: 'row', alignItems: 'center', gap: space.sm, borderRadius: radius.pill, paddingHorizontal: space.md, minHeight: 40 },
   grid: { flexDirection: 'row', flexWrap: 'wrap', margin: -space.xs },
   cell: { width: '50%', padding: space.xs },
-  tile: { borderRadius: radius.lg, padding: space.md, gap: 4, minHeight: 128 },
-  tileIcon: { width: 42, height: 42, borderRadius: 12, alignItems: 'center', justifyContent: 'center', marginBottom: space.xs },
+  tile: { borderRadius: radius.lg, padding: space.md, gap: space.sm, minHeight: 124 },
+  tileRow: { flexDirection: 'row', alignItems: 'center', borderRadius: radius.lg, padding: space.md, gap: space.sm, minHeight: 92 },
+  tileIcon: { width: 44, height: 44, borderRadius: 14, alignItems: 'center', justifyContent: 'center' },
   banner: { flexDirection: 'row', alignItems: 'center', borderRadius: radius.lg, overflow: 'hidden' },
   go: { flexDirection: 'row', alignItems: 'center', gap: 4, alignSelf: 'flex-start', borderRadius: radius.pill, paddingHorizontal: space.md, paddingVertical: 6 },
   tools: { flexDirection: 'row', flexWrap: 'wrap', gap: space.sm },

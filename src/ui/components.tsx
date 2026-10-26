@@ -252,8 +252,8 @@ export function TextField({
         style={[
           styles.inputRow,
           {
-            backgroundColor: focused ? p.surface : p.surfaceMuted,
-            borderColor: error ? p.danger : focused ? p.primary : 'transparent',
+            backgroundColor: p.surface,
+            borderColor: error ? p.danger : focused ? p.primary : p.border,
           },
         ]}>
         <TextInput
@@ -355,6 +355,84 @@ export function Toggle({ label, value, onChange }: { label: string; value: boole
       onPress={() => onChange(!value)}
       style={[styles.toggle, { borderColor: value ? p.primary : 'transparent', backgroundColor: value ? p.primarySoft : p.surfaceMuted }]}>
       <Icon name={value ? 'checkmark-circle' : 'ellipse-outline'} color={value ? p.primary : p.textMuted} />
+      <AppText variant="bodyStrong">{label}</AppText>
+    </Pressable>
+  );
+}
+
+/** A dropdown: shows the chosen option and opens the list in place. Labels go through t(). */
+export function SelectField<T extends string>({
+  label,
+  options,
+  value,
+  onChange,
+  testID,
+}: {
+  label: string;
+  options: { value: T; label: string }[];
+  value: T;
+  onChange: (value: T) => void;
+  testID?: string;
+}) {
+  const p = usePalette();
+  const [open, setOpen] = useState(false);
+  const current = options.find((o) => o.value === value);
+  return (
+    <View style={styles.field}>
+      <AppText variant="small" style={{ fontFamily: fonts.semibold }}>
+        {label}
+      </AppText>
+      <Pressable
+        accessibilityRole="button"
+        accessibilityState={{ expanded: open }}
+        accessibilityLabel={`${label}: ${current ? t(current.label) : ''}`}
+        onPress={() => setOpen((o) => !o)}
+        testID={testID}
+        style={[styles.inputRow, { backgroundColor: p.surface, borderColor: open ? p.primary : p.border }]}>
+        <AppText variant="bodyStrong" style={{ flex: 1 }}>
+          {current ? t(current.label) : ''}
+        </AppText>
+        <Icon name={open ? 'chevron-up' : 'chevron-down'} size={18} color={p.textMuted} />
+      </Pressable>
+      {open ? (
+        <View style={[styles.selectList, { backgroundColor: p.surface, borderColor: p.border }]} accessibilityRole="radiogroup">
+          {options.map((o) => {
+            const selected = o.value === value;
+            return (
+              <Pressable
+                key={o.value}
+                accessibilityRole="radio"
+                accessibilityState={{ selected }}
+                accessibilityLabel={t(o.label)}
+                onPress={() => {
+                  onChange(o.value);
+                  setOpen(false);
+                }}
+                style={({ pressed }) => [styles.selectOption, { backgroundColor: selected ? p.primarySoft : pressed ? p.surfaceMuted : 'transparent' }]}>
+                <AppText style={{ flex: 1, fontFamily: selected ? fonts.bold : fonts.regular }}>{t(o.label)}</AppText>
+                {selected ? <Icon name="checkmark" size={18} color={p.primary} /> : null}
+              </Pressable>
+            );
+          })}
+        </View>
+      ) : null}
+    </View>
+  );
+}
+
+/** A small square checkbox with its label. */
+export function Checkbox({ label, value, onChange }: { label: string; value: boolean; onChange: (v: boolean) => void }) {
+  const p = usePalette();
+  return (
+    <Pressable
+      accessibilityRole="checkbox"
+      accessibilityState={{ checked: value }}
+      accessibilityLabel={label}
+      onPress={() => onChange(!value)}
+      style={styles.checkboxRow}>
+      <View style={[styles.checkbox, { backgroundColor: value ? p.primary : p.surface, borderColor: value ? p.primary : p.border }]}>
+        {value ? <Icon name="checkmark" size={16} color={p.onPrimary} /> : null}
+      </View>
       <AppText variant="bodyStrong">{label}</AppText>
     </Pressable>
   );
@@ -509,7 +587,7 @@ const styles = StyleSheet.create({
   fieldRow: { flexDirection: 'row', gap: space.md },
   inputRow: {
     minHeight: MIN_TOUCH + 8,
-    borderWidth: 2,
+    borderWidth: 1.5,
     borderRadius: radius.md,
     paddingHorizontal: space.md,
     flexDirection: 'row',
@@ -528,6 +606,10 @@ const styles = StyleSheet.create({
     minHeight: MIN_TOUCH + 20,
   },
   chips: { flexDirection: 'row', flexWrap: 'wrap', gap: space.sm },
+  selectList: { borderWidth: 1.5, borderRadius: radius.md, padding: 4, gap: 2 },
+  selectOption: { flexDirection: 'row', alignItems: 'center', minHeight: MIN_TOUCH, paddingHorizontal: space.md, borderRadius: radius.sm },
+  checkboxRow: { flexDirection: 'row', alignItems: 'center', gap: space.sm, minHeight: MIN_TOUCH, alignSelf: 'flex-start' },
+  checkbox: { width: 24, height: 24, borderRadius: 6, borderWidth: 1.5, alignItems: 'center', justifyContent: 'center' },
   chip: {
     minHeight: MIN_TOUCH,
     paddingHorizontal: space.lg,

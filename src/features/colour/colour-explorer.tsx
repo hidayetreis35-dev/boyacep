@@ -1,11 +1,10 @@
 import { router } from 'expo-router';
-import { useState } from 'react';
-import { ScrollView, StyleSheet, View } from 'react-native';
+import { useState, type ReactNode } from 'react';
+import { ScrollView, Share, StyleSheet, View } from 'react-native';
 
 import { useSession } from '@/features/account/session';
 import { useProjects } from '@/features/projects/queries';
 import { t } from '@/i18n';
-import { RoomArt } from '@/ui/art';
 import { SectionTitle } from '@/ui/brand';
 import { AppText, Button, Icon, Notice, TextField } from '@/ui/components';
 import { PressableScale } from '@/ui/motion';
@@ -190,90 +189,115 @@ export function ColourExplorer({ selected, favourites, onSelect }: { selected: s
   );
 }
 
-/** Big preview of the selected colour with its actions. */
+/** The selected colour: swatch, name and code, quick colours and actions. */
 export function SelectedColour({
   colour,
+  quickColours,
   favourite,
   comparing,
+  onSelect,
   onToggleFavourite,
   onToggleCompare,
   onTryOnWall,
 }: {
   colour: PickedColour;
+  /** Favourites and recent picks first; classics fill the row. */
+  quickColours: string[];
   favourite: boolean;
   comparing: boolean;
+  onSelect: (c: PickedColour) => void;
   onToggleFavourite: () => void;
   onToggleCompare: () => void;
   onTryOnWall: () => void;
 }) {
   const p = usePalette();
-  const fg = ink(colour.hex);
-  const reflect = lrv(colour.hex);
   const facts = colourFacts(colour.hex);
+  const row = [...new Set([colour.hex, ...quickColours, ...CLASSICS.map((c) => c.hex)])].slice(0, 12);
+  const share = () =>
+    Share.share({ message: t('BoyaCep renk önerisi: {name} ({hex})', { name: t(colour.name), hex: colour.hex }) }).catch(() => undefined);
   return (
-    <View style={{ gap: space.md }}>
-      <View style={[styles.hero, { backgroundColor: colour.hex, borderColor: p.border }]} testID="selected-colour">
-        <View style={{ flexDirection: 'row', alignItems: 'flex-start', gap: space.sm }}>
-          <View style={{ flex: 1, gap: 2 }}>
-            <AppText variant="overline" style={{ color: fg, opacity: 0.8 }}>
-              {t('Seçili renk')}
-            </AppText>
-            <AppText variant="title" style={{ color: fg }}>
-              {t(colour.name)}
-            </AppText>
-            <AppText variant="caption" style={{ color: fg, opacity: 0.8 }}>
-              {facts.caption}
-            </AppText>
-          </View>
-          <PressableScale
-            accessibilityRole="button"
-            accessibilityLabel={favourite ? t('Favorilerden çıkar') : t('Favorilere ekle')}
-            onPress={onToggleFavourite}
-            style={[styles.round, { backgroundColor: 'rgba(255,255,255,0.85)' }]}>
-            <Icon name={favourite ? 'heart' : 'heart-outline'} size={22} color={favourite ? '#C2367A' : '#141B2D'} />
-          </PressableScale>
+    <View style={[styles.selected, { backgroundColor: p.surface, borderColor: p.border }, shadowOf(p)]} testID="selected-colour">
+      <View style={{ flexDirection: 'row', alignItems: 'center', gap: space.md }}>
+        <View style={[styles.bigDot, { backgroundColor: colour.hex, borderColor: p.border }]} />
+        <View style={{ flex: 1, gap: 2 }}>
+          <AppText variant="heading" numberOfLines={1}>
+            {t(colour.name)}
+          </AppText>
+          <AppText variant="small" tone="muted">
+            {colour.hex}
+          </AppText>
+          <AppText variant="caption" tone="muted" numberOfLines={1}>
+            {t('Işık yansıtma ≈ %{reflect}', { reflect: lrv(colour.hex) })} · {t(TEMPERATURE_LABEL[facts.temperature])}
+          </AppText>
         </View>
-        <View style={{ flexDirection: 'row', gap: space.sm, flexWrap: 'wrap' }}>
-          <View style={styles.tag}>
-            <AppText variant="caption" style={{ color: '#141B2D' }}>
-              {colour.hex}
-            </AppText>
-          </View>
-          <View style={styles.tag}>
-            <AppText variant="caption" style={{ color: '#141B2D' }}>
-              {t('Işık yansıtma ≈ %{reflect}', { reflect })}
-            </AppText>
-          </View>
-          <View style={styles.tag}>
-            <AppText variant="caption" style={{ color: '#141B2D' }}>
-              {t(TEMPERATURE_LABEL[facts.temperature])}
-            </AppText>
-          </View>
-          <View style={styles.tag}>
-            <AppText variant="caption" style={{ color: '#141B2D' }}>
-              {reflect >= 60 ? t('Ferah, ışığı açar') : reflect >= 30 ? t('Dengeli') : t('Derin, sıcak etki')}
-            </AppText>
-          </View>
-        </View>
+        <PressableScale accessibilityRole="button" accessibilityLabel={t('Paylaş')} onPress={share} style={[styles.round, { backgroundColor: p.surfaceMuted }]}>
+          <Icon name="share-social-outline" size={20} />
+        </PressableScale>
       </View>
 
-      <View style={{ flexDirection: 'row', gap: space.sm }}>
-        <View style={{ flex: 1 }}>
-          <Button label={t('Duvarda dene')} icon="camera" variant="cta" onPress={onTryOnWall} />
-        </View>
-        <View style={{ flex: 1 }}>
-          <Button label={comparing ? t('Karşılaştırmada') : t('Karşılaştır')} icon={comparing ? 'checkmark' : 'git-compare'} variant="secondary" onPress={onToggleCompare} />
-        </View>
+      <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={{ gap: space.sm, paddingVertical: 2 }}>
+        {row.map((hex) => {
+          const on = hex === colour.hex;
+          const c = toPicked(hex);
+          return (
+            <PressableScale
+              key={hex}
+              accessibilityRole="button"
+              accessibilityState={{ selected: on }}
+              accessibilityLabel={t('{name} rengini seç', { name: t(c.name) })}
+              onPress={() => onSelect(c)}
+              style={[styles.dotRing, { borderColor: on ? p.primary : 'transparent' }]}>
+              <View style={[styles.dot, { backgroundColor: hex, borderColor: p.border }]} />
+            </PressableScale>
+          );
+        })}
+      </ScrollView>
+
+      <View style={{ flexDirection: 'row', flexWrap: 'wrap', gap: space.sm }}>
+        <PressableScale
+          accessibilityRole="button"
+          accessibilityLabel={favourite ? t('Favorilerden çıkar') : t('Favorilere ekle')}
+          onPress={onToggleFavourite}
+          style={[styles.pill, { backgroundColor: favourite ? p.accentSoft : p.surfaceMuted }]}>
+          <Icon name={favourite ? 'heart' : 'heart-outline'} size={18} color={favourite ? '#C2367A' : p.text} />
+          <AppText variant="small" style={{ fontFamily: fonts.semibold }}>
+            {favourite ? t('Favorilerde') : t('Favorilere ekle')}
+          </AppText>
+        </PressableScale>
+        <PressableScale accessibilityRole="button" onPress={onToggleCompare} style={[styles.pill, { backgroundColor: comparing ? p.primarySoft : p.surfaceMuted }]}>
+          <Icon name={comparing ? 'checkmark' : 'git-compare'} size={18} />
+          <AppText variant="small" style={{ fontFamily: fonts.semibold }}>
+            {comparing ? t('Karşılaştırmada') : t('Karşılaştır')}
+          </AppText>
+        </PressableScale>
+        <PressableScale accessibilityRole="button" onPress={onTryOnWall} style={[styles.pill, { backgroundColor: p.cta }]}>
+          <Icon name="camera" size={18} color={p.onCta} />
+          <AppText variant="small" style={{ color: p.onCta, fontFamily: fonts.bold }}>
+            {t('Odamda dene')}
+          </AppText>
+        </PressableScale>
       </View>
 
       <SaveToProject colour={colour} />
-
     </View>
   );
 }
 
-/** Colour schemes for the selected colour; `limit` shows only the first few. */
-export function ColourHarmonies({ hex, onSelect, limit, withRoom = false }: { hex: string; onSelect: (c: PickedColour) => void; limit?: number; withRoom?: boolean }) {
+/**
+ * Colour schemes for the selected colour; `limit` shows only the first few.
+ * `room` draws the preview for a scheme's main colour.
+ */
+export function ColourHarmonies({
+  hex,
+  onSelect,
+  limit,
+  room,
+}: {
+  hex: string;
+  onSelect: (c: PickedColour) => void;
+  limit?: number;
+  room: (wall: string) => ReactNode;
+}) {
   const p = usePalette();
   return (
     <>
@@ -281,26 +305,26 @@ export function ColourHarmonies({ hex, onSelect, limit, withRoom = false }: { he
         .slice(0, limit)
         .map((h) => (
           <View key={h.key} style={[styles.harmony, { backgroundColor: p.surface, borderColor: p.border }, shadowOf(p)]}>
-            {withRoom ? <RoomArt wall={h.colours[0].hex} width="100%" height={120} /> : null}
-            <View style={styles.harmonyStrip}>
-              {h.colours.map((c) => (
-                <PressableScale
-                  key={c.hex}
-                  accessibilityRole="button"
-                  accessibilityLabel={`${h.title}: ${t(c.name)}`}
-                  onPress={() => onSelect(c)}
-                  style={[styles.harmonyBlock, { backgroundColor: c.hex }]}>
-                  <AppText variant="caption" numberOfLines={1} style={{ color: ink(c.hex), fontFamily: fonts.bold }}>
-                    {t(c.name)}
-                  </AppText>
-                </PressableScale>
-              ))}
-            </View>
-            <View style={{ padding: space.md, gap: 2 }}>
+            <View style={styles.harmonyThumb}>{room(h.colours[h.colours.length > 2 ? 0 : 1].hex)}</View>
+            <View style={{ flex: 1, padding: space.md, gap: 4, justifyContent: 'center' }}>
               <AppText variant="bodyStrong" style={{ fontFamily: fonts.bold }}>
                 {h.title}
               </AppText>
-              <AppText variant="small" tone="muted">
+              <AppText variant="caption" tone="muted" numberOfLines={2}>
+                {h.colours.map((c) => t(c.name)).join(' + ')}
+              </AppText>
+              <View style={{ flexDirection: 'row', gap: 6, marginTop: 2 }}>
+                {h.colours.map((c) => (
+                  <PressableScale
+                    key={c.hex}
+                    accessibilityRole="button"
+                    accessibilityLabel={`${h.title}: ${t(c.name)}`}
+                    onPress={() => onSelect(c)}
+                    style={[styles.harmonyDot, { backgroundColor: c.hex, borderColor: p.border }]}
+                  />
+                ))}
+              </View>
+              <AppText variant="caption" tone="muted" numberOfLines={2}>
                 {h.hint}
               </AppText>
             </View>
@@ -435,12 +459,15 @@ const styles = StyleSheet.create({
   familyDot: { width: 16, height: 16, borderRadius: 8, borderWidth: StyleSheet.hairlineWidth },
   custom: { flexDirection: 'row', alignItems: 'center', gap: space.md, borderRadius: radius.lg, borderWidth: StyleSheet.hairlineWidth, padding: space.md },
   customSwatch: { width: 48, height: 48, borderRadius: 14 },
-  hero: { borderRadius: radius.xl, padding: space.xl, gap: space.lg, minHeight: 190, justifyContent: 'space-between', borderWidth: StyleSheet.hairlineWidth },
   round: { width: 44, height: 44, borderRadius: 22, alignItems: 'center', justifyContent: 'center' },
-  tag: { backgroundColor: 'rgba(255,255,255,0.85)', borderRadius: radius.pill, paddingHorizontal: space.sm + 2, paddingVertical: 4 },
-  harmony: { borderRadius: radius.lg, borderWidth: StyleSheet.hairlineWidth, overflow: 'hidden' },
-  harmonyStrip: { flexDirection: 'row', height: 76 },
-  harmonyBlock: { flex: 1, justifyContent: 'flex-end', padding: space.sm },
+  harmony: { flexDirection: 'row', borderRadius: radius.lg, borderWidth: StyleSheet.hairlineWidth, overflow: 'hidden' },
+  harmonyThumb: { width: 128, minHeight: 120 },
+  harmonyDot: { width: 30, height: 30, borderRadius: 15, borderWidth: StyleSheet.hairlineWidth },
+  selected: { borderRadius: radius.lg, borderWidth: StyleSheet.hairlineWidth, padding: space.lg, gap: space.md },
+  bigDot: { width: 60, height: 60, borderRadius: 30, borderWidth: StyleSheet.hairlineWidth },
+  dotRing: { padding: 3, borderRadius: 24, borderWidth: 2 },
+  dot: { width: 36, height: 36, borderRadius: 18, borderWidth: StyleSheet.hairlineWidth },
+  pill: { flexDirection: 'row', alignItems: 'center', gap: 6, borderRadius: radius.pill, paddingHorizontal: space.md, minHeight: 40 },
   save: { borderRadius: radius.lg, borderWidth: StyleSheet.hairlineWidth, padding: space.lg, gap: space.md },
   compare: { borderRadius: radius.lg, borderWidth: StyleSheet.hairlineWidth, padding: space.md, gap: space.sm },
   compareSwatch: { height: 150, borderRadius: radius.md, borderWidth: StyleSheet.hairlineWidth, padding: space.xs },

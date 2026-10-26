@@ -31,8 +31,9 @@ describe('Boya Hesapla, Manuel Giriş', () => {
   it('adds the ceiling and gives advice for the room', async () => {
     await renderManual();
     await fireEvent.changeText(screen.getByTestId('manual-wall'), '30');
-    await fireEvent.press(screen.getByText('Banyo'));
-    await fireEvent.press(screen.getByText('Tavan dahil'));
+    await fireEvent.press(screen.getByTestId('manual-room'));
+    await fireEvent.press(screen.getByLabelText('Banyo'));
+    await fireEvent.press(screen.getByLabelText('Tavan dahil'));
     await fireEvent.changeText(screen.getByTestId('manual-ceiling'), '6');
     await fireEvent.press(screen.getByText('Hesapla'));
     // (30 + 6) × 2 / 10 × 1,1 = 7,9 L
@@ -54,8 +55,10 @@ describe('Boya Hesapla, Manuel Giriş', () => {
   it('prices exterior paint separately and has no ceiling', async () => {
     await renderManual();
     await fireEvent.changeText(screen.getByTestId('manual-wall'), '100');
-    await fireEvent.press(screen.getByText('Dış cephe'));
-    expect(screen.queryByText('Tavan dahil')).toBeNull();
+    await fireEvent.press(screen.getByTestId('manual-paint'));
+    await fireEvent.press(screen.getByLabelText('Dış cephe'));
+    expect(screen.queryByTestId('manual-room')).toBeNull();
+    expect(screen.queryByLabelText('Tavan dahil')).toBeNull();
     await fireEvent.press(screen.getByText('Hesapla'));
     // 22 L × 215–395 ₺/L = 4.730–8.690 ₺, rounded to 500
     expect(screen.getByText('4.500–8.500 ₺')).toBeTruthy();

@@ -93,8 +93,10 @@ function ProjectCard({ project }: { project: ProjectRow }) {
         </View>
         <Icon name="chevron-forward" color={p.textMuted} />
       </View>
-      <CardProgress project={project} />
-      <View style={{ flexDirection: 'row', justifyContent: 'flex-end' }}>
+      <View style={{ flexDirection: 'row', alignItems: 'center', gap: space.md }}>
+        <View style={{ flex: 1 }}>
+          <CardProgress project={project} />
+        </View>
         <Badge label={t(STATUS_LABEL[project.status])} tone={done ? 'success' : 'primary'} />
       </View>
     </PressableScale>

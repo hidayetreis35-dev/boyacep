@@ -29,8 +29,8 @@ describe('Renk Stüdyosu', () => {
     await fireEvent.press(screen.getByLabelText('Favorilere ekle'));
     await waitFor(() => expect(screen.getByLabelText('Favorilerden çıkar')).toBeTruthy());
 
-    expect(screen.getByText('Favorilerin (1)')).toBeTruthy();
-    expect(screen.getAllByLabelText('Petrol mavisi').length).toBeGreaterThan(1);
+    // The favourite stays one tap away in the quick row of the selected colour.
+    expect(screen.getByLabelText('Petrol mavisi rengini seç')).toBeTruthy();
   });
 
   it('compares up to three colours side by side', async () => {

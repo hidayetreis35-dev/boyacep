@@ -350,7 +350,7 @@ export function Segmented<T extends string>({
 }) {
   const p = usePalette();
   return (
-    <View style={[styles.segmented, { backgroundColor: p.surfaceMuted }]} accessibilityRole="tablist">
+    <View style={styles.segmented} accessibilityRole="tablist">
       {options.map((o) => {
         const active = o.value === value;
         return (
@@ -360,9 +360,9 @@ export function Segmented<T extends string>({
             accessibilityState={{ selected: active }}
             accessibilityLabel={t(o.label)}
             onPress={() => onChange(o.value)}
-            style={[styles.segment, active && [{ backgroundColor: p.surface }, shadowOf(p)]]}>
-            {o.icon ? <Icon name={o.icon} size={16} color={active ? p.text : p.textMuted} /> : null}
-            <AppText variant="small" numberOfLines={1} style={{ color: active ? p.text : p.textMuted, fontFamily: active ? fonts.bold : fonts.medium }}>
+            style={[styles.segment, { backgroundColor: active ? p.primary : p.surfaceMuted }]}>
+            {o.icon ? <Icon name={o.icon} size={16} color={active ? p.onPrimary : p.textMuted} /> : null}
+            <AppText variant="small" numberOfLines={1} style={{ color: active ? p.onPrimary : p.textMuted, fontFamily: active ? fonts.bold : fonts.medium }}>
               {t(o.label)}
             </AppText>
           </PressableScale>
@@ -444,8 +444,8 @@ const styles = StyleSheet.create({
   tileRow: { flexDirection: 'row', flexWrap: 'wrap', gap: space.md },
   disclosure: { borderRadius: radius.lg, borderWidth: StyleSheet.hairlineWidth, overflow: 'hidden' },
   disclosureHead: { flexDirection: 'row', alignItems: 'center', gap: space.sm, padding: space.lg, minHeight: 56 },
-  segmented: { flexDirection: 'row', borderRadius: radius.pill, padding: 4, gap: 4 },
-  segment: { flexGrow: 1, flexShrink: 1, flexBasis: 'auto', minHeight: 40, borderRadius: radius.pill, flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 6, paddingHorizontal: space.sm },
+  segmented: { flexDirection: 'row', gap: space.sm },
+  segment: { flexGrow: 1, flexShrink: 1, flexBasis: 'auto', minHeight: 44, borderRadius: radius.pill, flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 6, paddingHorizontal: space.sm },
   wizardNav: { flexDirection: 'row', gap: space.md, alignItems: 'center' },
   backBtn: { width: 56, height: 56, borderRadius: 28, alignItems: 'center', justifyContent: 'center' },
   nextBtn: {

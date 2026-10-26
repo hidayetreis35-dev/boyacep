@@ -2,7 +2,7 @@ import { useLocalSearchParams } from 'expo-router';
 import { useState } from 'react';
 import { View } from 'react-native';
 
-import { ColourHarmonies, CompareColours, ColourExplorer, SelectedColour, SwatchCard, toPicked, type PickedColour } from '@/features/colour/colour-explorer';
+import { ColourHarmonies, CompareColours, ColourExplorer, SelectedColour, toPicked, type PickedColour } from '@/features/colour/colour-explorer';
 import { ColourStudio } from '@/features/colour/colour-studio';
 import { useFavourites } from '@/features/colour/favourites';
 import type { PickedPhoto } from '@/features/photos/picker';
@@ -104,11 +104,14 @@ export default function ColourScreen() {
   };
   const toggleCompare = (hex: string) =>
     setCompare((list) => (list.includes(hex) ? list.filter((h) => h !== hex) : [...list, hex].slice(-MAX_COMPARE)));
-  const quickColours = [...favourites.list, ...recent];
+  const quickColours = [...new Set([...favourites.list, ...recent])];
+  const room = (wall: string) => <RoomArt wall={wall} width="100%" height="100%" />;
 
   const selected = (
     <SelectedColour
       colour={colour}
+      quickColours={quickColours}
+      onSelect={pick}
       favourite={favourites.isFavourite(colour.hex)}
       comparing={compare.includes(colour.hex)}
       onToggleFavourite={() => favourites.toggle(colour.hex)}
@@ -149,21 +152,11 @@ export default function ColourScreen() {
             <RoomArt wall={colour.hex} width="100%" height={200} />
           </View>
           {selected}
-          {favourites.list.length > 0 ? (
-            <View style={{ gap: space.sm }}>
-              <SectionTitle title={t('Favorilerin ({count})', { count: favourites.list.length })} />
-              <View style={{ flexDirection: 'row', flexWrap: 'wrap', gap: space.sm }}>
-                {favourites.list.map((hex) => (
-                  <SwatchCard key={hex} colour={toPicked(hex)} width={100} favourite selected={colour.hex === hex} onPress={() => pick(toPicked(hex))} />
-                ))}
-              </View>
-            </View>
-          ) : null}
           <SectionTitle
             title={t('Uyumlu Renk Kombinasyonları')}
             action={<Button label={t('Tümü')} variant="ghost" onPress={() => setTab('combos')} />}
           />
-          <ColourHarmonies hex={colour.hex} onSelect={pick} limit={1} />
+          <ColourHarmonies hex={colour.hex} onSelect={pick} limit={1} room={room} />
           <SectionTitle title={t('Renk kataloğu')} />
           <ColourExplorer selected={colour.hex} favourites={favourites.list} onSelect={pick} />
         </>
@@ -181,7 +174,7 @@ export default function ColourScreen() {
       {tab === 'combos' ? (
         <>
           <AppText tone="muted">{t('“{name}” ile uyumlu renkler. Bir renge dokun, seçili renk olsun.', { name: t(colour.name) })}</AppText>
-          <ColourHarmonies hex={colour.hex} onSelect={pick} withRoom />
+          <ColourHarmonies hex={colour.hex} onSelect={pick} room={room} />
         </>
       ) : null}
     </Screen>

@@ -67,7 +67,7 @@ describe('the app in English', () => {
   it('runs the paint calculator in English', async () => {
     await renderRouter('./src/app', { initialUrl: '/calculate' });
     await fireEvent.changeText(await screen.findByTestId('manual-wall'), '120');
-    await fireEvent.press(screen.getByText('Ceiling included'));
+    await fireEvent.press(screen.getByLabelText('Ceiling included'));
     await fireEvent.changeText(screen.getByTestId('manual-ceiling'), '40');
     await fireEvent.press(screen.getByRole('button', { name: 'Calculate' }));
     expect(screen.getByTestId('manual-result')).toBeTruthy();
