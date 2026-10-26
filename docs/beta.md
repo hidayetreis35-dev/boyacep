@@ -21,7 +21,7 @@ What has to be true before BoyaCep goes to the first testers, and what is still 
 | `development` | Development client for local debugging (needs `expo-dev-client`, not installed yet) |
 | `production` | Store builds; version is incremented remotely |
 
-Android testers install the APK from the link EAS prints and work through [telefon-testi.md](telefon-testi.md). iOS testers need their device registered (`eas device:create`) or TestFlight, which requires an Apple Developer account (paid).
+The `preview` APK is built for 64-bit ARM phones only (`arm64-v8a`), which covers phones from roughly 2017 on. Building all four Android architectures ran out of memory on the free EAS worker (Skia's native build). Android testers install the APK from the link EAS prints and work through [telefon-testi.md](telefon-testi.md). iOS testers need their device registered (`eas device:create`) or TestFlight, which requires an Apple Developer account (paid).
 
 ## Session storage
 
