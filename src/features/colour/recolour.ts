@@ -97,13 +97,26 @@ export function deltaE(a: Lab, b: Lab): number {
 /** Lab values of every pixel, three floats per pixel. `edges` and `smooth` (a blurred copy) are filled in on first use. */
 export type LabImage = { width: number; height: number; lab: Float32Array; edges?: Float32Array; smooth?: Float32Array };
 
+/** sRGB channel value → linear light, for every byte value. Saves three powers per pixel. */
+const LINEAR = Float64Array.from({ length: 256 }, (_, c) => toLinear(c));
+
+/**
+ * Same maths as rgbToLab, written out for speed: on Hermes (no JIT) this loop
+ * runs for every pixel of the working copy before the first tap.
+ */
 export function toLabImage(rgba: Uint8Array | Uint8ClampedArray, width: number, height: number): LabImage {
-  const lab = new Float32Array(width * height * 3);
-  for (let i = 0, p = 0; i < width * height; i++, p += 4) {
-    const [L, a, b] = rgbToLab(rgba[p], rgba[p + 1], rgba[p + 2]);
-    lab[i * 3] = L;
-    lab[i * 3 + 1] = a;
-    lab[i * 3 + 2] = b;
+  const n = width * height;
+  const lab = new Float32Array(n * 3);
+  for (let i = 0, p = 0, o = 0; i < n; i++, p += 4, o += 3) {
+    const lr = LINEAR[rgba[p]];
+    const lg = LINEAR[rgba[p + 1]];
+    const lb = LINEAR[rgba[p + 2]];
+    const fx = f((0.4124564 * lr + 0.3575761 * lg + 0.1804375 * lb) / XN);
+    const fy = f((0.2126729 * lr + 0.7151522 * lg + 0.072175 * lb) / YN);
+    const fz = f((0.0193339 * lr + 0.119192 * lg + 0.9503041 * lb) / ZN);
+    lab[o] = 116 * fy - 16;
+    lab[o + 1] = 500 * (fx - fy);
+    lab[o + 2] = 200 * (fy - fz);
   }
   return { width, height, lab };
 }
@@ -129,40 +142,53 @@ export function edgeMap(img: LabImage): Float32Array {
   const tmp = new Float32Array(w * h * 3);
   const soft = new Float32Array(w * h * 3);
   soft.set(lab);
+  // Two passes of a separable [1 2 1] / 4 blur; loops are unrolled over the three channels.
   for (let pass = 0; pass < 2; pass++) {
     for (let y = 0; y < h; y++) {
+      const row = y * w;
       for (let x = 0; x < w; x++) {
-        const l = y * w + Math.max(0, x - 1);
-        const c = y * w + x;
-        const r = y * w + Math.min(w - 1, x + 1);
-        for (let k = 0; k < 3; k++) tmp[c * 3 + k] = (soft[l * 3 + k] + 2 * soft[c * 3 + k] + soft[r * 3 + k]) / 4;
+        const l = (row + (x > 0 ? x - 1 : 0)) * 3;
+        const c = (row + x) * 3;
+        const r = (row + (x < w - 1 ? x + 1 : w - 1)) * 3;
+        tmp[c] = (soft[l] + 2 * soft[c] + soft[r]) / 4;
+        tmp[c + 1] = (soft[l + 1] + 2 * soft[c + 1] + soft[r + 1]) / 4;
+        tmp[c + 2] = (soft[l + 2] + 2 * soft[c + 2] + soft[r + 2]) / 4;
       }
     }
     for (let y = 0; y < h; y++) {
+      const up = (y > 0 ? y - 1 : 0) * w;
+      const row = y * w;
+      const down = (y < h - 1 ? y + 1 : h - 1) * w;
       for (let x = 0; x < w; x++) {
-        const u = Math.max(0, y - 1) * w + x;
-        const c = y * w + x;
-        const d = Math.min(h - 1, y + 1) * w + x;
-        for (let k = 0; k < 3; k++) soft[c * 3 + k] = (tmp[u * 3 + k] + 2 * tmp[c * 3 + k] + tmp[d * 3 + k]) / 4;
+        const u = (up + x) * 3;
+        const c = (row + x) * 3;
+        const d = (down + x) * 3;
+        soft[c] = (tmp[u] + 2 * tmp[c] + tmp[d]) / 4;
+        soft[c + 1] = (tmp[u + 1] + 2 * tmp[c + 1] + tmp[d + 1]) / 4;
+        soft[c + 2] = (tmp[u + 2] + 2 * tmp[c + 2] + tmp[d + 2]) / 4;
       }
     }
   }
   const edges = new Float32Array(w * h);
   for (let y = 0; y < h; y++) {
-    const up = Math.max(0, y - 1) * w;
+    const up = (y > 0 ? y - 1 : 0) * w;
     const mid = y * w;
-    const down = Math.min(h - 1, y + 1) * w;
+    const down = (y < h - 1 ? y + 1 : h - 1) * w;
     for (let x = 0; x < w; x++) {
-      const l = Math.max(0, x - 1);
-      const r = Math.min(w - 1, x + 1);
+      const l = x > 0 ? x - 1 : 0;
+      const r = x < w - 1 ? x + 1 : w - 1;
+      const ul = (up + l) * 3;
+      const ur = (up + r) * 3;
+      const ml = (mid + l) * 3;
+      const mr = (mid + r) * 3;
+      const dl = (down + l) * 3;
+      const dr = (down + r) * 3;
+      const ux = (up + x) * 3;
+      const dx = (down + x) * 3;
       let sum = 0;
       for (let k = 0; k < 3; k++) {
-        const ul = soft[(up + l) * 3 + k];
-        const ur = soft[(up + r) * 3 + k];
-        const dl = soft[(down + l) * 3 + k];
-        const dr = soft[(down + r) * 3 + k];
-        const gx = ur + 2 * soft[(mid + r) * 3 + k] + dr - ul - 2 * soft[(mid + l) * 3 + k] - dl;
-        const gy = dl + 2 * soft[(down + x) * 3 + k] + dr - ul - 2 * soft[(up + x) * 3 + k] - ur;
+        const gx = soft[ur + k] + 2 * soft[mr + k] + soft[dr + k] - soft[ul + k] - 2 * soft[ml + k] - soft[dl + k];
+        const gy = soft[dl + k] + 2 * soft[dx + k] + soft[dr + k] - soft[ul + k] - 2 * soft[ux + k] - soft[ur + k];
         sum += gx * gx + gy * gy;
       }
       edges[mid + x] = Math.sqrt(sum) / 8;
