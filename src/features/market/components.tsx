@@ -112,7 +112,7 @@ export function ReferenceCard({
             <Row label={t('Aralık')} value={summary.middleHalf ? t('Kayıtların ortadaki yarısı') : t('En düşük – en yüksek')} />
             <Row label={t('Kayıt sayısı')} value={String(summary.observations)} />
             <Row label={t('Bağımsız kaynak')} value={String(summary.sources)} />
-            {summary.newest ? <Row label={t('En yeni veri')} value={formatResearchDate(summary.newest)} /> : null}
+            {summary.newest ? <Row label={t('En yeni kayıt')} value={formatResearchDate(summary.newest)} /> : null}
             {summary.outliers > 0 ? <Row label={t('Ayrı tutulan uç değer')} value={String(summary.outliers)} /> : null}
           </View>
         </>
@@ -121,7 +121,7 @@ export function ReferenceCard({
       )}
 
       <AppText variant="caption" tone="muted">
-        {t('Kaynak: {sources}. Veri tarihi: {date}.', {
+        {t('Kaynak: {sources}. Araştırma tarihi: {date}.', {
           sources: reference.sources.map(sourceName).join(', '),
           date: formatResearchDate(reference.asOf),
         })}

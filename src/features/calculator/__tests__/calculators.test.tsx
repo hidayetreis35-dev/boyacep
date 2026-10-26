@@ -18,15 +18,15 @@ const next = () => fireEvent.press(screen.getByRole('button', { name: 'Devam' })
 describe('PaintWizard, one room', () => {
   it('asks one question at a time and blocks on missing measurements', async () => {
     await renderWizard();
-    expect(screen.getByText('Adım 1 / 6')).toBeTruthy();
+    expect(screen.getByText('ADIM 1 / 6')).toBeTruthy();
     expect(screen.getByRole('button', { name: 'Devam' })).toBeDisabled();
     await fireEvent.press(screen.getByTestId('space-room'));
     await next();
-    expect(screen.getByText('Adım 2 / 6')).toBeTruthy();
+    expect(screen.getByText('ADIM 2 / 6')).toBeTruthy();
     await next();
     expect(screen.getByText('Lütfen kırmızı işaretli alanları düzeltin.')).toBeTruthy();
     expect(screen.getByText('Oda uzunluğu 0 ile 50 m arasında olmalı.')).toBeTruthy();
-    expect(screen.getByText('Adım 2 / 6')).toBeTruthy();
+    expect(screen.getByText('ADIM 2 / 6')).toBeTruthy();
   });
 
   it('walks through every step and shows the same numbers as the engine', async () => {
@@ -65,7 +65,7 @@ describe('PaintWizard, one room', () => {
     expect(screen.getAllByText('Astar').length).toBe(2);
     expect(screen.queryByText('Gerekmiyor')).toBeNull();
     await fireEvent.press(screen.getByRole('button', { name: 'Düzenle' }));
-    expect(screen.getByText('Adım 6 / 6')).toBeTruthy();
+    expect(screen.getByText('ADIM 6 / 6')).toBeTruthy();
   });
 
   it('marks exterior walls as coming soon instead of guessing', async () => {
@@ -79,7 +79,7 @@ describe('PaintWizard, whole home', () => {
     await renderWizard();
     await fireEvent.press(screen.getByTestId('space-home'));
     await next();
-    expect(screen.getByText('Adım 2 / 4')).toBeTruthy();
+    expect(screen.getByText('ADIM 2 / 4')).toBeTruthy();
     await fireEvent.changeText(screen.getByTestId('floor-area'), '120');
     await next();
     await next();

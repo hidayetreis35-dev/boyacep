@@ -1,7 +1,7 @@
 import { calculateProject, COST_GROUP_LABEL, quickEstimate, QUOTE_KIND_LABEL, type RoomInput } from '@/engine';
 import { COLOURS } from '@/features/colour/catalogue';
 import { PLACES, SYMPTOMS, workPlan } from '@/features/inspect/rules';
-import { getLocale, setCurrentLocale, t } from '@/i18n';
+import { getLocale, setCurrentLocale, t, toUpper } from '@/i18n';
 import { en } from '@/i18n/en';
 import { scan, TURKISH } from '@/i18n/scan';
 
@@ -92,6 +92,11 @@ describe('t()', () => {
     expect(t('Kapı sayısı 0 veya pozitif tam sayı olmalı.')).toBe('Door count must be 0 or a positive whole number.');
     expect(t('Koruyucu örtü (20 m²)')).toBe('Dust sheet (20 m²)');
     expect(t('%10 fire payı eklendi')).toBe('10% waste allowance added');
+  });
+  it('upper-cases with Turkish dotted and dotless i', () => {
+    expect(toUpper('Piyasa referansı', 'tr')).toBe('PİYASA REFERANSI');
+    expect(toUpper('Adım 1 / 6', 'tr')).toBe('ADIM 1 / 6');
+    expect(toUpper('Market reference', 'en')).toBe('MARKET REFERENCE');
   });
 });
 

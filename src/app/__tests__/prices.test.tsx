@@ -51,7 +51,7 @@ describe('Türkiye Boya Fiyatları', () => {
     await renderRouter('./src/app', { initialUrl: '/prices' });
     expect(await screen.findByText('Türkiye Boya Fiyatları')).toBeTruthy();
     expect(screen.getByText('Şehir seçmediğin için Türkiye geneli gösteriliyor.')).toBeTruthy();
-    expect(screen.getByText('Piyasa referansı')).toBeTruthy();
+    expect(screen.getByText('PİYASA REFERANSI')).toBeTruthy();
     expect(screen.getByText('Kesin bir fark söylemek için yeterli veri yok. Aralıklar yalnızca yön gösterir.')).toBeTruthy();
     expect(screen.getAllByText('Bu bir teklif değildir', { exact: false }).length).toBeGreaterThan(0);
   });

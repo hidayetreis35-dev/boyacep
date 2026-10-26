@@ -39,6 +39,12 @@ export function setCurrentLocale(locale: Locale): void {
   current = locale;
 }
 
+/** Upper case in the app's language: Turkish turns i into İ and ı into I ("Piyasa" → "PİYASA"). */
+export function toUpper(text: string, locale: Locale = current): string {
+  if (locale === 'tr') return text.replace(/i/g, 'İ').replace(/ı/g, 'I').toUpperCase();
+  return text.toUpperCase();
+}
+
 export type Vars = Record<string, string | number>;
 
 function pick(entry: Translation, vars?: Vars): string {

@@ -44,7 +44,7 @@ export function RegionalCostCard({ floorArea, litres, kind }: { floorArea: numbe
       <Row label={t('Boya (mağaza fiyatıyla)')} value={paint ? formatLiraRange(paint) : t('Yeterli veri yok')} />
       {total ? <Row label={t('Toplam (yaklaşık)')} value={formatLiraRange(total)} strong /> : null}
       <AppText variant="caption" tone="muted">
-        {t('Astar, macun ve yardımcı malzemeler dahil değil. Kaynak: {sources}. Veri tarihi: {date}.', {
+        {t('Astar, macun ve yardımcı malzemeler dahil değil. Kaynak: {sources}. Araştırma tarihi: {date}.', {
           sources: sources.join(', '),
           date: formatResearchDate(reference.asOf),
         })}

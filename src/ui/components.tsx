@@ -31,7 +31,7 @@ import { SafeAreaView } from 'react-native-safe-area-context';
 import { PressableScale } from './motion';
 import { MAX_CONTENT_WIDTH, MIN_TOUCH, fonts, radius, shadowOf, space, type, usePalette, type Palette, type TypeVariant } from './theme';
 
-import { t } from '@/i18n';
+import { t, toUpper } from '@/i18n';
 
 export type IconName = ComponentProps<typeof Ionicons>['name'];
 
@@ -58,10 +58,17 @@ export function AppText({
   variant = 'body',
   tone,
   style,
+  children,
   ...rest
 }: TextProps & { variant?: TypeVariant; tone?: Tone }) {
   const p = usePalette();
-  return <Text style={[type[variant] as TextStyle, { color: toneColor(p, tone) }, style]} {...rest} />;
+  // Overlines are upper case. textTransform would drop the dot of the Turkish İ on iOS and web.
+  const content = variant === 'overline' ? Children.map(children, (c) => (typeof c === 'string' ? toUpper(c) : c)) : children;
+  return (
+    <Text style={[type[variant] as TextStyle, { color: toneColor(p, tone) }, style]} {...rest}>
+      {content}
+    </Text>
+  );
 }
 
 export function Icon({ name, size = 22, color }: { name: IconName; size?: number; color?: string }) {

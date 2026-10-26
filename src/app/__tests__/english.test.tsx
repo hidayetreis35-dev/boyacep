@@ -73,9 +73,9 @@ describe('the app in English', () => {
       expect(turkishOnScreen()).toEqual([]);
     }
     await fireEvent.press(screen.getByRole('button', { name: 'Show result' }));
-    expect(screen.getByText('Result · Room')).toBeTruthy();
+    expect(screen.getByText('RESULT · ROOM')).toBeTruthy();
     expect(screen.getByText('Dust sheet (20 m²)')).toBeTruthy();
-    expect(screen.getByText('Market reference')).toBeTruthy();
+    expect(screen.getByText('MARKET REFERENCE')).toBeTruthy();
     expect(turkishOnScreen()).toEqual([]);
   });
 });

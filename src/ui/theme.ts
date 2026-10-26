@@ -122,7 +122,7 @@ export const type = {
   bodyStrong: { fontSize: 16, lineHeight: 24, fontFamily: fonts.semibold },
   small: { fontSize: 14, lineHeight: 20, fontFamily: fonts.medium },
   caption: { fontSize: 12, lineHeight: 16, fontFamily: fonts.semibold },
-  overline: { fontSize: 12, lineHeight: 16, fontFamily: fonts.bold, letterSpacing: 1, textTransform: 'uppercase' },
+  overline: { fontSize: 12, lineHeight: 16, fontFamily: fonts.bold, letterSpacing: 1 },
   number: { fontSize: 36, lineHeight: 42, fontFamily: fonts.extrabold, letterSpacing: -0.8 },
 } as const;
 
