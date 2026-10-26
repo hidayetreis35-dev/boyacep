@@ -1,4 +1,14 @@
-import { calculateProject, COST_GROUP_LABEL, quickEstimate, QUOTE_KIND_LABEL, type RoomInput } from '@/engine';
+import {
+  calculateProject,
+  COST_GROUP_LABEL,
+  EXPENSE_CATEGORY_LABEL,
+  quickEstimate,
+  QUOTE_KIND_LABEL,
+  RECOMMENDATION_KIND_LABEL,
+  RECOMMENDATION_LEVEL_LABEL,
+  recommendMaterials,
+  type RoomInput,
+} from '@/engine';
 import { COLOURS } from '@/features/colour/catalogue';
 import { PLACES, SYMPTOMS, workPlan } from '@/features/inspect/rules';
 import { getLocale, setCurrentLocale, t, toUpper } from '@/i18n';
@@ -146,10 +156,35 @@ describe('English engine and rules output', () => {
     }
   });
 
-  it('translates cost groups and quote line kinds', () => {
-    for (const label of [...Object.values(COST_GROUP_LABEL), ...Object.values(QUOTE_KIND_LABEL)]) {
+  it('translates cost groups, quote line kinds and expense categories', () => {
+    for (const label of [...Object.values(COST_GROUP_LABEL), ...Object.values(QUOTE_KIND_LABEL), ...Object.values(EXPENSE_CATEGORY_LABEL)]) {
       expect(english(label)).not.toBe(label);
     }
+  });
+
+  it('translates every material recommendation', () => {
+    const surfaces = ['painted', 'new_plaster', 'plasterboard', 'concrete'] as const;
+    const conditions = ['good', 'minor_repair', 'poor'] as const;
+    const uses = ['dry', 'kitchen', 'bathroom'] as const;
+    const texts = new Set<string>([...Object.values(RECOMMENDATION_KIND_LABEL), ...Object.values(RECOMMENDATION_LEVEL_LABEL)]);
+    for (const surfaceType of surfaces)
+      for (const surfaceCondition of conditions)
+        for (const use of uses)
+          for (const colourChange of ['similar', 'dark_to_light', 'light_to_dark'] as const) {
+            const recs = recommendMaterials({
+              surfaceType,
+              surfaceCondition,
+              use,
+              paintCeiling: true,
+              colourChange,
+              problems: ['damp', 'mould', 'salt', 'chalking', 'smoke_stain', 'oil_paint'],
+            });
+            for (const r of [...recs, ...recommendMaterials({ surfaceType, surfaceCondition, use, paintCeiling: true, colourChange })]) {
+              texts.add(r.product);
+              texts.add(r.reason);
+            }
+          }
+    for (const text of texts) expect(english(text)).not.toBe(text);
   });
 
   it('builds wall check plans in English', () => {

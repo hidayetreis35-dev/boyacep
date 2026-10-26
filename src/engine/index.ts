@@ -38,3 +38,15 @@ export {
   type Expense,
   type ExpenseCategory,
 } from './budget';
+export {
+  RECOMMENDATION_KIND_LABEL,
+  RECOMMENDATION_LEVEL_LABEL,
+  recommendMaterials,
+  type ColourChange,
+  type Recommendation,
+  type RecommendationKind,
+  type RecommendationLevel,
+  type RecommendInput,
+  type RoomUse,
+  type WallProblem,
+} from './recommend';

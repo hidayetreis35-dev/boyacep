@@ -63,6 +63,9 @@ describe('PaintWizard, one room', () => {
     await next();
     await fireEvent.press(screen.getByRole('button', { name: 'Sonucu göster' }));
     expect(screen.getAllByText('Astar').length).toBe(2);
+    await fireEvent.press(screen.getByRole('button', { name: 'Hangi ürünü almalıyım?' }));
+    expect(screen.getByText('Su bazlı iç cephe astarı')).toBeTruthy();
+    expect(screen.getByText('Orta tüylü rulo (12–18 mm)')).toBeTruthy();
     expect(screen.queryByText('Gerekmiyor')).toBeNull();
     await fireEvent.press(screen.getByRole('button', { name: 'Düzenle' }));
     expect(screen.getByText('ADIM 6 / 6')).toBeTruthy();

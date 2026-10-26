@@ -13,6 +13,7 @@ import { fonts, radius, space, useFeatureColour, usePalette } from '@/ui/theme';
 
 import type { RoomForm } from './form';
 import { quantityText, SOURCE_LABEL } from './labels';
+import { ProductAdvice, roomUse } from './product-advice';
 import { packageText } from './results';
 import { SPACE_LABEL, type SpaceKind } from './wizard';
 
@@ -245,6 +246,10 @@ export function RoomResult({
           ))}
         </Card>
       ) : null}
+
+      <ProductAdvice
+        input={{ surfaceType: form.surfaceType, surfaceCondition: form.surfaceCondition, use: roomUse(kind), paintCeiling: form.paintCeiling }}
+      />
 
       <CostTeaser paintLitres={finish} primerLitres={totals.primerLitres} />
       {/* Market data for single rooms covers jobs up to 30 m² of floor. */}
