@@ -124,9 +124,9 @@ export default function ColourScreen() {
     <Screen edges={['bottom']}>
       <Segmented
         options={[
-          { value: 'colours', label: t('Renkler'), icon: 'color-palette' },
-          { value: 'photo', label: t('Odayı Dene'), icon: 'camera' },
-          { value: 'combos', label: t('Kombinasyonlar'), icon: 'color-filter' },
+          { value: 'colours', label: t('Renkler') },
+          { value: 'photo', label: t('Odayı Dene') },
+          { value: 'combos', label: t('Kombinasyonlar') },
         ]}
         value={tab}
         onChange={(next) => {
