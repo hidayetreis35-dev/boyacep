@@ -4,6 +4,7 @@ import { StyleSheet, View } from 'react-native';
 import { DEFAULT_CAN_SIZES, planPackages, type MaterialCategory, type MaterialItem, type PackagePlan, type ProjectCalculation, type QuickEstimate } from '@/engine';
 import { useSession } from '@/features/account/session';
 import { setPendingRoom } from '@/features/projects/pending-room';
+import { useCreateProject } from '@/features/projects/queries';
 import { RegionalCostCard } from '@/features/market/regional-cost';
 import { t } from '@/i18n';
 import { formatNumber, parseDecimal } from '@/lib/number';
@@ -13,6 +14,7 @@ import { fonts, radius, space, useFeatureColour, usePalette } from '@/ui/theme';
 
 import type { RoomForm } from './form';
 import { quantityText, SOURCE_LABEL } from './labels';
+import { MOVE_STEPS, type PaintReason } from './move';
 import { ProductAdvice, roomUse } from './product-advice';
 import { packageText } from './results';
 import { SPACE_LABEL, type SpaceKind } from './wizard';
@@ -292,6 +294,50 @@ export function RoomResult({
   );
 }
 
+/** Creates a project to keep before and after photos in. Needs the backend. */
+function MovePhotosButton({ title }: { title: string }) {
+  const { session } = useSession();
+  const create = useCreateProject();
+  const openProject = () => {
+    if (!session) {
+      router.push('/sign-in');
+      return;
+    }
+    create.mutate(title, { onSuccess: (project) => router.push({ pathname: '/projects/[id]', params: { id: project.id } }) });
+  };
+  return (
+    <>
+      <Button label={t('Önce ve sonra fotoğrafları için proje aç')} icon="camera" variant="secondary" loading={create.isPending} onPress={openProject} />
+      {create.isError ? (
+        <Notice tone="danger" icon="alert-circle">
+          {t('Proje oluşturulamadı: {message}', { message: create.error.message })}
+        </Notice>
+      ) : null}
+    </>
+  );
+}
+
+/** Moving in or out: the order of work, and a project for before and after photos. */
+function MovePlan({ reason, houseType }: { reason: Exclude<PaintReason, 'refresh'>; houseType: string }) {
+  const { db } = useSession();
+  const title = reason === 'move_out' ? t('Taşınma: {type} ev teslimi', { type: houseType }) : t('Taşınma: {type} yeni ev', { type: houseType });
+  return (
+    <Card>
+      <SectionTitle title={reason === 'move_out' ? t('Kiracı çıkışı için sıra') : t('Yeni eve taşınırken sıra')} />
+      {MOVE_STEPS[reason].map((step, i) => (
+        <View key={step} style={{ flexDirection: 'row', gap: space.sm }}>
+          <AppText variant="bodyStrong" tone="primary" style={{ minWidth: 20 }}>
+            {`${i + 1}.`}
+          </AppText>
+          <AppText style={{ flex: 1 }}>{t(step)}</AppText>
+        </View>
+      ))}
+      {reason === 'move_in' ? <Button label={t('Duvarını incele')} icon="scan" variant="secondary" onPress={() => router.push('/inspect')} /> : null}
+      {db ? <MovePhotosButton title={title} /> : null}
+    </Card>
+  );
+}
+
 export function HomeResult({
   result,
   home,
@@ -299,7 +345,7 @@ export function HomeResult({
   onRestart,
 }: {
   result: QuickEstimate;
-  home: { houseType: string; area: string; ceilings: boolean; coats: number };
+  home: { houseType: string; area: string; ceilings: boolean; coats: number; reason?: PaintReason };
   onEdit: () => void;
   onRestart: () => void;
 }) {
@@ -326,6 +372,7 @@ export function HomeResult({
           <StatTile label={t('Tavan boyası')} value={formatNumber(result.ceilingLitres)} unit="L" icon="arrow-up-circle" feature="ask" hint={t('≈ {area} m² tavan', { area: formatNumber(result.ceilingArea) })} />
         ) : null}
       </TileRow>
+      {home.reason && home.reason !== 'refresh' ? <MovePlan reason={home.reason} houseType={home.houseType} /> : null}
       <CostTeaser paintLitres={result.totalLitres} primerLitres={0} />
       <RegionalCostCard kind="home" floorArea={parseDecimal(home.area)} litres={result.totalLitres} />
       <Notice>

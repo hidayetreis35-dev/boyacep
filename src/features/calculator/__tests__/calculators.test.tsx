@@ -92,6 +92,30 @@ describe('PaintWizard, whole home', () => {
     expect(screen.getByText('Duvar: 5 × 15 L · Tavan: 1 × 15 L + 1 × 7,5 L + 2 × 2,5 L')).toBeTruthy();
   });
 
+  it('shows the moving-out order of work', async () => {
+    await renderWizard();
+    await fireEvent.press(screen.getByTestId('space-home'));
+    await next();
+    await fireEvent.changeText(screen.getByTestId('floor-area'), '90');
+    await fireEvent.press(screen.getByTestId('reason-move_out'));
+    await next();
+    await next();
+    await fireEvent.press(screen.getByRole('button', { name: 'Sonucu göster' }));
+    expect(screen.getByText('Kiracı çıkışı için sıra')).toBeTruthy();
+    expect(screen.getByText(/her duvarını fotoğrafla/)).toBeTruthy();
+  });
+
+  it('shows no moving plan for a normal refresh', async () => {
+    await renderWizard();
+    await fireEvent.press(screen.getByTestId('space-home'));
+    await next();
+    await fireEvent.changeText(screen.getByTestId('floor-area'), '90');
+    await next();
+    await next();
+    await fireEvent.press(screen.getByRole('button', { name: 'Sonucu göster' }));
+    expect(screen.queryByText(/için sıra|taşınırken sıra/)).toBeNull();
+  });
+
   it('rejects an unrealistic area', async () => {
     await renderWizard();
     await fireEvent.press(screen.getByTestId('space-home'));

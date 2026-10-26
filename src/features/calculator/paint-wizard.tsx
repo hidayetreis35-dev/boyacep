@@ -10,6 +10,7 @@ import { FadeIn } from '@/ui/motion';
 import { space } from '@/ui/theme';
 
 import { EMPTY_ROOM_FORM, toRoomInput, type FormErrors, type RoomForm } from './form';
+import { PAINT_REASONS, type PaintReason } from './move';
 import { HomeResult, RoomResult } from './wizard-result';
 import {
   applySurfaces,
@@ -24,8 +25,8 @@ import {
   type SpaceKind,
 } from './wizard';
 
-type HomeForm = { houseType: HouseType; area: string; ceilings: boolean; coats: number };
-const EMPTY_HOME: HomeForm = { houseType: '3+1', area: '', ceilings: true, coats: 2 };
+type HomeForm = { houseType: HouseType; area: string; ceilings: boolean; coats: number; reason: PaintReason };
+const EMPTY_HOME: HomeForm = { houseType: '3+1', area: '', ceilings: true, coats: 2, reason: 'refresh' };
 
 type HomeStep = 'space' | 'home' | 'homeSurfaces' | 'homeCoats';
 const HOME_STEPS: { key: HomeStep; label: string }[] = [
@@ -304,6 +305,20 @@ export function PaintWizard() {
               error={homeError}
               testID="floor-area"
             />
+            <AppText variant="bodyStrong">{t('Neden boyuyorsun?')}</AppText>
+            <OptionGrid columns={1}>
+              {PAINT_REASONS.map((r) => (
+                <OptionCard
+                  key={r.value}
+                  title={t(r.label)}
+                  subtitle={t(r.hint)}
+                  icon={r.value === 'refresh' ? 'brush' : r.value === 'move_out' ? 'exit' : 'enter'}
+                  selected={home.reason === r.value}
+                  onPress={() => setHome((h) => ({ ...h, reason: r.value }))}
+                  testID={`reason-${r.value}`}
+                />
+              ))}
+            </OptionGrid>
           </>
         )}
 
