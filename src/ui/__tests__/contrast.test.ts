@@ -1,0 +1,47 @@
+import { luminance } from '@/features/colour/palette';
+import { featurePalettes, palettes, type FeatureKey } from '@/ui/theme';
+
+/** WCAG contrast ratio between two colours. */
+function contrast(a: string, b: string): number {
+  const [hi, lo] = [luminance(a), luminance(b)].sort((x, y) => y - x);
+  return (hi + 0.05) / (lo + 0.05);
+}
+
+// Text pairs that appear in the app; body text needs 4.5:1 (WCAG AA).
+const PAIRS: [keyof (typeof palettes)['light'], keyof (typeof palettes)['light']][] = [
+  ['text', 'background'],
+  ['text', 'surface'],
+  ['textMuted', 'background'],
+  ['textMuted', 'surface'],
+  ['textMuted', 'surfaceMuted'],
+  ['primary', 'background'],
+  ['primary', 'surface'],
+  ['primary', 'primarySoft'],
+  ['onPrimary', 'primary'],
+  ['accent', 'accentSoft'],
+  ['danger', 'dangerSoft'],
+  ['danger', 'surface'],
+  ['success', 'successSoft'],
+  ['onCta', 'cta'],
+  ['teal', 'tealSoft'],
+  ['onHero', 'heroFrom'],
+  ['onHero', 'heroTo'],
+  ['onHeroMuted', 'heroFrom'],
+  ['onHeroMuted', 'heroTo'],
+];
+
+describe.each(['light', 'dark'] as const)('%s theme contrast', (scheme) => {
+  it.each(PAIRS)('%s on %s meets WCAG AA', (fg, bg) => {
+    expect(contrast(palettes[scheme][fg], palettes[scheme][bg])).toBeGreaterThanOrEqual(4.5);
+  });
+});
+
+// Feature cards put the feature's ink text on its soft tint.
+const FEATURES = Object.keys(featurePalettes.light) as FeatureKey[];
+
+describe.each(['light', 'dark'] as const)('%s feature colour contrast', (scheme) => {
+  it.each(FEATURES)('%s ink on its soft tint meets WCAG AA', (key) => {
+    const { ink, soft } = featurePalettes[scheme][key];
+    expect(contrast(ink, soft)).toBeGreaterThanOrEqual(4.5);
+  });
+});
