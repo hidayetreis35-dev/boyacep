@@ -10,7 +10,7 @@ Tarih: 25.10.2026. Komutlar: `npm run check` (tip kontrolü, lint, Jest) ve `npm
 | Lint | Hatasız |
 | Jest | 40 dosya, 450 test, hepsi geçti |
 | Veri tabanı testleri | Bütün dosyalar geçti; yeni `97_market_prices.test.sql` 47 kontrol |
-| Tarayıcı (web derlemesi, Chromium) | Masaüstü 1280×900 ve mobil 390×844'te ana sayfa, fiyat ekranı (Manisa, Adıyaman, İzmir + malzeme dahil, karşılaştırma) ve İngilizce fiyat ekranı açıldı; sayfa hatası yok |
+| Tarayıcı (web derlemesi, Chromium) | Masaüstü 1280×900 ve mobil 390×844'te ana sayfa, fiyat ekranı (Manisa, Adıyaman, İzmir + malzeme dahil, karşılaştırma) ve İngilizce fiyat ekranı açıldı; sayfa hatası yok. 26.10.2026: boya hesabı tarayıcıda sonuna kadar yürütüldü (tüm ev 120 m² ve tek oda, şehir Manisa); "Ustayla yaklaşık maliyet" kartı çıktı, sayfa hatası yok |
 
 ## İstenen 12 senaryo
 
@@ -41,5 +41,4 @@ Tarih: 25.10.2026. Komutlar: `npm run check` (tip kontrolü, lint, Jest) ve `npm
 - **Canlı veri tabanı**: tablolar 26.10.2026'da canlıya uygulandı ve salt okuma sorgularıyla doğrulandı (il/ilçe sayıları, RLS, ziyaretçi izinleri). Kural testleri (onay, rıza, 5 iş eşiği) yalnızca yerel PostgreSQL'de çalıştı; canlıda test verisi yazılmadı.
 - **Android emülatör**: bu bulut ortamında donanım sanallaştırması (KVM) yok, Android emülatörü çalışamıyor. Telefon boyutundaki ekranlar tarayıcıda (390×844) denendi.
 - **iOS**: test edilmedi.
-- **Hesap sonucu kartı tarayıcıda**: bileşen testleriyle doğrulandı; tarayıcıda ekran görüntüsü alınmadı.
 - **Karanlık tema**: yeni kartlar tema renklerini kullanıyor, ama karanlık temada ayrıca bakılmadı.
