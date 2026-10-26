@@ -3,6 +3,7 @@ import { createClient, type SupabaseClient } from '@supabase/supabase-js';
 import { AppState, Platform } from 'react-native';
 
 import type { Database } from './database.types';
+import { secureSessionStorage } from './secure-storage';
 
 export type DbClient = SupabaseClient<Database>;
 
@@ -17,8 +18,9 @@ export const isBackendConfigured = Boolean(url && key);
 
 function create(): DbClient | null {
   if (!url || !key) return null;
-  // During static web rendering there is no window; keep the session in memory.
-  const storage = Platform.OS === 'web' && typeof window === 'undefined' ? undefined : AsyncStorage;
+  // Phones keep the session in the secure store. The web has no secure store, so it uses the
+  // browser's storage; during static web rendering there is no window, so it stays in memory.
+  const storage = Platform.OS !== 'web' ? secureSessionStorage : typeof window === 'undefined' ? undefined : AsyncStorage;
   return createClient<Database>(url, key, {
     auth: {
       storage,

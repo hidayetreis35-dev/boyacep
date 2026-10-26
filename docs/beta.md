@@ -23,11 +23,14 @@ What has to be true before BoyaCep goes to the first testers, and what is still 
 
 Android testers install the APK from the link EAS prints and work through [telefon-testi.md](telefon-testi.md). iOS testers need their device registered (`eas device:create`) or TestFlight, which requires an Apple Developer account (paid).
 
+## Session storage
+
+On phones the sign-in session is kept in `expo-secure-store` (Keychain / Android Keystore), split into chunks under 2 KB (`src/lib/secure-storage.ts`). Sessions saved by older builds in AsyncStorage are moved on the first start, so testers stay signed in. Android backups exclude the secure store (config plugin), so a restored phone asks to sign in again instead of failing. On the web the session stays in browser storage, as there is no secure store there.
+
 ## Open before a public launch
 
 - Legal: KVKK aydınlatma metni and terms of use reviewed by a lawyer (the in-app privacy page is a summary).
-- Email: Supabase's built-in email is rate-limited; connect an SMTP provider before real users arrive.
-- Session storage: the auth session is kept in AsyncStorage. Consider an encrypted store (SecureStore-held key) before launch.
+- Email: Supabase's built-in email is rate-limited (a few emails an hour for the whole project); connect an SMTP provider before real users arrive. The sign-in screen already waits 60 seconds between emails, honours the wait time Supabase returns and asks for a new email after 5 wrong codes.
 - Painter portfolio and profile photos.
 - AI wall analysis (needs an owner decision on the paid service).
 - Supabase project: confirm region, enable point-in-time recovery or daily backups on the paid plan before storing real customer data.

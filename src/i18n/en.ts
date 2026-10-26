@@ -1639,4 +1639,11 @@ export const en: Record<string, Translation> = {
   "Şehir seçmeden başla": "Start without a city",
   "Devam eden projen": "Your current project",
   "Projeyi aç": "Open project",
+  "Çok fazla hatalı deneme. Güvenliğin için yeni bir giriş e-postası iste.": "Too many wrong attempts. For your security, ask for a new sign-in email.",
+  "Yeni bir giriş e-postası gönderdik. En son gelen e-postayı kullan.": "We sent a new sign-in email. Use the most recent one.",
+  "{seconds} sn sonra yeniden gönderebilirsin": "Resend available in {seconds} s",
+  "E-postayı yeniden gönder": "Resend the email",
+  "E-posta gelmedi mi? Gereksiz (spam) klasörüne bak ve adresi doğru yazdığından emin ol. E-posta birkaç dakika gecikebilir.": "No email yet? Check your spam folder and make sure the address is right. The email can take a few minutes.",
+  "Güvenlik için yeni e-postayı {seconds} saniye sonra isteyebilirsin.": "For security, you can ask for a new email in {seconds} s.",
+  "Şu an çok fazla giriş e-postası gönderildi. Biraz sonra tekrar dene; daha önce gelen e-postayı da kullanabilirsin.": "Too many sign-in emails were sent just now. Try again a little later, or use an email you already received.",
 };

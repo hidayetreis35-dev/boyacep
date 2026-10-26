@@ -1,14 +1,40 @@
 import * as Linking from 'expo-linking';
 import { router } from 'expo-router';
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import { StyleSheet, View } from 'react-native';
 
-import { isValidEmail, sendEmailCode } from '@/features/account/api';
+import { isValidEmail, sendEmailCode, TooSoonError } from '@/features/account/api';
 import { completeSignIn } from '@/features/account/auth-link';
 import { useSession } from '@/features/account/session';
 import { t } from '@/i18n';
 import { AppText, Button, Card, EmptyState, Icon, Notice, Screen, TextField } from '@/ui/components';
 import { fonts, space, usePalette } from '@/ui/theme';
+
+/** Seconds between two sign-in emails (Supabase's own limit is one a minute per address). */
+const RESEND_SECONDS = 60;
+/** Wrong codes allowed before the screen asks for a new email. */
+const MAX_ATTEMPTS = 5;
+
+/** A countdown in whole seconds; `start` begins a new one. */
+function useCountdown(): [number, (seconds: number) => void] {
+  const [until, setUntil] = useState(0);
+  const [now, setNow] = useState(0);
+  useEffect(() => {
+    if (!until) return;
+    const timer = setInterval(() => {
+      const time = Date.now();
+      setNow(time);
+      if (time >= until) clearInterval(timer);
+    }, 1000);
+    return () => clearInterval(timer);
+  }, [until]);
+  const start = (seconds: number) => {
+    const time = Date.now();
+    setNow(time);
+    setUntil(time + seconds * 1000);
+  };
+  return [Math.max(0, Math.ceil((until - now) / 1000)), start];
+}
 
 function StepDot({ n, label, active, done }: { n: number; label: string; active: boolean; done: boolean }) {
   const p = usePalette();
@@ -39,6 +65,10 @@ export default function SignInScreen() {
   const [step, setStep] = useState<'email' | 'code'>('email');
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [sentAgain, setSentAgain] = useState(false);
+  const [failures, setFailures] = useState(0);
+  const [wait, startWait] = useCountdown();
+  const blocked = failures >= MAX_ATTEMPTS;
 
   if (!db) {
     return (
@@ -53,12 +83,14 @@ export default function SignInScreen() {
     );
   }
 
-  const run = async (task: () => Promise<void>) => {
+  const run = async (task: () => Promise<void>, onError?: (e: unknown) => void) => {
     setBusy(true);
     setError(null);
     try {
       await task();
     } catch (e) {
+      if (e instanceof TooSoonError) startWait(e.seconds);
+      onError?.(e);
       setError(e instanceof Error ? e.message : t('Bir sorun oluştu.'));
     } finally {
       setBusy(false);
@@ -69,15 +101,24 @@ export default function SignInScreen() {
     run(async () => {
       if (!isValidEmail(email)) throw new Error(t('Geçerli bir e-posta adresi yazın.'));
       await sendEmailCode(db, email, Linking.createURL('/'));
+      startWait(RESEND_SECONDS);
+      setSentAgain(step === 'code');
+      setFailures(0);
       setStep('code');
     });
 
   const verify = () =>
-    run(async () => {
-      await completeSignIn(db, email, code);
-      if (router.canGoBack()) router.back();
-      else router.replace('/');
-    });
+    run(
+      async () => {
+        if (blocked) throw new Error(t('Çok fazla hatalı deneme. Güvenliğin için yeni bir giriş e-postası iste.'));
+        await completeSignIn(db, email, code);
+        if (router.canGoBack()) router.back();
+        else router.replace('/');
+      },
+      () => {
+        if (code.trim()) setFailures((n) => n + 1);
+      },
+    );
 
   return (
     <Screen edges={['bottom']}>
@@ -132,13 +173,28 @@ export default function SignInScreen() {
             {error}
           </Notice>
         ) : null}
+        {sentAgain && !error ? (
+          <Notice tone="success" icon="checkmark-circle">
+            {t('Yeni bir giriş e-postası gönderdik. En son gelen e-postayı kullan.')}
+          </Notice>
+        ) : null}
         <Button
           label={step === 'email' ? t('Giriş e-postası gönder') : t('Giriş yap')}
           variant="cta"
           size="lg"
           onPress={step === 'email' ? sendCode : verify}
           loading={busy}
+          disabled={step === 'code' && blocked}
         />
+        {step === 'code' ? (
+          <Button
+            label={wait > 0 ? t('{seconds} sn sonra yeniden gönderebilirsin', { seconds: wait }) : t('E-postayı yeniden gönder')}
+            icon="refresh"
+            variant="secondary"
+            onPress={sendCode}
+            disabled={wait > 0 || busy}
+          />
+        ) : null}
         {step === 'code' ? (
           <Button
             label={t('E-postayı değiştir')}
@@ -147,10 +203,16 @@ export default function SignInScreen() {
               setStep('email');
               setCode('');
               setError(null);
+              setSentAgain(false);
             }}
           />
         ) : null}
       </Card>
+      {step === 'code' ? (
+        <Notice icon="help-circle">
+          {t('E-posta gelmedi mi? Gereksiz (spam) klasörüne bak ve adresi doğru yazdığından emin ol. E-posta birkaç dakika gecikebilir.')}
+        </Notice>
+      ) : null}
       <AppText variant="caption" tone="muted">
         {t('Giriş yaparak verilerinin BoyaCep hesabında saklanmasını kabul etmiş olursun. Hesabını ve verilerini istediğin zaman silebileceksin.')}
       </AppText>

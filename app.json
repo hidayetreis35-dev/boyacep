@@ -47,6 +47,13 @@
           "cameraPermission": "BoyaCep, duvarının fotoğrafını çekebilmen için kamerana erişir.",
           "microphonePermission": false
         }
+      ],
+      [
+        "expo-secure-store",
+        {
+          "configureAndroidBackup": true,
+          "faceIDPermission": false
+        }
       ]
     ],
     "experiments": {
