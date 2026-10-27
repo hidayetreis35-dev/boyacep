@@ -97,7 +97,7 @@ describe('app navigation', () => {
     for (const title of ['Boya Hesapla', 'Renkleri Dene', 'Duvarını İncele', 'Maliyetini Hesapla']) {
       expect(screen.getByLabelText(title)).toBeTruthy();
     }
-    for (const room of ['Salon', 'Yatak odası', 'Mutfak', 'Banyo', 'Tüm ev', 'Tadilat', 'Dekorasyon']) {
+    for (const room of ['Salon', 'Yatak odası', 'Çocuk odası', 'Çalışma odası', 'Mutfak', 'Banyo', 'Koridor', 'Tüm ev', 'Tadilat', 'Dekorasyon']) {
       expect(screen.getByLabelText(room)).toBeTruthy();
     }
     // Everything else stays one tap away.
@@ -120,6 +120,13 @@ describe('app navigation', () => {
     expect(screen).toHavePathname('/calculate');
     expect(screen).toHaveSearchParams({ space: 'kitchen' });
     expect(screen.getByRole('radio', { name: 'Mutfak' })).toBeSelected();
+  });
+
+  it('opens the hallway as a custom space', async () => {
+    await renderRouter('./src/app', { initialUrl: '/' });
+    await fireEvent.press(await screen.findByLabelText('Koridor'));
+    expect(screen).toHaveSearchParams({ space: 'custom' });
+    expect(screen.getByRole('radio', { name: 'Özel alan' })).toBeSelected();
   });
 
   it('marks AI design as coming soon instead of pretending it works', async () => {

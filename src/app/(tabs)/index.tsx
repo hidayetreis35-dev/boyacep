@@ -30,13 +30,16 @@ const space_ = (s: SpaceKind): Href => ({ pathname: '/calculate', params: { spac
 
 /** Rooms open the calculator with that room chosen; renovation and decoration open their own screens. */
 const ROOMS: { key: string; title: string; photo?: PhotoName; icon?: IconName; href: Href }[] = [
-  { key: 'living', title: msg('Salon'), photo: 'inspiration', href: space_('living') },
+  { key: 'living', title: msg('Salon'), photo: 'livingRoom', href: space_('living') },
   { key: 'bedroom', title: msg('Yatak odası'), photo: 'bedroom', href: space_('room') },
-  { key: 'kitchen', title: msg('Mutfak'), photo: 'kitchen', href: space_('kitchen') },
+  { key: 'kids', title: msg('Çocuk odası'), photo: 'kidsRoom', href: space_('room') },
+  { key: 'study', title: msg('Çalışma odası'), photo: 'study', href: space_('room') },
+  { key: 'kitchen', title: msg('Mutfak'), photo: 'kitchenGreen', href: space_('kitchen') },
   { key: 'bathroom', title: msg('Banyo'), photo: 'bathroom', href: space_('bathroom') },
-  { key: 'home', title: msg('Tüm ev'), icon: 'home', href: space_('home') },
-  { key: 'renovation', title: msg('Tadilat'), photo: 'wallProblem', href: '/projects' },
-  { key: 'decoration', title: msg('Dekorasyon'), photo: 'colourRoom', href: '/colour' },
+  { key: 'hallway', title: msg('Koridor'), photo: 'hallway', href: space_('custom') },
+  { key: 'home', title: msg('Tüm ev'), photo: 'wholeHome', href: space_('home') },
+  { key: 'renovation', title: msg('Tadilat'), photo: 'renovation', href: '/projects' },
+  { key: 'decoration', title: msg('Dekorasyon'), photo: 'decoration', href: '/colour' },
 ];
 
 const MORE: { key: string; title: string; icon: IconName; feature: FeatureKey; href: Href; soon?: boolean }[] = [
@@ -187,7 +190,7 @@ export default function HomeScreen() {
             <>
               <FadeIn>
                 <PhotoHero
-                  photo="welcome"
+                  photo="inspiration"
                   title={t('Evin için güzel fikirler burada başlıyor.')}
                   body={t('Boyamadan yenilemeye, bütçeden usta bulmaya kadar her şey elinin altında.')}
                   action={t('Hemen başla')}

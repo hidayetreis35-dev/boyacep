@@ -1760,6 +1760,7 @@ export const en: Record<string, Translation> = {
   "Oda Seç": "Measure rooms",
   "Yatak odası": "Bedroom",
   "Çocuk odası": "Kids' room",
+  "Çalışma odası": "Study",
   "Koridor": "Hallway",
   "Salon için silinebilir mat ya da ipek mat iç cephe boyası uygun.": "For a living room, a washable matt or silk-matt interior paint works well.",
   "Yatak odasında kokusu az, düşük uçucu maddeli (VOC) boya tercih et.": "In a bedroom, choose a low-odour, low-VOC paint.",

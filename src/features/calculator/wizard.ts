@@ -10,12 +10,12 @@ export type SpaceKind = 'room' | 'living' | 'kitchen' | 'bathroom' | 'home' | 'e
 
 export const SPACES: { value: SpaceKind; label: string; hint: string; icon: IconName; photo?: PhotoName; ready: boolean }[] = [
   { value: 'room', photo: 'bedroom', label: msg('Oda'), hint: msg('Yatak, çocuk ya da çalışma odası'), icon: 'bed', ready: true },
-  { value: 'living', photo: 'inspiration', label: msg('Salon'), hint: msg('Oturma ve yemek alanı'), icon: 'tv', ready: true },
-  { value: 'kitchen', photo: 'kitchen', label: msg('Mutfak'), hint: msg('Buhara dayanıklı boya önerilir'), icon: 'restaurant', ready: true },
+  { value: 'living', photo: 'livingRoom', label: msg('Salon'), hint: msg('Oturma ve yemek alanı'), icon: 'tv', ready: true },
+  { value: 'kitchen', photo: 'kitchenGreen', label: msg('Mutfak'), hint: msg('Buhara dayanıklı boya önerilir'), icon: 'restaurant', ready: true },
   { value: 'bathroom', photo: 'bathroom', label: msg('Banyo'), hint: msg('Neme dayanıklı boya önerilir'), icon: 'water', ready: true },
   { value: 'home', photo: 'welcome', label: msg('Tüm ev'), hint: msg('Ev tipi ve metrekareyle hızlı tahmin'), icon: 'home', ready: true },
-  { value: 'custom', label: msg('Özel alan'), hint: msg('Koridor, antre, ofis…'), icon: 'shapes', ready: true },
-  { value: 'exterior', label: msg('Dış cephe'), hint: msg('Ayrı katsayılar gerekiyor'), icon: 'business', ready: false },
+  { value: 'custom', photo: 'hallway', label: msg('Özel alan'), hint: msg('Koridor, antre, ofis…'), icon: 'shapes', ready: true },
+  { value: 'exterior', photo: 'facade', label: msg('Dış cephe'), hint: msg('Ayrı katsayılar gerekiyor'), icon: 'business', ready: false },
 ];
 
 export const SPACE_LABEL = Object.fromEntries(SPACES.map((s) => [s.value, s.label])) as Record<SpaceKind, string>;

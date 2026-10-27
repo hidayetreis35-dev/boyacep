@@ -24,7 +24,7 @@ describe('showcase pieces', () => {
   it('RoomStrip lists every room, with or without a photo, on phones and wide screens', async () => {
     const onSalon = jest.fn();
     const items = [
-      { key: 'living', title: 'Salon', photo: 'inspiration' as const, onPress: onSalon },
+      { key: 'living', title: 'Salon', photo: 'livingRoom' as const, onPress: onSalon },
       { key: 'home', title: 'Tüm ev', icon: 'home' as const, onPress: jest.fn() },
     ];
     const { rerender } = await render(<RoomStrip items={items} />);

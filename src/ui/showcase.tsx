@@ -144,14 +144,14 @@ export function QuickAction({
 export type RoomItem = { key: string; title: string; photo?: PhotoName; icon?: IconName; onPress: () => void };
 
 /** A tall photo card with the room's name on it. Without a photo it shows a calm tinted card with an icon. */
-export function RoomCard({ item, width }: { item: RoomItem; width?: DimensionValue }) {
+export function RoomCard({ item, width, landscape }: { item: RoomItem; width?: DimensionValue; landscape?: boolean }) {
   const p = usePalette();
   return (
     <PressableScale
       accessibilityRole="button"
       accessibilityLabel={item.title}
       onPress={item.onPress}
-      style={[styles.room, { width, backgroundColor: item.photo ? p.heroFrom : p.sageSoft }]}>
+      style={[styles.room, landscape && styles.roomLandscape, { width, backgroundColor: item.photo ? p.heroFrom : p.sageSoft }]}>
       {item.photo ? (
         <>
           <Photo name={item.photo} style={StyleSheet.absoluteFill} />
@@ -169,14 +169,16 @@ export function RoomCard({ item, width }: { item: RoomItem; width?: DimensionVal
   );
 }
 
-/** Rooms in a row: scrolls sideways on phones, fills the width on wide screens. */
+/** Rooms in a row: scrolls sideways on phones; on wide screens, a grid of up to seven per row. */
 export function RoomStrip({ items, wide }: { items: RoomItem[]; wide?: boolean }) {
   if (wide) {
+    const rows = Math.ceil(items.length / 7);
+    const columns = Math.ceil(items.length / rows);
     return (
-      <View style={styles.roomRow}>
+      <View style={styles.roomGrid}>
         {items.map((item) => (
-          <View key={item.key} style={{ flex: 1 }}>
-            <RoomCard item={item} width="100%" />
+          <View key={item.key} style={{ width: `${100 / columns}%`, padding: (space.md - 2) / 2 }}>
+            <RoomCard item={item} width="100%" landscape={rows > 1} />
           </View>
         ))}
       </View>
@@ -354,7 +356,8 @@ const styles = StyleSheet.create({
   room: { aspectRatio: 3 / 4, borderRadius: 18, overflow: 'hidden', justifyContent: 'flex-end' },
   roomIcon: { position: 'absolute', top: 0, left: 0, right: 0, bottom: 0, alignItems: 'center', justifyContent: 'center', paddingBottom: space.xl },
   roomTitle: { padding: space.md - 2 },
-  roomRow: { flexDirection: 'row', gap: space.md },
+  roomLandscape: { aspectRatio: 4 / 3 },
+  roomGrid: { flexDirection: 'row', flexWrap: 'wrap', margin: -(space.md - 2) / 2 },
   roomScrollOuter: { marginHorizontal: -space.lg },
   roomScroll: { gap: space.md - 2, paddingHorizontal: space.lg },
   sectionHeader: { flexDirection: 'row', alignItems: 'center', gap: space.sm, marginTop: space.sm },
