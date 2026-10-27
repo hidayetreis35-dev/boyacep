@@ -60,6 +60,9 @@ function project(overrides: Partial<ProjectRow> = {}): ProjectRow {
   };
 }
 
+// The first test renders the whole router cold, which can take over 5 s on CI.
+jest.setTimeout(20_000);
+
 beforeEach(async () => {
   jest.clearAllMocks();
   await AsyncStorage.setItem('boyacep.roles.v1', JSON.stringify(['homeowner']));
