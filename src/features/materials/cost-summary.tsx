@@ -3,33 +3,52 @@ import { StyleSheet, View } from 'react-native';
 import { COST_GROUP_LABEL, type CostGroup, type CostSummary } from '@/engine';
 import { t } from '@/i18n';
 import { formatMoney } from '@/lib/number';
-import { Disclosure, Gradient } from '@/ui/brand';
+import { Disclosure } from '@/ui/brand';
 import { AppText, Badge, Icon, Notice, Row, type IconName } from '@/ui/components';
-import { fonts, radius, space, useFeatureColour, usePalette } from '@/ui/theme';
+import { HeroPanel } from '@/ui/showcase';
+import { fonts, radius, space, usePalette, type Palette } from '@/ui/theme';
 
-const GROUP_STYLE: Record<CostGroup, { icon: IconName; colour: string }> = {
-  paint: { icon: 'color-fill', colour: '#FF6B2C' },
-  primer: { icon: 'water', colour: '#0EA5B7' },
-  filler: { icon: 'construct', colour: '#D99A1E' },
-  supplies: { icon: 'brush', colour: '#4C5FD5' },
-  labor: { icon: 'person', colour: '#C2367A' },
-  transport: { icon: 'car', colour: '#0E9F7E' },
-  other: { icon: 'add-circle', colour: '#6B7280' },
+type Tone = 'cta' | 'primary' | 'warning' | 'sage' | 'rose' | 'muted';
+
+const GROUP_STYLE: Record<CostGroup, { icon: IconName; tone: Tone }> = {
+  paint: { icon: 'color-fill', tone: 'cta' },
+  primer: { icon: 'water', tone: 'primary' },
+  filler: { icon: 'construct', tone: 'warning' },
+  supplies: { icon: 'brush', tone: 'sage' },
+  labor: { icon: 'person', tone: 'rose' },
+  transport: { icon: 'car', tone: 'primary' },
+  other: { icon: 'add-circle', tone: 'muted' },
 };
 
-/** Total in a big teal banner, then one card per cost group with a share bar. */
+/** Bar colour, icon tint and icon background for a group, from the palette. */
+function toneColours(p: Palette, tone: Tone): { bar: string; ink: string; soft: string } {
+  switch (tone) {
+    case 'cta':
+      return { bar: p.cta, ink: p.accent, soft: p.accentSoft };
+    case 'primary':
+      return { bar: p.primary, ink: p.primary, soft: p.primarySoft };
+    case 'warning':
+      return { bar: p.warning, ink: p.warning, soft: p.warningSoft };
+    case 'sage':
+      return { bar: p.sage, ink: p.sageInk, soft: p.sageSoft };
+    case 'rose':
+      return { bar: p.rose, ink: p.roseInk, soft: p.roseSoft };
+    default:
+      return { bar: p.textMuted, ink: p.textMuted, soft: p.surfaceMuted };
+  }
+}
+
+/** Total in a big navy banner, then one card per cost group with a share bar. */
 export function CostSummaryCard({ summary, showGroups = true }: { summary: CostSummary; showGroups?: boolean }) {
   const p = usePalette();
-  const f = useFeatureColour('cost');
   const groups = summary.groups.filter((g) => g.total > 0 || g.missing > 0);
   return (
     <View style={{ gap: space.md }}>
-      <View style={styles.hero} accessibilityLiveRegion="polite">
-        <Gradient from={f.base} to="#1B2B4B" />
-        <AppText variant="overline" style={{ color: '#FFFFFF', opacity: 0.9 }}>
+      <HeroPanel liveRegion>
+        <AppText variant="overline" style={{ color: p.onHeroMuted }}>
           {t('Tahmini toplam')}
         </AppText>
-        <AppText variant="display" style={{ color: '#FFFFFF', fontSize: 40, lineHeight: 46 }} testID="cost-total">
+        <AppText variant="display" style={{ color: p.onHero, fontSize: 40, lineHeight: 46 }} testID="cost-total">
           {formatMoney(summary.total)}
         </AppText>
         <View style={{ flexDirection: 'row', flexWrap: 'wrap', gap: space.sm }}>
@@ -37,23 +56,24 @@ export function CostSummaryCard({ summary, showGroups = true }: { summary: CostS
           <Badge label={t('Tahmini: {amount}', { amount: formatMoney(summary.estimate) })} tone="accent" />
         </View>
         {summary.budgetLeft !== null ? (
-          <AppText variant="bodyStrong" style={{ color: '#FFFFFF' }}>
+          <AppText variant="bodyStrong" style={{ color: p.onHero }}>
             {summary.budgetLeft >= 0 ? t('Bütçede kalan') : t('Bütçe aşımı')}: {formatMoney(Math.abs(summary.budgetLeft))}
           </AppText>
         ) : null}
-      </View>
+      </HeroPanel>
 
       {showGroups && groups.length > 0 ? (
         <View style={styles.grid}>
           {groups.map((g) => {
             const style = GROUP_STYLE[g.group];
+            const c = toneColours(p, style.tone);
             const share = summary.total > 0 ? g.total / summary.total : 0;
             return (
               <View key={g.group} style={styles.cell}>
                 <View style={[styles.group, { backgroundColor: p.surface, borderColor: p.border }]}>
                   <View style={{ flexDirection: 'row', alignItems: 'center', gap: space.sm }}>
-                    <View style={[styles.groupIcon, { backgroundColor: style.colour }]}>
-                      <Icon name={style.icon} size={14} color="#FFFFFF" />
+                    <View style={[styles.groupIcon, { backgroundColor: c.soft }]}>
+                      <Icon name={style.icon} size={14} color={c.ink} />
                     </View>
                     <AppText variant="small" tone="muted" style={{ flex: 1 }} numberOfLines={1}>
                       {t(COST_GROUP_LABEL[g.group])}
@@ -63,7 +83,7 @@ export function CostSummaryCard({ summary, showGroups = true }: { summary: CostS
                     {formatMoney(g.total)}
                   </AppText>
                   <View style={[styles.bar, { backgroundColor: p.surfaceMuted }]}>
-                    <View style={{ width: `${Math.round(share * 100)}%`, height: '100%', borderRadius: 3, backgroundColor: style.colour }} />
+                    <View style={{ width: `${Math.round(share * 100)}%`, height: '100%', borderRadius: 3, backgroundColor: c.bar }} />
                   </View>
                   {g.missing > 0 ? (
                     <AppText variant="caption" tone="danger">
@@ -104,7 +124,6 @@ export function CostSummaryCard({ summary, showGroups = true }: { summary: CostS
 }
 
 const styles = StyleSheet.create({
-  hero: { borderRadius: radius.xl, padding: space.xl, gap: space.sm, overflow: 'hidden' },
   grid: { flexDirection: 'row', flexWrap: 'wrap', margin: -space.xs },
   cell: { width: '50%', padding: space.xs },
   group: { borderRadius: radius.lg, borderWidth: StyleSheet.hairlineWidth, padding: space.md, gap: space.xs },

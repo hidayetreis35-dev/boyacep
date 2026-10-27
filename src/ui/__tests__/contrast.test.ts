@@ -1,4 +1,5 @@
 import { luminance } from '@/features/colour/palette';
+import { VERDICT_SHADES } from '@/features/inspect/inspect-result';
 import { featurePalettes, palettes, type FeatureKey } from '@/ui/theme';
 
 /** WCAG contrast ratio between two colours. */
@@ -51,5 +52,11 @@ describe.each(['light', 'dark'] as const)('%s feature colour contrast', (scheme)
   it.each(FEATURES)('%s ink on its soft tint meets WCAG AA', (key) => {
     const { ink, soft } = featurePalettes[scheme][key];
     expect(contrast(ink, soft)).toBeGreaterThanOrEqual(4.5);
+  });
+});
+
+describe('verdict banner shades', () => {
+  it.each(Object.entries(VERDICT_SHADES))('white text on %s meets WCAG AA', (_, shade) => {
+    expect(contrast('#FFFFFF', shade)).toBeGreaterThanOrEqual(4.5);
   });
 });

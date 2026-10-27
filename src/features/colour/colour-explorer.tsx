@@ -258,8 +258,8 @@ export function SelectedColour({
           accessibilityRole="button"
           accessibilityLabel={favourite ? t('Favorilerden çıkar') : t('Favorilere ekle')}
           onPress={onToggleFavourite}
-          style={[styles.pill, { backgroundColor: favourite ? p.accentSoft : p.surfaceMuted }]}>
-          <Icon name={favourite ? 'heart' : 'heart-outline'} size={18} color={favourite ? '#C2367A' : p.text} />
+          style={[styles.pill, { backgroundColor: favourite ? p.roseSoft : p.surfaceMuted }]}>
+          <Icon name={favourite ? 'heart' : 'heart-outline'} size={18} color={favourite ? p.rose : p.text} />
           <AppText variant="small" style={{ fontFamily: fonts.semibold }}>
             {favourite ? t('Favorilerde') : t('Favorilere ekle')}
           </AppText>

@@ -22,6 +22,37 @@ export function PaintStripe({ style }: { style?: StyleProp<ViewStyle> }) {
 }
 
 /**
+ * The deep result banner: navy gradient, white text and the paint stripe along
+ * the bottom. `from` and `to` may swap in other deep shades, never theme
+ * tokens that turn light in dark mode, because the text on it stays white.
+ */
+export function HeroPanel({
+  children,
+  from,
+  to,
+  liveRegion,
+  testID,
+}: {
+  children: ReactNode;
+  from?: string;
+  to?: string;
+  liveRegion?: boolean;
+  testID?: string;
+}) {
+  const p = usePalette();
+  return (
+    <View
+      accessibilityLiveRegion={liveRegion ? 'polite' : undefined}
+      style={[styles.panel, { backgroundColor: from ?? p.heroFrom }, shadowOf(p, 2)]}
+      testID={testID}>
+      <Gradient from={from ?? p.heroFrom} to={to ?? p.heroTo} />
+      {children}
+      <PaintStripe style={styles.heroStripe} />
+    </View>
+  );
+}
+
+/**
  * A full-width photo with a dark fade at the bottom, a big headline, one line
  * of text and one orange button. Used once per screen, at the top.
  */
@@ -303,6 +334,7 @@ export function SkeletonCard({ lines = 2, testID = 'skeleton' }: { lines?: numbe
 
 const styles = StyleSheet.create({
   stripe: { flexDirection: 'row', height: 5 },
+  panel: { borderRadius: radius.xl, padding: space.xl, paddingBottom: space.xl + 5, gap: space.sm, overflow: 'hidden' },
   hero: { borderRadius: radius.xl, overflow: 'hidden', justifyContent: 'flex-end' },
   heroText: { padding: space.xl - 4, paddingBottom: space.xl, gap: space.sm },
   heroTitle: { fontSize: 28, lineHeight: 32, textShadowColor: 'rgba(0, 0, 0, 0.35)', textShadowRadius: 12, textShadowOffset: { width: 0, height: 1 } },

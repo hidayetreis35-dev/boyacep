@@ -8,8 +8,9 @@ import { useCreateProject } from '@/features/projects/queries';
 import { RegionalCostCard } from '@/features/market/regional-cost';
 import { t } from '@/i18n';
 import { formatNumber, parseDecimal } from '@/lib/number';
-import { Disclosure, Gradient, SectionTitle, StatTile, TileRow } from '@/ui/brand';
+import { Disclosure, SectionTitle, StatTile, TileRow } from '@/ui/brand';
 import { AppText, Badge, Button, Card, Icon, Notice, Row, type IconName } from '@/ui/components';
+import { HeroPanel } from '@/ui/showcase';
 import { fonts, radius, space, useFeatureColour, usePalette } from '@/ui/theme';
 
 import type { RoomForm } from './form';
@@ -65,25 +66,26 @@ function buyText(paints: MaterialItem[]): string {
     .join(' · ');
 }
 
-/** Orange result banner with the headline number. */
+/** Navy result banner with the headline number. */
 function ResultHero({ overline, litres, caption, buy, estimate }: { overline: string; litres: number; caption: string; buy: string; estimate: boolean }) {
   const p = usePalette();
-  const f = useFeatureColour('calculate');
   return (
-    <View style={styles.hero}>
-      <Gradient from={f.base} to="#C2367A" />
-      <AppText variant="overline" style={{ color: '#FFFFFF', opacity: 0.9 }}>
-        {overline}
-      </AppText>
+    <HeroPanel>
+      <View style={{ flexDirection: 'row', alignItems: 'center', gap: space.sm }}>
+        <Icon name="color-fill" size={18} color={p.cta} />
+        <AppText variant="overline" style={{ color: p.onHeroMuted }}>
+          {overline}
+        </AppText>
+      </View>
       <View style={{ flexDirection: 'row', alignItems: 'baseline', gap: space.sm }}>
-        <AppText variant="display" style={{ color: '#FFFFFF', fontSize: 52, lineHeight: 58 }} testID="total-litres">
+        <AppText variant="display" style={{ color: p.onHero, fontSize: 52, lineHeight: 58 }} testID="total-litres">
           {formatNumber(litres)}
         </AppText>
-        <AppText variant="heading" style={{ color: '#FFFFFF' }}>
+        <AppText variant="heading" style={{ color: p.onHero }}>
           {t('litre boya')}
         </AppText>
       </View>
-      <AppText style={{ color: '#FFFFFF', opacity: 0.92 }}>{caption}</AppText>
+      <AppText style={{ color: p.onHeroMuted }}>{caption}</AppText>
       <View style={[styles.heroBuy, { backgroundColor: p.surface }]}>
         <Icon name="cart" size={18} color={p.text} />
         <AppText variant="small" style={{ flex: 1, fontFamily: fonts.semibold }}>
@@ -91,7 +93,7 @@ function ResultHero({ overline, litres, caption, buy, estimate }: { overline: st
         </AppText>
         {estimate ? <Badge label={t('Tahmini')} tone="accent" /> : null}
       </View>
-    </View>
+    </HeroPanel>
   );
 }
 
@@ -384,7 +386,6 @@ export function HomeResult({
 }
 
 const styles = StyleSheet.create({
-  hero: { borderRadius: radius.xl, padding: space.xl, gap: space.sm, overflow: 'hidden' },
   heroBuy: { flexDirection: 'row', alignItems: 'center', gap: space.sm, borderRadius: radius.md, padding: space.md, marginTop: space.sm },
   cans: { flexDirection: 'row', flexWrap: 'wrap', gap: space.xs },
   can: { flexDirection: 'row', alignItems: 'center', gap: 6, borderRadius: radius.pill, paddingHorizontal: space.md, paddingVertical: 6 },

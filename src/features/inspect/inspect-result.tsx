@@ -3,9 +3,10 @@ import { useState } from 'react';
 import { StyleSheet, View } from 'react-native';
 
 import { t } from '@/i18n';
-import { Gradient, Segmented, SectionTitle } from '@/ui/brand';
+import { Segmented, SectionTitle } from '@/ui/brand';
 import { AppText, Button, Card, Icon, Notice, type IconName } from '@/ui/components';
 import { PressableScale } from '@/ui/motion';
+import { HeroPanel } from '@/ui/showcase';
 import { fonts, radius, space, useFeatureColour, usePalette } from '@/ui/theme';
 
 import { SaveInspection } from '@/features/survey/save-inspection';
@@ -14,7 +15,16 @@ import { assess, SEVERITY_LABEL, workPlan, type Place, type Severity, type Sympt
 import { SpotPhoto, type Spot } from './spot-photo';
 
 
-export const VERDICT_SHADES = { indigo: '#4C5FD5', teal: '#0A7570' } as const;
+/** Deep fixed shades for the verdict banner: brick, amber, navy and sage. */
+export const VERDICT_SHADES = {
+  brick: '#B42318',
+  brickDeep: '#5E2B3A',
+  amber: '#8A4B06',
+  navy: '#1F3358',
+  navyDeep: '#121C33',
+  sage: '#2F5640',
+  sageDeep: '#1F3A2B',
+} as const;
 
 type Verdict = { title: string; text: string; icon: IconName; from: string; to: string };
 
@@ -28,8 +38,8 @@ function verdictOf(worst: Severity | null, blocked: boolean): Verdict {
       title: t('Önce bir uzmana göster'),
       text: t('İşaretlediklerinden en az biri boyayla çözülmez. Nedeni giderilmeden yapılan boya kısa sürede bozulur.'),
       icon: 'alert-circle',
-      from: '#B42318',
-      to: '#5E2B3A',
+      from: VERDICT_SHADES.brick,
+      to: VERDICT_SHADES.brickDeep,
     };
   }
   if (worst === 'careful') {
@@ -37,8 +47,8 @@ function verdictOf(worst: Severity | null, blocked: boolean): Verdict {
       title: t('Hazırlık gerekiyor'),
       text: t('Önce nedeni çöz, sonra boyaya geç. Aşağıdaki sırayı izle.'),
       icon: 'warning',
-      from: VERDICT_SHADES.indigo,
-      to: '#2E3C9E',
+      from: VERDICT_SHADES.amber,
+      to: VERDICT_SHADES.navyDeep,
     };
   }
   if (worst === 'diy') {
@@ -46,16 +56,16 @@ function verdictOf(worst: Severity | null, blocked: boolean): Verdict {
       title: t('Biraz hazırlıkla boyanır'),
       text: t('Aşağıdaki sırayı izlersen bu işi kendin yapabilirsin.'),
       icon: 'construct',
-      from: VERDICT_SHADES.indigo,
-      to: VERDICT_SHADES.teal,
+      from: VERDICT_SHADES.navy,
+      to: VERDICT_SHADES.sage,
     };
   }
   return {
     title: t('Boyaya hazır görünüyor'),
     text: t('İşaretlediğin bir sorun yok. Temel hazırlıkla boyayabilirsin.'),
     icon: 'checkmark-circle',
-    from: VERDICT_SHADES.teal,
-    to: '#0B5F6B',
+    from: VERDICT_SHADES.sage,
+    to: VERDICT_SHADES.sageDeep,
   };
 }
 
@@ -174,8 +184,7 @@ export function InspectResult({
               <SpotPhoto uri={photo.uri} aspect={photo.width / photo.height} spots={spots} marking={false} maxHeight={200} />
             </View>
           ) : null}
-          <View style={styles.hero}>
-            <Gradient from={verdict.from} to={verdict.to} />
+          <HeroPanel from={verdict.from} to={verdict.to}>
             <View style={{ flexDirection: 'row', alignItems: 'center', gap: space.sm }}>
               <Icon name={verdict.icon} size={22} color="#FFFFFF" />
               <AppText variant="overline" style={{ color: '#FFFFFF', opacity: 0.9 }}>
@@ -186,7 +195,7 @@ export function InspectResult({
               {verdict.title}
             </AppText>
             <AppText style={{ color: '#FFFFFF', opacity: 0.92 }}>{verdict.text}</AppText>
-          </View>
+          </HeroPanel>
 
           {symptoms.length > 0 ? (
             <Card>
@@ -258,7 +267,6 @@ export function InspectResult({
 }
 
 const styles = StyleSheet.create({
-  hero: { borderRadius: radius.xl, padding: space.xl, gap: space.sm, overflow: 'hidden' },
   chips: { flexDirection: 'row', flexWrap: 'wrap', gap: space.xs },
   chip: { borderRadius: radius.pill, paddingHorizontal: space.md, paddingVertical: 6 },
   step: { flexDirection: 'row', gap: space.md, alignItems: 'flex-start', paddingVertical: space.xs },
