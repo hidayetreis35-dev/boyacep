@@ -1952,4 +1952,8 @@ export const en: Record<string, Translation> = {
   "Oda oda yenileme planı": "Room-by-room plan",
   "Plan, odalara yazdığın yüzey türü ve durumuna göre hazırlandı. Bekleme süreleri için boyanın ve astarın kutusuna bak.": "The plan follows the surface type and condition you gave each room. For drying times, check the paint and primer cans.",
   "Boya Rehberi’nde adım adım": "Step by step in the Paint Guide",
+  "{projects} paylaşılan proje · {waiting} teklif yanıt bekliyor": "Shared projects: {projects} · Awaiting reply: {waiting}",
+  "İşlerin burada": "Your work is here",
+  "Ev sahiplerinin paylaştığı projeleri gör, ölçülere göre PDF teklif hazırla.": "See projects homeowners shared with you and make PDF quotes from their measurements.",
+  "Usta Paneli’ni aç": "Open the Painter Panel",
 };

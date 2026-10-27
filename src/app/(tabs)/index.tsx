@@ -12,6 +12,7 @@ import { SearchBox } from '@/features/home/search-box';
 import { useCity } from '@/features/market/city';
 import { provinceByCode } from '@/features/market/provinces';
 import { ContinueProject } from '@/features/projects/continue-card';
+import { ProHomeCard } from '@/features/pros/pro-home-card';
 import { useProjects } from '@/features/projects/queries';
 import { msg, t } from '@/i18n';
 import { AppText, Icon, useWide, type IconName } from '@/ui/components';
@@ -121,12 +122,19 @@ function QuickActions({ wide }: { wide: boolean }) {
 /** Rule-based, from the user's own data only: their open project and their city's prices. */
 function ForYou({ wide }: { wide: boolean }) {
   const { session, db } = useSession();
+  const account = useAccount();
   const projects = useProjects();
+  const pro = !!db && !!session && account.data?.profile.active_role === 'pro';
   let project: ReactNode = null;
   if (db && session && projects.isSuccess) project = <ContinueProject projects={projects.data} />;
   else if (db && session && projects.isPending) project = <SkeletonCard />;
   return (
     <View style={wide ? styles.twoCols : { gap: space.md }}>
+      {pro ? (
+        <View style={wide ? { flex: 1 } : null}>
+          <ProHomeCard />
+        </View>
+      ) : null}
       {project ? <View style={wide ? { flex: 1 } : null}>{project}</View> : null}
       <View style={[wide ? { flex: 1 } : null, { gap: space.md }]}>
         {db && session ? <CareNudge /> : null}
