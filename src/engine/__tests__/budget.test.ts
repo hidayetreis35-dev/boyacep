@@ -1,4 +1,4 @@
-import { summarizeBudget, summarizeCost, summarizeHomeBudget, type PricedMaterial } from '@/engine';
+import { monthlySpending, summarizeBudget, summarizeCost, summarizeHomeBudget, type PricedMaterial } from '@/engine';
 
 const paint: PricedMaterial = { category: 'interior_paint', quantity: 2, unitPrice: 2000, priceSource: 'store' };
 const primer: PricedMaterial = { category: 'primer', quantity: 1, unitPrice: 800, priceSource: 'estimate' };
@@ -99,5 +99,33 @@ describe('summarizeHomeBudget', () => {
   it('has no budget figures when no project has a budget, and ignores unknown projects', () => {
     const s = summarizeHomeBudget([{ id: 'a', budget: 0 }], [{ projectId: 'x', category: 'paint', amount: 500 }]);
     expect(s).toMatchObject({ budget: null, left: null, usedShare: null, spent: 0, categories: [] });
+  });
+});
+
+describe('monthlySpending', () => {
+  it('adds up each of the last six months, oldest first, keeping empty months', () => {
+    const months = monthlySpending(
+      [
+        { spentOn: '2026-10-03', amount: 1200 },
+        { spentOn: '2026-10-21', amount: 300.5 },
+        { spentOn: '2026-08-15', amount: 4500 },
+        { spentOn: '2026-04-30', amount: 999 }, // too old
+        { spentOn: '2026-11-01', amount: 50 }, // after today
+      ],
+      '2026-10-27',
+    );
+    expect(months).toEqual([
+      { month: '2026-05', amount: 0 },
+      { month: '2026-06', amount: 0 },
+      { month: '2026-07', amount: 0 },
+      { month: '2026-08', amount: 4500 },
+      { month: '2026-09', amount: 0 },
+      { month: '2026-10', amount: 1500.5 },
+    ]);
+  });
+
+  it('crosses the new year', () => {
+    expect(monthlySpending([{ spentOn: '2025-12-31', amount: 10 }], '2026-02-01', 3).map((m) => m.month)).toEqual(['2025-12', '2026-01', '2026-02']);
+    expect(monthlySpending([{ spentOn: '2025-12-31', amount: 10 }], '2026-02-01', 3)[0].amount).toBe(10);
   });
 });

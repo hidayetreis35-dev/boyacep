@@ -159,3 +159,29 @@ export function summarizeHomeBudget(projects: HomeBudgetProject[], expenses: Hom
     projects: rows,
   };
 }
+
+export interface DatedExpense {
+  /** YYYY-MM-DD */
+  spentOn: string;
+  amount: number;
+}
+
+/**
+ * Spending per calendar month for the last `months` months, oldest first,
+ * ending with the month of `today` (YYYY-MM-DD). Months with nothing spent
+ * are kept as 0 so the chart's gaps are real.
+ */
+export function monthlySpending(expenses: DatedExpense[], today: string, months = 6): { month: string; amount: number }[] {
+  const [year, month] = today.slice(0, 7).split('-').map(Number);
+  const last = year * 12 + month - 1;
+  const keys = Array.from({ length: months }, (_, i) => {
+    const index = last - (months - 1 - i);
+    return `${Math.floor(index / 12)}-${String((index % 12) + 1).padStart(2, '0')}`;
+  });
+  const totals = new Map(keys.map((k) => [k, 0]));
+  for (const e of expenses) {
+    const key = e.spentOn.slice(0, 7);
+    if (totals.has(key)) totals.set(key, totals.get(key)! + e.amount);
+  }
+  return keys.map((key) => ({ month: key, amount: round(totals.get(key)!) }));
+}

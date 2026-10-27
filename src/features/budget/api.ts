@@ -42,8 +42,16 @@ export async function listExpenses(db: DbClient, projectId: string): Promise<Exp
 }
 
 /** Every expense of the signed-in user (RLS keeps it to their own projects), for "Ev Bütçem". */
-export async function listAllExpenses(db: DbClient): Promise<Pick<ProjectExpenseRow, 'id' | 'project_id' | 'category' | 'amount'>[]> {
-  const { data, error } = await db.from('project_expenses').select('id, project_id, category, amount').limit(5000);
+export type HomeExpense = Pick<ProjectExpenseRow, 'id' | 'project_id' | 'category' | 'amount' | 'label' | 'spent_on' | 'created_at'>;
+
+/** Newest first, so the latest spending is in the list even if there are thousands. */
+export async function listAllExpenses(db: DbClient): Promise<HomeExpense[]> {
+  const { data, error } = await db
+    .from('project_expenses')
+    .select('id, project_id, category, amount, label, spent_on, created_at')
+    .order('spent_on', { ascending: false })
+    .order('created_at', { ascending: false })
+    .limit(5000);
   if (error) throw new Error(error.message);
   return data;
 }

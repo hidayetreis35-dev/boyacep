@@ -3,6 +3,7 @@ import { fireEvent, screen } from '@testing-library/react-native';
 import { renderRouter } from 'expo-router/testing-library';
 
 import * as budgetApi from '@/features/budget/api';
+import { monthLabel } from '@/features/budget/charts';
 import * as projectsApi from '@/features/projects/api';
 import type { ProjectRow } from '@/lib/database.types';
 
@@ -49,6 +50,23 @@ function project(overrides: Partial<ProjectRow> = {}): ProjectRow {
   };
 }
 
+/** A day in the month `back` months before this one, as YYYY-MM-DD. */
+function monthsAgo(back: number, day = 15): string {
+  const d = new Date();
+  const m = new Date(d.getFullYear(), d.getMonth() - back, day);
+  return `${m.getFullYear()}-${String(m.getMonth() + 1).padStart(2, '0')}-${String(day).padStart(2, '0')}`;
+}
+
+const expense = (id: string, project_id: string, category: 'paint' | 'material' | 'labor' | 'other', amount: number, label: string, spent_on: string) => ({
+  id,
+  project_id,
+  category,
+  amount,
+  label,
+  spent_on,
+  created_at: `${spent_on}T10:00:00Z`,
+});
+
 beforeEach(async () => {
   jest.clearAllMocks();
   await AsyncStorage.setItem('boyacep.roles.v1', JSON.stringify(['homeowner']));
@@ -71,18 +89,31 @@ describe('Ev Bütçem', () => {
       project({ id: 'p1', title: 'Salon', budget: 10000 }),
       project({ id: 'p2', title: 'Yatak odası', budget: 5000 }),
     ]);
+    // Newest first, as the server sorts them.
     bapi.listAllExpenses.mockResolvedValue([
-      { id: 'e1', project_id: 'p1', category: 'paint', amount: 3000 },
-      { id: 'e2', project_id: 'p1', category: 'labor', amount: 4500 },
-      { id: 'e3', project_id: 'p2', category: 'material', amount: 1500 },
+      expense('e1', 'p1', 'paint', 3000, 'Boya alımı', monthsAgo(0, 2)),
+      expense('e3', 'p2', 'material', 1500, 'Rulo ve fırça', monthsAgo(0, 1)),
+      expense('e2', 'p1', 'labor', 4500, 'Usta ödemesi', monthsAgo(1)),
     ]);
     await renderRouter('./src/app', { initialUrl: '/budget' });
     expect(await screen.findByTestId('home-budget-total')).toHaveTextContent('15.000 ₺');
-    expect(screen.getByText('%60')).toBeTruthy();
+    expect(screen.getByText('%60 kullanıldı')).toBeTruthy();
     expect(screen.getByText('9.000 ₺')).toBeTruthy();
     expect(screen.getByText('6.000 ₺')).toBeTruthy();
     expect(screen.getByText('İşçilik')).toBeTruthy();
     expect(screen.getByText('%50')).toBeTruthy();
+    expect(screen.getByTestId('category-bar').props.accessibilityLabel).toBe('Boya %33, Malzeme %17, İşçilik %50');
+
+    // This month first; a tap on last month's bar shows its total.
+    expect(screen.getByTestId('month-total')).toHaveTextContent('4.500 ₺');
+    await fireEvent.press(screen.getByRole('button', { name: `${monthLabel(monthsAgo(2).slice(0, 7))}: Harcama yok` }));
+    expect(screen.getByTestId('month-total')).toHaveTextContent('Harcama yok');
+    await fireEvent.press(screen.getByRole('button', { name: `${monthLabel(monthsAgo(1).slice(0, 7))}: 4.500 ₺` }));
+    expect(screen.getByTestId('month-total')).toHaveTextContent('4.500 ₺');
+
+    // Recent spending, newest first, opens its project.
+    expect(screen.getByText('Usta ödemesi')).toBeTruthy();
+    expect(screen.getByText('Rulo ve fırça')).toBeTruthy();
     // Two projects: adding an expense asks which one.
     await fireEvent.press(screen.getByText('Yeni Harcama Ekle'));
     expect(screen.getByText('Hangi projeye?')).toBeTruthy();
