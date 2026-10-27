@@ -1,5 +1,5 @@
 import AsyncStorage from '@react-native-async-storage/async-storage';
-import { fireEvent, screen, waitFor } from '@testing-library/react-native';
+import { fireEvent, screen, waitFor, within } from '@testing-library/react-native';
 import { Linking } from 'react-native';
 import { renderRouter } from 'expo-router/testing-library';
 
@@ -8,7 +8,7 @@ import * as budgetApi from '@/features/budget/api';
 import { EMPTY_ROOM_FORM } from '@/features/calculator/form';
 import * as projectsApi from '@/features/projects/api';
 import { clearPendingRoom, getPendingRoom, setPendingRoom } from '@/features/projects/pending-room';
-import type { ProjectRow } from '@/lib/database.types';
+import type { ProjectRow, QuoteItemRow, QuoteRow } from '@/lib/database.types';
 
 // A signed-in session against a fake backend; the data layer is mocked below.
 jest.mock('@/lib/supabase', () => ({
@@ -44,6 +44,46 @@ jest.mock('@/features/budget/api', () => ({
   deleteReceipts: jest.fn(async () => {}),
 }));
 const bapi = jest.mocked(budgetApi);
+jest.mock('@/features/quotes/api', () => ({
+  ...jest.requireActual('@/features/quotes/api'),
+  listReceivedQuotes: jest.fn(async () => []),
+  listQuoteItems: jest.fn(async () => []),
+}));
+const qapi = jest.mocked(jest.requireMock('@/features/quotes/api') as { listReceivedQuotes: jest.Mock; listQuoteItems: jest.Mock });
+
+function quote(id: string, title: string, status: QuoteRow['status'], vat_rate = 20): QuoteRow {
+  return {
+    id,
+    pro_id: `pro-${id}`,
+    project_id: 'p1',
+    number: 1,
+    title,
+    customer_name: '',
+    customer_contact: '',
+    notes: '',
+    vat_rate,
+    discount: 0,
+    currency: 'TRY',
+    valid_until: null,
+    status,
+    sent_at: '2026-10-20T10:00:00Z',
+    responded_at: null,
+    created_at: '',
+    updated_at: '',
+  };
+}
+
+const item = (quote_id: string, kind: QuoteItemRow['kind'], unit_price: number): QuoteItemRow => ({
+  id: `${quote_id}-${kind}`,
+  quote_id,
+  kind,
+  description: kind,
+  quantity: 1,
+  unit: 'iş',
+  unit_price,
+  sort_order: 0,
+  created_at: '',
+});
 
 function project(overrides: Partial<ProjectRow> = {}): ProjectRow {
   return {
@@ -175,6 +215,27 @@ describe('Project detail', () => {
     expect(await screen.findByText('Proje toplamı')).toBeTruthy();
     // 35 m² walls + 12 m² ceiling, 2 coats, 10 m²/L, +10 %: 7.7 + 2.6 = 10.3 L
     expect(screen.getAllByText('10,3 L').length).toBeGreaterThan(0);
+  });
+
+  it('compares the quotes painters sent, cheapest first, leaving out withdrawn ones', async () => {
+    api.getProject.mockResolvedValue({ project: project(), rooms: [] });
+    qapi.listReceivedQuotes.mockResolvedValue([
+      quote('q1', 'Ahmet Usta teklifi', 'sent'),
+      quote('q2', 'Renk Boya teklifi', 'sent', 0),
+      quote('q3', 'Eski teklif', 'withdrawn'),
+    ]);
+    qapi.listQuoteItems.mockResolvedValue([item('q1', 'labor', 10000), item('q1', 'material', 4000), item('q2', 'labor', 12000), item('q2', 'material', 2000)]);
+    await renderRouter('./src/app', { initialUrl: '/projects/p1' });
+    const card = within(await screen.findByTestId('quote-comparison'));
+    expect(qapi.listQuoteItems).toHaveBeenCalledWith(expect.anything(), ['q1', 'q2']);
+    // q2 has no VAT: 14.000 ₺; q1 is 14.000 ₺ + 20 % = 16.800 ₺.
+    const cheapest = within(screen.getByTestId('compare-q2'));
+    expect(cheapest.getByText('14.000,00 ₺')).toBeTruthy();
+    expect(cheapest.getByText('En düşük fiyat')).toBeTruthy();
+    expect(within(screen.getByTestId('compare-q1')).getByText('+2.800,00 ₺')).toBeTruthy();
+    expect(card.queryByText('Eski teklif')).toBeNull();
+    // Every quote is still listed below, withdrawn too.
+    expect(screen.getByText('Eski teklif')).toBeTruthy();
   });
 
   it('saves a new room through the room editor', async () => {

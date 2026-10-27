@@ -1895,4 +1895,8 @@ export const en: Record<string, Translation> = {
   "Ekim {year}": "October {year}",
   "Kasım {year}": "November {year}",
   "Aralık {year}": "December {year}",
+  "Teklifleri karşılaştır": "Compare quotes",
+  "İşçilik {labor} · Malzeme {material}": "Labour {labor} · Materials {material}",
+  "En düşük fiyat": "Lowest price",
+  "Toplamlara KDV ve indirim dahil. En düşük fiyat her zaman en iyi teklif değildir: işin kapsamına, malzemenin markasına ve geçerlilik tarihine de bak.": "Totals include VAT and discounts. The lowest price isn't always the best quote: also check the scope of work, the brand of materials and the expiry date.",
 };

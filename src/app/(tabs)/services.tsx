@@ -1,11 +1,11 @@
 import { router, type Href } from 'expo-router';
-import { useState } from 'react';
-import { StyleSheet, View } from 'react-native';
+import { useRef, useState } from 'react';
+import { StyleSheet, View, type HostInstance } from 'react-native';
 
 import { SERVICE_CATEGORIES, type ServiceCategory } from '@/features/home/actions';
 import { msg, t, toLower } from '@/i18n';
 import { SectionTitle } from '@/ui/brand';
-import { AppText, Badge, Button, Card, Icon, Screen, TextField, type IconName } from '@/ui/components';
+import { AppText, Badge, Button, Card, Icon, Screen, TextField, useScrollToView, type IconName } from '@/ui/components';
 import { PressableScale } from '@/ui/motion';
 import { QuickAction } from '@/ui/showcase';
 import { fonts, radius, shadowOf, space, useFeatureColour, usePalette, type FeatureKey } from '@/ui/theme';
@@ -71,17 +71,20 @@ function PainterSteps() {
   );
 }
 
-export default function ServicesScreen() {
+function Services() {
   const p = usePalette();
   const [query, setQuery] = useState('');
   const q = toLower(query.trim());
   const shown = q ? SERVICE_CATEGORIES.filter((c) => toLower(t(c.title)).includes(q)) : SERVICE_CATEGORIES;
+  const scrollTo = useScrollToView();
+  const steps = useRef<HostInstance>(null);
 
+  // Painters are the open trade: their tile leads to the steps that work today.
   const open = (c: ServiceCategory) =>
-    c.open ? undefined : router.push({ pathname: '/soon/[feature]', params: { feature: c.key } });
+    c.open ? scrollTo(steps.current) : router.push({ pathname: '/soon/[feature]', params: { feature: c.key } });
 
   return (
-    <Screen>
+    <>
       <View style={{ gap: 4 }}>
         <AppText variant="title" accessibilityRole="header">
           {t('Keşfet')}
@@ -111,7 +114,9 @@ export default function ServicesScreen() {
       </View>
       {shown.length === 0 ? <AppText tone="muted">{t('Bu adla bir hizmet bulamadık.')}</AppText> : null}
 
-      <PainterSteps />
+      <View ref={steps} testID="painter-steps">
+        <PainterSteps />
+      </View>
 
       <SectionTitle title={t('Yakındaki Ustalar')} />
       <Card>
@@ -129,6 +134,14 @@ export default function ServicesScreen() {
         <AppText tone="muted">{t('Profilini oluştur, ev sahiplerinin paylaştığı projeleri gör ve PDF teklif hazırla.')}</AppText>
         <Button label={t('Usta Paneli')} icon="construct" variant="secondary" onPress={() => router.push('/usta')} />
       </Card>
+    </>
+  );
+}
+
+export default function ServicesScreen() {
+  return (
+    <Screen>
+      <Services />
     </Screen>
   );
 }
