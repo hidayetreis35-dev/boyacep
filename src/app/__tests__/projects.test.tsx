@@ -215,6 +215,13 @@ describe('Project detail', () => {
     expect(await screen.findByText('Proje toplamı')).toBeTruthy();
     // 35 m² walls + 12 m² ceiling, 2 coats, 10 m²/L, +10 %: 7.7 + 2.6 = 10.3 L
     expect(screen.getAllByText('10,3 L').length).toBeGreaterThan(0);
+
+    // A painted wall in good shape: sand, ceiling first, two coats; no primer.
+    await fireEvent.press(screen.getByText('Oda oda yenileme planı'));
+    expect(screen.getByTestId('plan-sand')).toHaveTextContent(/Hafif zımpara/);
+    expect(screen.getByTestId('plan-ceiling')).toHaveTextContent(/Önce tavan/);
+    expect(screen.getByTestId('plan-walls2')).toHaveTextContent(/Duvarlar: 2 kat/);
+    expect(screen.queryByTestId('plan-prime')).toBeNull();
   });
 
   it('compares the quotes painters sent, cheapest first, leaving out withdrawn ones', async () => {

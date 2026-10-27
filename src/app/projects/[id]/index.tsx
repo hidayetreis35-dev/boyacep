@@ -12,6 +12,7 @@ import { ReceivedQuotes } from '@/features/quotes/received-quotes';
 import { ProjectSteps } from '@/features/projects/project-steps';
 import { roomToInput, STATUS_LABEL, STATUS_ORDER, type RoomWithOpenings } from '@/features/projects/mapping';
 import { useDeleteProject, useProject, useSetProjectStatus } from '@/features/projects/queries';
+import { RoomPlan } from '@/features/projects/room-plan';
 import { t } from '@/i18n';
 import { formatMoney, formatNumber } from '@/lib/number';
 import {
@@ -277,6 +278,7 @@ export default function ProjectScreen() {
               variant="secondary"
               onPress={() => router.push({ pathname: '/projects/[id]/room', params: { id: project.id } })}
             />
+            {calc?.ok ? <RoomPlan rooms={rooms} /> : null}
           </View>
 
           {calc && !calc.ok ? (

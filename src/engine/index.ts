@@ -25,6 +25,7 @@ export {
   type PricedMaterial,
 } from './cost';
 export * from './quote';
+export { renovationPlan, type PlanRoom, type PlanStep, type PlanStepKind } from './plan';
 export * from './market';
 export {
   EXPENSE_CATEGORY_LABEL,
