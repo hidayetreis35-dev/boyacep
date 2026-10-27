@@ -1,5 +1,5 @@
 import { router } from 'expo-router';
-import { useState } from 'react';
+import { useMemo, useState } from 'react';
 import { View } from 'react-native';
 
 import { areaEstimate, DEFAULT_CAN_SIZES, materialCost, planPackages, type AreaEstimate, type RangeEstimate } from '@/engine';
@@ -65,26 +65,32 @@ export function ManualCalculator({ onMeasure }: { onMeasure: () => void }) {
   const [ceilingArea, setCeilingArea] = useState('');
   const [coats, setCoats] = useState(2);
   const [errors, setErrors] = useState<Record<string, string>>({});
-  const [result, setResult] = useState<Result | null>(null);
+  // After the first "Hesapla" the result follows the fields as they change.
+  const [live, setLive] = useState(false);
 
-  // Any change makes an old result wrong, so it goes away.
+  const withCeiling = ceiling && paint === 'interior';
+  const outcome = useMemo(
+    () => areaEstimate({ wallArea: parseDecimal(wall), ceilingArea: withCeiling ? parseDecimal(ceilingArea) : null, coats }),
+    [wall, ceilingArea, withCeiling, coats],
+  );
+  const result: Result | null = live && outcome.ok ? { estimate: outcome.value, cost: shopCost(outcome.value, paint), room, paint } : null;
+
+  // Errors belong to the last press; editing a field clears them.
   const edit =
     <T,>(set: (v: T) => void) =>
     (v: T) => {
       set(v);
-      setResult(null);
+      setErrors({});
     };
 
-  const withCeiling = ceiling && paint === 'interior';
   const calculate = () => {
-    const r = areaEstimate({ wallArea: parseDecimal(wall), ceilingArea: withCeiling ? parseDecimal(ceilingArea) : null, coats });
-    if (!r.ok) {
-      setErrors(Object.fromEntries(r.issues.map((i) => [i.field, t(i.message)])));
-      setResult(null);
+    if (!outcome.ok) {
+      setErrors(Object.fromEntries(outcome.issues.map((i) => [i.field, t(i.message)])));
+      setLive(false);
       return;
     }
     setErrors({});
-    setResult({ estimate: r.value, cost: shopCost(r.value, paint), room, paint });
+    setLive(true);
   };
 
   const price = paint === 'exterior' ? MATERIAL_PRICES.exterior_paint : MATERIAL_PRICES.interior_paint;
@@ -102,6 +108,9 @@ export function ManualCalculator({ onMeasure }: { onMeasure: () => void }) {
           hint={t('Boyanacak duvarların toplamı; kapı ve pencereleri çıkar.')}
           testID="manual-wall"
         />
+        {result ? null : (
+          <Button label={t('Alanı bilmiyorum, odayı ölçelim')} icon="resize" variant="ghost" onPress={onMeasure} />
+        )}
         {paint === 'interior' ? <SelectField label={t('Oda tipi')} options={ROOMS} value={room} onChange={edit(setRoom)} testID="manual-room" /> : null}
         <SelectField label={t('Boya türü')} options={PAINTS} value={paint} onChange={edit(setPaint)} testID="manual-paint" />
         {paint === 'interior' ? (

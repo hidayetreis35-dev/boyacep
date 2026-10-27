@@ -1774,6 +1774,7 @@ export const en: Record<string, Translation> = {
   "Tahmindir: 1 L boya tek katta yaklaşık 10 m² örter, %10 fire payı eklendi. Kesin miktar için boyanın kutusundaki sarfiyatı kullan. Fiyat kaynağı: {sources}, {date}.": "This is an estimate: 1 L of paint covers about 10 m² per coat, with 10% added for waste. For an exact amount, use the coverage on the paint can. Price source: {sources}, {date}.",
   "Ustayla toplam maliyeti hesapla": "Work out the total cost with a painter",
   "Odayı ölçerek ayrıntılı hesapla": "Measure the room for a detailed result",
+  "Alanı bilmiyorum, odayı ölçelim": "I don't know the area, let's measure the room",
   "Duvar alanı 1 ile 5000 m² arasında olmalı.": "The wall area must be between 1 and 5000 m².",
   "Tavan alanı 1 ile 2000 m² arasında olmalı.": "The ceiling area must be between 1 and 2000 m².",
   "Odayı Dene": "Try in a room",
