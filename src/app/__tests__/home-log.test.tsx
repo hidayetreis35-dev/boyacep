@@ -1,5 +1,5 @@
 import AsyncStorage from '@react-native-async-storage/async-storage';
-import { fireEvent, screen, waitFor } from '@testing-library/react-native';
+import { fireEvent, screen, waitFor, within } from '@testing-library/react-native';
 import { renderRouter } from 'expo-router/testing-library';
 
 import * as colourApi from '@/features/colour/project-colours';
@@ -72,6 +72,36 @@ describe('Ev Hafızası', () => {
     expect(screen.getByText('Kırık beyaz · 7035')).toBeTruthy();
     expect(screen.getByText('İç cephe, silinebilir · Mat · 20.10.2026 · Ahmet usta')).toBeTruthy();
     expect(screen.getByLabelText('Renk #F4F1EA')).toBeTruthy();
+  });
+
+  it('says how long ago each place was painted and which may want a fresh coat', async () => {
+    const back = (years: number, months = 0) => {
+      const d = new Date();
+      const day = new Date(d.getFullYear() - years, d.getMonth() - months, 1);
+      return `${day.getFullYear()}-${String(day.getMonth() + 1).padStart(2, '0')}-01`;
+    };
+    api.listHomeLog.mockResolvedValue([
+      { ...salon, id: 'h2', place: 'Mutfak', painted_on: back(5) },
+      { ...salon, id: 'h3', place: 'Yatak odası', painted_on: back(1, 2) },
+    ]);
+    await renderRouter('./src/app', { initialUrl: '/home-log' });
+    const care = within(await screen.findByTestId('care-reminders'));
+    expect(care.getByText('Mutfak · 5 yıl önce boyandı')).toBeTruthy();
+    expect(care.getByText('Sık kullanılan yerler genelde 3–5 yılda bir yenilenir.')).toBeTruthy();
+    expect(care.getByText('Yenileme zamanı')).toBeTruthy();
+    expect(care.queryByText(/Yatak odası/)).toBeNull();
+    expect(screen.getByText('1 yıl önce boyandı')).toBeTruthy();
+    await fireEvent.press(care.getByText('Yenileme için boya hesapla'));
+    expect(screen).toHavePathname('/calculate');
+  });
+
+  it('nudges on the home screen when a place may be due', async () => {
+    projects.listProjects.mockResolvedValue([]);
+    api.listHomeLog.mockResolvedValue([{ ...salon, id: 'h2', place: 'Banyo', painted_on: '2019-03-01' }]);
+    await renderRouter('./src/app', { initialUrl: '/' });
+    expect(await screen.findByTestId('care-nudge')).toHaveTextContent(/^Banyo · \d+ yıl önce boyandı$/);
+    await fireEvent.press(screen.getByText('Ev Hafızası’nı aç'));
+    expect(screen).toHavePathname('/home-log');
   });
 
   it('adds a record', async () => {

@@ -1,17 +1,19 @@
-import { useLocalSearchParams } from 'expo-router';
+import { router, useLocalSearchParams } from 'expo-router';
 import { useState } from 'react';
 import { StyleSheet, View } from 'react-native';
 
 import { useSession } from '@/features/account/session';
 import { SignInGate } from '@/features/account/sign-in-gate';
 import { isNotEnabled } from '@/features/home-log/api';
+import { careReminders, monthsSince, paintedAgo, type CareReminder } from '@/features/home-log/care';
 import { emptyHomeLogForm, FINISH_LABEL, FINISH_OPTIONS, searchHomeLog, toHomeLogDraft, type HomeLogErrors, type HomeLogForm } from '@/features/home-log/form';
 import { useHomeLog, useHomeLogActions } from '@/features/home-log/queries';
 import { formatDate } from '@/features/quotes/pdf';
 import { t } from '@/i18n';
 import type { HomeLogRow, PaintFinish } from '@/lib/database.types';
+import { todayIso } from '@/lib/day';
 import { SectionTitle } from '@/ui/brand';
-import { AppText, Button, Card, ChoiceChips, EmptyState, ErrorState, FieldRow, LoadingState, Notice, Screen, TextField } from '@/ui/components';
+import { AppText, Badge, Button, Card, ChoiceChips, EmptyState, ErrorState, FieldRow, Icon, LoadingState, Notice, Screen, TextField } from '@/ui/components';
 import { radius, space, usePalette } from '@/ui/theme';
 
 const NO_FINISH = 'none';
@@ -74,6 +76,42 @@ function AddEntry({ projectId, place }: { projectId?: string; place?: string }) 
   );
 }
 
+/** Places that may want a fresh coat, from the user's own dates and a rough usual interval. */
+function CareCard({ reminders }: { reminders: CareReminder[] }) {
+  const p = usePalette();
+  return (
+    <View testID="care-reminders">
+      <Card>
+        <View style={{ flexDirection: 'row', alignItems: 'center', gap: space.sm }}>
+          <Icon name="alarm" size={22} color={p.accent} />
+          <AppText variant="heading" style={{ flex: 1 }}>
+            {t('Bakım zamanı')}
+          </AppText>
+          <Badge label={t('Tahmini')} tone="accent" />
+        </View>
+        {reminders.map((r) => (
+          <View key={r.entry.id} style={[styles.careRow, { borderColor: p.border }]}>
+            <View style={[styles.dot, { backgroundColor: r.entry.colour_hex ?? p.surfaceMuted, borderColor: p.border }]} />
+            <View style={{ flex: 1, gap: 2 }}>
+              <AppText variant="bodyStrong">
+                {r.entry.place} · {paintedAgo(r.months)}
+              </AppText>
+              <AppText variant="caption" tone="muted">
+                {t(r.rule.reason)}
+              </AppText>
+            </View>
+            <Badge label={r.status === 'due' ? t('Yenileme zamanı') : t('Zamanı yaklaşıyor')} tone={r.status === 'due' ? 'accent' : 'muted'} />
+          </View>
+        ))}
+        <AppText variant="caption" tone="muted">
+          {t('Süreler genel öneridir. Duvarında kabarma, solma ya da kir varsa daha erken; iyi duruyorsa daha geç boyayabilirsin.')}
+        </AppText>
+        <Button label={t('Yenileme için boya hesapla')} icon="calculator" variant="secondary" onPress={() => router.push('/calculate')} />
+      </Card>
+    </View>
+  );
+}
+
 function Entry({ entry }: { entry: HomeLogRow }) {
   const p = usePalette();
   const [confirming, setConfirming] = useState(false);
@@ -94,6 +132,12 @@ function Entry({ entry }: { entry: HomeLogRow }) {
             {details}
           </AppText>
         </View>
+      </View>
+      <View style={{ flexDirection: 'row', alignItems: 'center', gap: 6 }}>
+        <Icon name="time-outline" size={16} color={p.textMuted} />
+        <AppText variant="small" tone="muted">
+          {paintedAgo(monthsSince(entry.painted_on, todayIso()))}
+        </AppText>
       </View>
       {entry.note ? <AppText variant="small" tone="muted">{entry.note}</AppText> : null}
       {confirming ? (
@@ -133,6 +177,7 @@ function HomeLog() {
   }
 
   const rows = searchHomeLog(log.data, query);
+  const reminders = careReminders(log.data, todayIso());
   return (
     <View style={{ gap: space.lg }}>
       <Card>
@@ -141,6 +186,7 @@ function HomeLog() {
           {t('Boyadığın her yerin rengini, ürününü ve tarihini sakla. Yıllar sonra rötuş yaparken ya da evi satarken aynı rengi bulursun.')}
         </AppText>
       </Card>
+      {reminders.length > 0 ? <CareCard reminders={reminders} /> : null}
       <AddEntry projectId={projectId} place={place} />
       <View style={{ gap: space.sm }}>
         <SectionTitle title={t('Kayıtların')} />
@@ -180,4 +226,6 @@ export default function HomeLogScreen() {
 
 const styles = StyleSheet.create({
   swatch: { width: 48, height: 48, borderRadius: radius.md, borderWidth: StyleSheet.hairlineWidth },
+  careRow: { flexDirection: 'row', alignItems: 'center', gap: space.md, paddingTop: space.sm, borderTopWidth: StyleSheet.hairlineWidth },
+  dot: { width: 28, height: 28, borderRadius: 14, borderWidth: StyleSheet.hairlineWidth },
 });

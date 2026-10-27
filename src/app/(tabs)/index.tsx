@@ -6,6 +6,7 @@ import { SafeAreaView } from 'react-native-safe-area-context';
 import { initials } from '@/features/account/initials';
 import { useAccount, useSession } from '@/features/account/session';
 import type { SpaceKind } from '@/features/calculator/wizard';
+import { CareNudge } from '@/features/home-log/care-nudge';
 import { CityPriceCard } from '@/features/home/city-price-card';
 import { SearchBox } from '@/features/home/search-box';
 import { useCity } from '@/features/market/city';
@@ -127,7 +128,8 @@ function ForYou({ wide }: { wide: boolean }) {
   return (
     <View style={wide ? styles.twoCols : { gap: space.md }}>
       {project ? <View style={wide ? { flex: 1 } : null}>{project}</View> : null}
-      <View style={wide ? { flex: 1 } : null}>
+      <View style={[wide ? { flex: 1 } : null, { gap: space.md }]}>
+        {db && session ? <CareNudge /> : null}
         <CityPriceCard />
       </View>
     </View>
