@@ -23,7 +23,7 @@ import type { PhotoSurface, WallOutline } from '@/lib/database.types';
 import { radius, usePalette } from '@/ui/theme';
 
 import { isUsableOutline } from './outline';
-import { CORNER_LABEL, pressPoint, TAP_LABEL, type PhotoStageProps } from './photo-stage-types';
+import { pressPoint, stageLabel, type PhotoStageProps } from './photo-stage-types';
 import {
   DARKER_WEIGHT,
   DEFAULT_TOLERANCE,
@@ -35,6 +35,7 @@ import {
   meanLab,
   photoWhite,
   polygonMask,
+  sampleColour,
   selectRegion,
   TINT,
   toLabImage,
@@ -229,7 +230,9 @@ function outlinePath(points: WallOutline, width: number, height: number, close: 
 const REMOVE_COLOUR = '#D92D20';
 
 /** Realistic preview drawn with Skia; works on phone (Expo Go) and web. */
-export default function RealisticPhoto({ uri, aspect, surfaces, active, draft, drawing, showColour, amount, onTap }: PhotoStageProps) {
+export default function RealisticPhoto({ uri, aspect, surfaces, active, draft, drawing: selecting, showColour, amount, onTap, picking, pickedAt, onPick }: PhotoStageProps) {
+  // While picking a colour the selection on hold stays hidden, and taps go to the picker.
+  const drawing = selecting && !picking;
   const p = usePalette();
   const photo = useImage(uri);
   const img = useWorkingCopy(photo);
@@ -238,7 +241,8 @@ export default function RealisticPhoto({ uri, aspect, surfaces, active, draft, d
   const height = width > 0 ? width / aspect : 0;
   const ready = !!photo && !!img && width > 0;
 
-  const label = drawing ? t(draft.mode === 'tap' ? TAP_LABEL : CORNER_LABEL) : t('Oda fotoğrafı ve renk önizlemesi');
+  const label = t(stageLabel({ picking, drawing, draft }));
+  const touchable = drawing || !!picking;
   const activeSurface: PhotoSurface | undefined = surfaces[active];
 
   return (
@@ -249,12 +253,14 @@ export default function RealisticPhoto({ uri, aspect, surfaces, active, draft, d
       {width > 0 ? (
         <Pressable
           onPress={(e) => {
-            if (!drawing) return;
-            const pt = pressPoint(e, width, height);
-            if (pt) onTap(pt);
+            const pt = touchable ? pressPoint(e, width, height) : null;
+            if (!pt) return;
+            if (picking) {
+              if (img) onPick?.(sampleColour(img, pt, white), pt);
+            } else onTap(pt);
           }}
-          disabled={!drawing}
-          accessibilityRole={drawing ? 'button' : 'image'}
+          disabled={!touchable}
+          accessibilityRole={touchable ? 'button' : 'image'}
           accessibilityLabel={label}
           style={{ width, height }}>
           {ready ? (
@@ -323,8 +329,14 @@ export default function RealisticPhoto({ uri, aspect, surfaces, active, draft, d
                     </Group>
                   ))
                 : null}
-              {!drawing && activeSurface && !activeSurface.seeds?.length && isUsableOutline(activeSurface.points) ? (
+              {!drawing && !picking && activeSurface && !activeSurface.seeds?.length && isUsableOutline(activeSurface.points) ? (
                 <Path path={outlinePath(activeSurface.points, width, height, true)} style="stroke" strokeWidth={2} color="#FFFFFF" />
+              ) : null}
+              {picking && pickedAt ? (
+                <Group>
+                  <Circle cx={pickedAt[0] * width} cy={pickedAt[1] * height} r={14} color="#141B2D" style="stroke" strokeWidth={5} />
+                  <Circle cx={pickedAt[0] * width} cy={pickedAt[1] * height} r={14} color="#FFFFFF" style="stroke" strokeWidth={2.5} />
+                </Group>
               ) : null}
             </Canvas>
           ) : (

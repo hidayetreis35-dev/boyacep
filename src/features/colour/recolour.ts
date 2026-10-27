@@ -700,6 +700,29 @@ export function meanLab(img: LabImage, mask: Uint8Array): Lab {
 }
 
 /**
+ * "Renk yakala": the colour around a 0–1 point, averaged over a small patch so
+ * grain and texture don't decide it. The photo's exposure is undone the way
+ * `paintInPhoto` applies it, so a white wall in a dim photo reads as white.
+ */
+export function sampleColour(img: LabImage, [sx, sy]: [number, number], white = 100, reach = 3): Lab {
+  const x0 = Math.min(img.width - 1, Math.max(0, Math.round(sx * (img.width - 1))));
+  const y0 = Math.min(img.height - 1, Math.max(0, Math.round(sy * (img.height - 1))));
+  const sum: Lab = [0, 0, 0];
+  let n = 0;
+  for (let y = Math.max(0, y0 - reach); y <= Math.min(img.height - 1, y0 + reach); y++) {
+    for (let x = Math.max(0, x0 - reach); x <= Math.min(img.width - 1, x0 + reach); x++) {
+      const i = (y * img.width + x) * 3;
+      sum[0] += img.lab[i];
+      sum[1] += img.lab[i + 1];
+      sum[2] += img.lab[i + 2];
+      n++;
+    }
+  }
+  const k = (white + 16) / 116;
+  return [Math.min(100, (sum[0] / n + 16) / k - 16), sum[1] / n / k, sum[2] / n / k];
+}
+
+/**
  * RGBA bytes for the mask image the shader reads, with a one-pixel soft edge
  * (3×3 average) so it scales up smoothly. Alpha is the mask. Red says where
  * the edge is a real line (255), which the shader sharpens at full resolution

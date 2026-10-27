@@ -1,5 +1,6 @@
 import { COLOURS, type CatalogColour, type FamilyKey } from './catalogue';
 import { luminance } from './palette';
+import { deltaE, hexToLab, type Lab } from './recolour';
 
 import { t } from '@/i18n';
 
@@ -58,6 +59,24 @@ export function nearest(hex: string, exclude: string[] = [], families?: FamilyKe
     }
   }
   return best;
+}
+
+export type ColourMatch = { colour: CatalogColour; distance: number };
+
+/** "Renk yakala": the catalogue colours closest to a measured one (CIE76 ΔE in Lab), closest first. */
+export function closestColours(lab: Lab, count = 5, list: CatalogColour[] = COLOURS): ColourMatch[] {
+  return list
+    .map((colour) => ({ colour, distance: deltaE(lab, hexToLab(colour.hex)) }))
+    .sort((a, b) => a.distance - b.distance)
+    .slice(0, count);
+}
+
+/** How close a match looks. Side by side, most people can't tell colours under about 2–3 ΔE apart. */
+export function matchLabel(distance: number): string {
+  if (distance < 3) return t('Neredeyse aynı');
+  if (distance < 7) return t('Çok yakın');
+  if (distance < 14) return t('Yakın');
+  return t('Benzer ton');
 }
 
 /** Light reflectance value, approximated from relative luminance (0 = black, 100 = white). */

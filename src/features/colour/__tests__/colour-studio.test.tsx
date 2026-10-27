@@ -1,4 +1,4 @@
-import { fireEvent, render, screen } from '@testing-library/react-native';
+import { fireEvent, render, screen, within } from '@testing-library/react-native';
 import { useState } from 'react';
 
 import { toPicked, type PickedColour } from '@/features/colour/colour-explorer';
@@ -117,6 +117,52 @@ describe('ColourStudio', () => {
       ['Duvar', '#A3B49A'],
       ['Tavan', '#B35C3E'],
     ]);
+  });
+
+  it('picks a colour from the photo and paints the surface with the closest one', async () => {
+    const onSave = jest.fn();
+    await render(<Studio initialSurfaces={[{ label: 'Duvar', points: [[0.1, 0.1], [0.9, 0.1], [0.9, 0.9]], hex: '#25324A' }]} onSave={onSave} />);
+    await layout();
+
+    await fireEvent.press(screen.getByRole('button', { name: 'Renk yakala' }));
+    expect(screen.queryByTestId('picked-colours')).toBeNull();
+    await tap(200, 150, 'Fotoğraf: rengini öğrenmek istediğin yere dokun');
+    const picked = within(screen.getByTestId('picked-colours'));
+    expect(picked.getByText('En yakın 5 renk')).toBeTruthy();
+    expect(picked.getAllByRole('button')).toHaveLength(5);
+    expect(picked.getByText('Neredeyse aynı')).toBeTruthy();
+
+    await fireEvent.press(picked.getByRole('button', { name: 'Adaçayı rengini dene' }));
+    expect(screen.queryByTestId('picked-colours')).toBeNull();
+    expect(screen.getByText('“Duvar” için renk: Adaçayı')).toBeTruthy();
+    await fireEvent.press(screen.getByText('Projeye kaydet'));
+    expect((onSave.mock.calls[0][0] as PhotoSurface[])[0].hex).toBe('#A3B49A');
+  });
+
+  it('picks a colour for the surface being selected, then goes back to selecting', async () => {
+    const onSave = jest.fn();
+    await render(<Studio onSave={onSave} />);
+    await layout();
+    await tap(100, 80, 'Fotoğraf: boyanacak yere dokun');
+
+    await fireEvent.press(screen.getByRole('button', { name: 'Renk yakala' }));
+    await tap(200, 150, 'Fotoğraf: rengini öğrenmek istediğin yere dokun');
+    await fireEvent.press(screen.getByRole('button', { name: 'Yeşil gri rengini dene' }));
+
+    await fireEvent.press(paint());
+    expect(screen.getByText('“Duvar” için renk: Yeşil gri')).toBeTruthy();
+    await fireEvent.press(screen.getByText('Projeye kaydet'));
+    expect(onSave).toHaveBeenCalledWith([{ label: 'Duvar', points: [], seeds: [[0.25, 0.2667]], tolerance: 15, hex: '#A2A79C' }]);
+  });
+
+  it('leaves picking with "Bitti" without changing anything', async () => {
+    await render(<Studio initialSurfaces={[{ label: 'Duvar', points: [[0.1, 0.1], [0.9, 0.1], [0.9, 0.9]], hex: '#25324A' }]} />);
+    await layout();
+    await fireEvent.press(screen.getByRole('button', { name: 'Renk yakala' }));
+    await tap(200, 150, 'Fotoğraf: rengini öğrenmek istediğin yere dokun');
+    await fireEvent.press(screen.getByRole('button', { name: 'Bitti' }));
+    expect(screen.queryByTestId('picked-colours')).toBeNull();
+    expect(screen.getByText('“Duvar” için renk: Lacivert')).toBeTruthy();
   });
 
   it('undoes the last corner', async () => {

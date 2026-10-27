@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useMemo, useState } from 'react';
 import { ScrollView, StyleSheet, View } from 'react-native';
 
 import { msg, t } from '@/i18n';
@@ -10,10 +10,11 @@ import { fonts, radius, space, usePalette } from '@/ui/theme';
 
 import { CLASSICS, TRENDS } from './catalogue';
 import { toPicked, type PickedColour } from './colour-explorer';
+import { closestColours, matchLabel, rgbToHex } from './harmony';
 import { isUsableOutline, MAX_OUTLINE_POINTS, MAX_SURFACES } from './outline';
 import { PhotoStage } from './photo-stage';
 import type { SelectMode } from './photo-stage-types';
-import { DEFAULT_TOLERANCE, MAX_SEEDS, TOLERANCES, toleranceKeyOf, type ToleranceKey } from './recolour';
+import { DEFAULT_TOLERANCE, labToRgb, MAX_SEEDS, TOLERANCES, toleranceKeyOf, type Lab, type ToleranceKey } from './recolour';
 
 const STRENGTHS = [
   { value: 'light', label: msg('Hafif'), amount: 0.55 },
@@ -31,6 +32,60 @@ type Tap = { point: [number, number]; remove: boolean };
 function nextLabel(kind: string, surfaces: PhotoSurface[]): string {
   const same = surfaces.filter((s) => s.label.startsWith(kind)).length;
   return same === 0 ? kind : `${kind} ${same + 1}`;
+}
+
+/**
+ * "Renk yakala": the colour under the user's tap and the five closest catalogue
+ * colours. Light and shade shift what a photo shows, so the matches are offered
+ * as suggestions to try, never as the paint's exact code.
+ */
+function PickPanel({ picked, onUse, onDone }: { picked: Lab | null; onUse: (hex: string) => void; onDone: () => void }) {
+  const p = usePalette();
+  const matches = useMemo(() => (picked ? closestColours(picked) : []), [picked]);
+  return (
+    <View style={{ gap: space.md }}>
+      {picked ? (
+        <View style={{ gap: space.sm }} testID="picked-colours">
+          <View style={styles.pickedRow}>
+            <View style={[styles.pickedSwatch, { backgroundColor: rgbToHex(labToRgb(picked)), borderColor: p.border }]} />
+            <View style={{ flex: 1, gap: 2 }}>
+              <AppText variant="small" style={{ fontFamily: fonts.semibold }}>
+                {t('Fotoğraftaki renk')}
+              </AppText>
+              <AppText variant="caption" tone="muted">
+                {t('Işık ve gölge, fotoğraftaki rengi değiştirir. Karar vermeden önce renk kartına bak.')}
+              </AppText>
+            </View>
+          </View>
+          <AppText variant="small" style={{ fontFamily: fonts.semibold }}>
+            {t('En yakın {count} renk', { count: matches.length })}
+          </AppText>
+          {matches.map(({ colour, distance }) => (
+            <PressableScale
+              key={colour.hex}
+              accessibilityRole="button"
+              accessibilityLabel={t('{name} rengini dene', { name: t(colour.name) })}
+              onPress={() => onUse(colour.hex)}
+              style={[styles.match, { backgroundColor: p.surface, borderColor: p.border }]}>
+              <View style={[styles.matchSwatch, { backgroundColor: colour.hex, borderColor: p.border }]} />
+              <View style={{ flex: 1 }}>
+                <AppText variant="body" style={{ fontFamily: fonts.semibold }}>
+                  {t(colour.name)}
+                </AppText>
+                <AppText variant="caption" tone="muted">
+                  {matchLabel(distance)}
+                </AppText>
+              </View>
+              <AppText variant="small" style={{ color: p.accent, fontFamily: fonts.semibold }}>
+                {t('Dene')}
+              </AppText>
+            </PressableScale>
+          ))}
+        </View>
+      ) : null}
+      <Button label={t('Bitti')} icon="checkmark" variant="secondary" onPress={onDone} />
+    </View>
+  );
 }
 
 /**
@@ -75,6 +130,8 @@ export function ColourStudio({
   const [strength, setStrength] = useState<Strength>('strong');
   const [view, setView] = useState<'after' | 'before'>('after');
   const [choosingKind, setChoosingKind] = useState(false);
+  const [picking, setPicking] = useState(false);
+  const [picked, setPicked] = useState<{ lab: Lab; point: [number, number] } | null>(null);
   const draft: WallOutline = taps.filter((value) => !value.remove).map((value) => value.point);
   const excludes: WallOutline = taps.filter((value) => value.remove).map((value) => value.point);
   const usable = mode === 'tap' ? draft.length > 0 : isUsableOutline(draft);
@@ -131,6 +188,23 @@ export function ColourStudio({
     setSurfaces((list) => list.map((s, i) => (i === active ? { ...s, hex: c.hex } : s)));
   };
 
+  const startPicking = () => {
+    setPicked(null);
+    setPicking(true);
+  };
+
+  const stopPicking = () => {
+    setPicking(false);
+    setPicked(null);
+  };
+
+  // While a surface is being selected the colour waits for "Yüzeyi boya"; otherwise it goes on the active surface.
+  const takePicked = (hex: string) => {
+    if (drawing) onPickColour(toPicked(hex));
+    else applyColour(toPicked(hex));
+    stopPicking();
+  };
+
   const removeActive = () => {
     setSurfaces((list) => list.filter((_, i) => i !== active));
     setActive(0);
@@ -141,7 +215,11 @@ export function ColourStudio({
 
   return (
     <View style={{ gap: space.lg }}>
-      {drawing ? (
+      {picking ? (
+        <Notice icon="eyedrop">
+          {t('Fotoğrafta beğendiğin bir rengin üzerine dokun: bir yastık, bir dolap ya da başka bir duvar. Boya renkleri arasından en yakınlarını gösteririz.')}
+        </Notice>
+      ) : drawing ? (
         <>
           <Segmented
             options={[
@@ -169,9 +247,12 @@ export function ColourStudio({
         showColour={view === 'after'}
         amount={STRENGTHS.find((s) => s.value === strength)!.amount}
         onTap={addPoint}
+        picking={picking}
+        pickedAt={picked?.point ?? null}
+        onPick={(lab, point) => setPicked({ lab, point })}
       />
 
-      {drawing && mode === 'tap' ? (
+      {drawing && !picking && mode === 'tap' ? (
         <Segmented
           options={[
             { value: 'add', label: t('Ekle'), icon: 'add-circle' },
@@ -182,7 +263,7 @@ export function ColourStudio({
         />
       ) : null}
 
-      {drawing && mode === 'tap' ? (
+      {drawing && !picking && mode === 'tap' ? (
         <ChoiceChips
           label={t('Seçim genişliği')}
           options={TOLERANCES.map(({ value, label }) => ({ value, label }))}
@@ -191,7 +272,9 @@ export function ColourStudio({
         />
       ) : null}
 
-      {drawing ? (
+      {picking ? (
+        <PickPanel picked={picked?.lab ?? null} onUse={takePicked} onDone={stopPicking} />
+      ) : drawing ? (
         <View style={{ flexDirection: 'row', gap: space.sm, flexWrap: 'wrap' }}>
           <Button label={t('Geri al')} icon="arrow-undo" variant="secondary" disabled={taps.length === 0} onPress={() => setTaps((value) => value.slice(0, -1))} />
           <Button
@@ -215,6 +298,7 @@ export function ColourStudio({
                 setActive((a) => Math.min(a, surfaces.length - 1));
               }}
             /> : null}
+          <Button label={t('Renk yakala')} icon="eyedrop" variant="ghost" onPress={startPicking} />
         </View>
       ) : (
         <>
@@ -292,7 +376,10 @@ export function ColourStudio({
                   );
                 })}
               </ScrollView>
-              {onBrowse ? <Button label={t('Tüm renklere göz at')} icon="color-palette" variant="ghost" onPress={onBrowse} /> : null}
+              <View style={{ flexDirection: 'row', gap: space.sm, flexWrap: 'wrap' }}>
+                <Button label={t('Renk yakala')} icon="eyedrop" variant="secondary" onPress={startPicking} />
+                {onBrowse ? <Button label={t('Tüm renklere göz at')} icon="color-palette" variant="ghost" onPress={onBrowse} /> : null}
+              </View>
             </View>
           ) : null}
 
@@ -340,4 +427,16 @@ const styles = StyleSheet.create({
   },
   dot: { width: 16, height: 16, borderRadius: 8, borderWidth: StyleSheet.hairlineWidth },
   quick: { width: 48, height: 48, borderRadius: 16 },
+  pickedRow: { flexDirection: 'row', alignItems: 'center', gap: space.md },
+  pickedSwatch: { width: 56, height: 56, borderRadius: radius.md, borderWidth: StyleSheet.hairlineWidth },
+  match: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: space.md,
+    borderRadius: radius.md,
+    borderWidth: StyleSheet.hairlineWidth,
+    padding: space.sm,
+    minHeight: 56,
+  },
+  matchSwatch: { width: 40, height: 40, borderRadius: radius.sm, borderWidth: StyleSheet.hairlineWidth },
 });

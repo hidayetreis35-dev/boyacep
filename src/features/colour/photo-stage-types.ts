@@ -4,6 +4,7 @@ import { msg } from '@/i18n';
 import type { PhotoSurface, WallOutline } from '@/lib/database.types';
 
 import { toNormalised } from './outline';
+import type { Lab } from './recolour';
 
 /** How the surface being added is picked: tap similar colour, or draw its corners. */
 export type SelectMode = 'tap' | 'corners';
@@ -22,6 +23,11 @@ export type PhotoStageProps = {
   /** 0–1: how fully the paint replaces the photo's own colour. */
   amount: number;
   onTap: (point: [number, number]) => void;
+  /** "Renk yakala": a tap reports the colour under it instead of selecting. Wins over `drawing`. */
+  picking?: boolean;
+  /** Where the last colour was taken from; marked on the photo while picking. */
+  pickedAt?: [number, number] | null;
+  onPick?: (colour: Lab, point: [number, number]) => void;
 };
 
 /** A press on a view of the given size as a 0–1 point, or null. */
@@ -36,3 +42,12 @@ export function pressPoint(e: GestureResponderEvent, width: number, height: numb
 
 export const TAP_LABEL = msg('Fotoğraf: boyanacak yere dokun');
 export const CORNER_LABEL = msg('Fotoğraf: yüzeyin köşesine dokun');
+export const PICK_LABEL = msg('Fotoğraf: rengini öğrenmek istediğin yere dokun');
+export const PHOTO_LABEL = msg('Oda fotoğrafı ve renk önizlemesi');
+
+/** What the photo's touch surface is for right now, as a screen-reader label. */
+export function stageLabel({ picking, drawing, draft }: Pick<PhotoStageProps, 'picking' | 'drawing' | 'draft'>): string {
+  if (picking) return PICK_LABEL;
+  if (drawing) return draft.mode === 'tap' ? TAP_LABEL : CORNER_LABEL;
+  return PHOTO_LABEL;
+}
