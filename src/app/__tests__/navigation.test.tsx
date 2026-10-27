@@ -132,7 +132,13 @@ describe('app navigation', () => {
   it('marks AI design as coming soon instead of pretending it works', async () => {
     await renderRouter('./src/app', { initialUrl: '/' });
     await fireEvent.press(await screen.findByLabelText('AI Ev Tasarımı, yakında'));
-    expect(screen).toHavePathname('/soon/ai-design');
+    expect(screen).toHavePathname('/ai-design');
+    expect(await screen.findByText('Hayalindeki odayı önceden gör')).toBeTruthy();
+    expect(screen.getByText(/henüz açılmadı/)).toBeTruthy();
+    // The hero leads to what works today: the colour studio's photo tab.
+    await fireEvent.press(screen.getByText('Bugün: odanda renk dene'));
+    expect(screen).toHavePathname('/colour');
+    expect(screen.getByRole('tab', { name: 'Odayı Dene' })).toBeSelected();
   });
 
   it('shows the five tabs, with Keşfet instead of Hizmetler', async () => {

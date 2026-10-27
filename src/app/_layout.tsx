@@ -129,6 +129,7 @@ function App() {
             <Stack.Screen name="ask/[id]" options={{ title: t('Soru') }} />
             <Stack.Screen name="admin/questions" options={{ title: t('Bekleyen sorular') }} />
             <Stack.Screen name="soon/[feature]" options={{ title: t('Yakında') }} />
+            <Stack.Screen name="ai-design" options={{ title: t('AI Ev Tasarımı') }} />
           </Stack>
         </ThemeProvider>
       </SessionProvider>

@@ -47,7 +47,7 @@ const MORE: { key: string; title: string; icon: IconName; feature: FeatureKey; h
   { key: 'pros', title: msg('Usta Bul'), icon: 'person', feature: 'ask', href: '/services' },
   { key: 'budget', title: msg('Ev Bütçesi'), icon: 'wallet', feature: 'budget', href: '/budget' },
   { key: 'projects', title: msg('Projelerim'), icon: 'briefcase', feature: 'projects', href: '/projects' },
-  { key: 'ai-design', title: msg('AI Ev Tasarımı'), icon: 'sparkles', feature: 'color', href: { pathname: '/soon/[feature]', params: { feature: 'ai-design' } }, soon: true },
+  { key: 'ai-design', title: msg('AI Ev Tasarımı'), icon: 'sparkles', feature: 'color', href: '/ai-design', soon: true },
   { key: 'prices', title: msg('Boya Fiyatları'), icon: 'stats-chart', feature: 'cost', href: '/prices' },
   { key: 'ask', title: msg('Ustaya Sor'), icon: 'chatbubbles', feature: 'ask', href: '/ask' },
   { key: 'guide', title: msg('Boya Rehberi'), icon: 'book', feature: 'guide', href: '/guide' },
