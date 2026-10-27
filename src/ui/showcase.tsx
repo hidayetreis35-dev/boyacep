@@ -47,10 +47,10 @@ export function PhotoHero({
     <View style={[styles.hero, { minHeight, backgroundColor: p.heroFrom }, shadowOf(p, 2)]} testID={testID}>
       <Photo name={photo} style={StyleSheet.absoluteFill} />
       {/* Two fades: a long soft one, and a stronger one behind the text so it stays readable on bright photos. */}
-      <Gradient vertical from={p.heroFrom} to={p.heroFrom} fromOpacity={0} toOpacity={0.7} style={{ top: '10%' }} />
-      <Gradient vertical from={p.heroFrom} to={p.heroFrom} fromOpacity={0} toOpacity={0.75} style={{ top: '45%' }} />
+      <Gradient vertical from={p.heroFrom} to={p.heroFrom} fromOpacity={0.05} toOpacity={0.9} />
+      <Gradient vertical from={p.heroFrom} to={p.heroFrom} fromOpacity={0} toOpacity={0.6} style={{ top: '30%' }} />
       <View style={styles.heroText}>
-        <AppText variant="display" accessibilityRole="header" style={{ color: p.onHero, fontSize: 28, lineHeight: 32 }}>
+        <AppText variant="display" accessibilityRole="header" style={[styles.heroTitle, { color: p.onHero }]}>
           {title}
         </AppText>
         {body ? <AppText style={{ color: p.onHeroMuted, fontSize: 15, lineHeight: 21 }}>{body}</AppText> : null}
@@ -305,6 +305,7 @@ const styles = StyleSheet.create({
   stripe: { flexDirection: 'row', height: 5 },
   hero: { borderRadius: radius.xl, overflow: 'hidden', justifyContent: 'flex-end' },
   heroText: { padding: space.xl - 4, paddingBottom: space.xl, gap: space.sm },
+  heroTitle: { fontSize: 28, lineHeight: 32, textShadowColor: 'rgba(0, 0, 0, 0.35)', textShadowRadius: 12, textShadowOffset: { width: 0, height: 1 } },
   heroButton: {
     alignSelf: 'flex-start',
     flexDirection: 'row',

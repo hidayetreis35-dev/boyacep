@@ -192,7 +192,7 @@ export default function HomeScreen() {
                   body={t('Boyamadan yenilemeye, bütçeden usta bulmaya kadar her şey elinin altında.')}
                   action={t('Hemen başla')}
                   onAction={() => router.push('/calculate')}
-                  minHeight={wide ? 380 : 320}
+                  minHeight={wide ? 400 : 340}
                   testID="home-hero"
                 />
               </FadeIn>
