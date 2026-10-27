@@ -1852,4 +1852,8 @@ export const en: Record<string, Translation> = {
   "Örnek": "Sample",
   "Bu bir örnektir, senin verin değil.": "This is a sample, not your data.",
   "Yükleniyor": "Loading",
+  "Salon, 18 m²": "Living room, 18 m²",
+  "Astar bitti · 2 kat boya kaldı": "Primer done · 2 coats of paint to go",
+  "Projelerin burada böyle görünecek.": "This is how your projects will look.",
+  "Bütçen burada böyle görünecek.": "This is how your budget will look.",
 };

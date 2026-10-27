@@ -54,3 +54,22 @@ describe('Giriş', () => {
     expect(mockAuth.verifyOtp).toHaveBeenCalledTimes(5);
   });
 });
+
+describe('Misafir önizlemesi', () => {
+  it('shows guests a sample of their projects, clearly tagged, with a way to sign in', async () => {
+    await renderRouter('./src/app', { initialUrl: '/projects' });
+    expect(await screen.findByText('Projelerin burada böyle görünecek.')).toBeTruthy();
+    expect(screen.getByTestId('sign-in-preview')).toHaveTextContent(/ÖRNEK/);
+    expect(screen.getByText('Salon, 18 m²')).toBeTruthy();
+    await fireEvent.press(screen.getByText('Giriş yap'));
+    expect(screen).toHavePathname('/sign-in');
+  });
+
+  it('shows guests a sample home budget instead of a wall', async () => {
+    await renderRouter('./src/app', { initialUrl: '/budget' });
+    expect(await screen.findByText('Bütçen burada böyle görünecek.')).toBeTruthy();
+    expect(screen.getByTestId('sign-in-preview')).toHaveTextContent(/25\.000 ₺/);
+    // The sample never poses as the user's real total.
+    expect(screen.queryByTestId('home-budget-total')).toBeNull();
+  });
+});

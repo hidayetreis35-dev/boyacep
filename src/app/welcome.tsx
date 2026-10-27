@@ -12,10 +12,11 @@ import { DISTRICTS, PILOT_PROVINCES, provinceByCode, type ProvinceCode } from '@
 import { LOCALES, msg, t } from '@/i18n';
 import { useLocale } from '@/i18n/provider';
 import { CityArt } from '@/ui/art';
-import { Gradient, PaintDrops } from '@/ui/brand';
+import { Gradient } from '@/ui/brand';
 import { AppText, Button, Card, Icon, Screen, type IconName } from '@/ui/components';
 import { PressableScale } from '@/ui/motion';
 import { Photo } from '@/ui/photos';
+import { PaintStripe } from '@/ui/showcase';
 import { MAX_CONTENT_WIDTH, fonts, radius, shadowOf, space, usePalette } from '@/ui/theme';
 
 const ROLES: { role: SelectableRole; title: string; text: string; icon: IconName }[] = [
@@ -49,46 +50,49 @@ function HeroLanguage() {
   );
 }
 
+/** First screen: a full-bleed room photo with the promise and one button on a dark fade. */
 function Hero({ onStart }: { onStart: () => void }) {
   const p = usePalette();
   const { db } = useSession();
   return (
-    <SafeAreaView edges={['top', 'bottom']} style={{ flex: 1, backgroundColor: p.heroFrom }}>
-      <ScrollView contentContainerStyle={styles.heroScroll} style={{ backgroundColor: p.heroFrom }}>
-        <PaintDrops colours={['#FF6B2C', '#C2367A', '#D99A1E']} style={{ opacity: 0.85, right: -70, top: -50 }} />
-        <View style={styles.heroInner}>
-          <View style={styles.brandRow}>
-            <View style={[styles.brandMark, { backgroundColor: p.cta }]}>
-              <Icon name="color-fill" size={18} color={p.onCta} />
-            </View>
-            <AppText variant="heading" style={{ color: p.onHero, fontFamily: fonts.extrabold, flex: 1 }}>
-              BoyaCep
-            </AppText>
-            <HeroLanguage />
-          </View>
-          <AppText variant="display" style={{ color: p.onHero, marginTop: space.lg }}>
-            {t('Evin için ihtiyacın olan her şey, tek platformda.')}
-          </AppText>
-          <AppText style={{ color: p.onHeroMuted }}>{t('Boya • Renk • Tadilat planı • Ev bütçesi')}</AppText>
-          <View style={styles.heroPhoto}>
-            <Photo name="welcome" style={StyleSheet.absoluteFill} />
-            <Gradient vertical from={p.heroFrom} to={p.heroFrom} fromOpacity={1} toOpacity={0} style={{ height: '45%' }} />
-          </View>
-          <View style={{ flexGrow: 1 }} />
-          <Button label={t('Başlayalım')} icon="arrow-forward" variant="cta" size="lg" onPress={onStart} />
-          {db ? (
-            <PressableScale accessibilityRole="link" accessibilityLabel={t('Giriş yap')} onPress={() => router.push('/sign-in')} style={styles.signIn}>
-              <AppText variant="small" style={{ color: p.onHeroMuted }}>
-                {t('Zaten hesabın var mı?')}{' '}
-                <AppText variant="small" style={{ color: p.onHero, fontFamily: fonts.bold, textDecorationLine: 'underline' }}>
-                  {t('Giriş yap')}
-                </AppText>
+    <View style={{ flex: 1, backgroundColor: p.heroFrom }}>
+      <Photo name="welcome" style={StyleSheet.absoluteFill} />
+      <Gradient vertical from={p.heroFrom} to={p.heroFrom} fromOpacity={0.6} toOpacity={0} style={{ bottom: '75%' }} />
+      <Gradient vertical from={p.heroFrom} to={p.heroFrom} fromOpacity={0} toOpacity={0.97} style={{ top: '30%' }} />
+      <SafeAreaView edges={['top', 'bottom']} style={{ flex: 1 }}>
+        <ScrollView contentContainerStyle={styles.heroScroll}>
+          <View style={styles.heroInner}>
+            <View style={styles.brandRow}>
+              <View style={[styles.brandMark, { backgroundColor: p.cta }]}>
+                <Icon name="color-fill" size={18} color={p.onCta} />
+              </View>
+              <AppText variant="heading" style={{ color: p.onHero, fontFamily: fonts.display, fontSize: 22, flex: 1 }}>
+                BoyaCep
               </AppText>
-            </PressableScale>
-          ) : null}
-        </View>
-      </ScrollView>
-    </SafeAreaView>
+              <HeroLanguage />
+            </View>
+            <View style={{ flexGrow: 1, minHeight: 220 }} />
+            <PaintStripe style={styles.heroStripe} />
+            <AppText variant="display" accessibilityRole="header" style={{ color: p.onHero }}>
+              {t('Evin için ihtiyacın olan her şey, tek platformda.')}
+            </AppText>
+            <AppText style={{ color: p.onHeroMuted }}>{t('Boya • Renk • Tadilat planı • Ev bütçesi')}</AppText>
+            <View style={{ height: space.sm }} />
+            <Button label={t('Başlayalım')} icon="arrow-forward" variant="cta" size="lg" onPress={onStart} />
+            {db ? (
+              <PressableScale accessibilityRole="link" accessibilityLabel={t('Giriş yap')} onPress={() => router.push('/sign-in')} style={styles.signIn}>
+                <AppText variant="small" style={{ color: p.onHeroMuted }}>
+                  {t('Zaten hesabın var mı?')}{' '}
+                  <AppText variant="small" style={{ color: p.onHero, fontFamily: fonts.bold, textDecorationLine: 'underline' }}>
+                    {t('Giriş yap')}
+                  </AppText>
+                </AppText>
+              </PressableScale>
+            ) : null}
+          </View>
+        </ScrollView>
+      </SafeAreaView>
+    </View>
   );
 }
 
@@ -306,20 +310,13 @@ export default function WelcomeScreen() {
 }
 
 const styles = StyleSheet.create({
-  heroScroll: { flexGrow: 1, alignItems: 'center', overflow: 'hidden' },
+  heroScroll: { flexGrow: 1, alignItems: 'center' },
   heroInner: { width: '100%', maxWidth: MAX_CONTENT_WIDTH, padding: space.xl, gap: space.md, flexGrow: 1 },
-  brandRow: { flexDirection: 'row', alignItems: 'center', gap: space.sm, zIndex: 1 },
+  brandRow: { flexDirection: 'row', alignItems: 'center', gap: space.sm },
+  heroStripe: { width: 72, height: 5, borderRadius: 3, overflow: 'hidden' },
   brandMark: { width: 36, height: 36, borderRadius: 11, alignItems: 'center', justifyContent: 'center' },
   lang: { flexDirection: 'row', borderRadius: radius.pill, padding: 3 },
   langItem: { borderRadius: radius.pill, paddingHorizontal: 12, minHeight: 32, justifyContent: 'center' },
-  heroPhoto: {
-    height: 250,
-    marginHorizontal: -space.xl,
-    marginVertical: space.sm,
-    overflow: 'hidden',
-    borderBottomLeftRadius: 160,
-    borderBottomRightRadius: 160,
-  },
   signIn: { alignSelf: 'center', paddingVertical: space.sm, minHeight: 44, justifyContent: 'center' },
   stepHeader: { flexDirection: 'row', alignItems: 'center', gap: space.sm },
   back: { width: 44, height: 44, marginLeft: -space.sm, alignItems: 'center', justifyContent: 'center' },

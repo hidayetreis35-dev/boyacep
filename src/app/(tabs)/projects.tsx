@@ -28,6 +28,7 @@ import {
 } from '@/ui/components';
 import { IconBubble, Segmented } from '@/ui/brand';
 import { PressableScale } from '@/ui/motion';
+import { Photo } from '@/ui/photos';
 import { fonts, radius, shadowOf, space, useFeatureColour, usePalette } from '@/ui/theme';
 
 type Filter = 'all' | 'active' | 'done';
@@ -100,6 +101,23 @@ function ProjectCard({ project }: { project: ProjectRow }) {
         <Badge label={t(STATUS_LABEL[project.status])} tone={done ? 'success' : 'primary'} />
       </View>
     </PressableScale>
+  );
+}
+
+/** What a saved project looks like, for guests. Shown only inside an "Örnek" preview. */
+function SampleProject() {
+  const p = usePalette();
+  return (
+    <View style={[styles.sample, { backgroundColor: p.surface, borderColor: p.border }]}>
+      <Photo name="colourRoom" style={styles.samplePhoto} />
+      <View style={{ flex: 1, gap: space.sm, padding: space.md }}>
+        <AppText variant="cardTitle">{t('Salon, 18 m²')}</AppText>
+        <ProgressBar share={0.6} label="%60" />
+        <AppText variant="caption" tone="muted">
+          {t('Astar bitti · 2 kat boya kaldı')}
+        </AppText>
+      </View>
+    </View>
   );
 }
 
@@ -221,6 +239,7 @@ export default function ProjectsScreen() {
             icon="albums"
             title={t('Projelerini kaydet')}
             message={t('Evinin boya işini tek yerde topla.')}
+            preview={{ caption: t('Projelerin burada böyle görünecek.'), content: <SampleProject /> }}
             benefits={[
               t('Odalarını ve ölçülerini bir kez gir, hesap hep hazır olsun.'),
               t('Seçtiğin renkleri, fotoğrafları ve bütçeni sakla.'),
@@ -244,4 +263,6 @@ const styles = StyleSheet.create({
   card: { gap: space.md, padding: space.lg, borderRadius: radius.lg, borderWidth: StyleSheet.hairlineWidth },
   track: { flex: 1, height: 8, borderRadius: radius.pill, overflow: 'hidden' },
   fill: { height: '100%', borderRadius: radius.pill },
+  sample: { flexDirection: 'row', borderRadius: radius.lg, borderWidth: StyleSheet.hairlineWidth, overflow: 'hidden' },
+  samplePhoto: { width: 104, minHeight: 104 },
 });

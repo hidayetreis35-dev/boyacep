@@ -25,9 +25,9 @@ const CATEGORY_ICON: Record<ExpenseCategory, IconName> = {
 
 const percent = (share: number) => `%${formatNumber(Math.round(share * 100), 0)}`;
 
-function Overview({ s }: { s: HomeBudgetSummary }) {
+function Overview({ s, sample }: { s: HomeBudgetSummary; sample?: boolean }) {
   const p = usePalette();
-  const f = useFeatureColour('cost');
+  const f = useFeatureColour('budget');
   const over = s.left !== null && s.left < 0;
   return (
     <Card>
@@ -41,7 +41,7 @@ function Overview({ s }: { s: HomeBudgetSummary }) {
           </AppText>
         ) : null}
       </View>
-      <AppText variant="title" style={{ fontFamily: fonts.extrabold, fontSize: 30, lineHeight: 36 }} testID="home-budget-total">
+      <AppText variant="title" style={{ fontFamily: fonts.extrabold, fontSize: 30, lineHeight: 36 }} testID={sample ? undefined : 'home-budget-total'}>
         {formatLira(s.budget ?? s.spent)}
       </AppText>
       {s.budget !== null ? (
@@ -79,7 +79,7 @@ function Overview({ s }: { s: HomeBudgetSummary }) {
 
 function Categories({ s }: { s: HomeBudgetSummary }) {
   const p = usePalette();
-  const f = useFeatureColour('cost');
+  const f = useFeatureColour('budget');
   if (s.categories.length === 0) {
     return (
       <Card>
@@ -193,6 +193,16 @@ function HomeBudget() {
   );
 }
 
+/** A made-up home budget for guests, always inside an "Örnek" preview: 25.000 ₺ budget, 14.500 ₺ spent. */
+const SAMPLE_BUDGET = summarizeHomeBudget(
+  [{ id: 'sample', budget: 25000 }],
+  [
+    { projectId: 'sample', category: 'labor', amount: 7000 },
+    { projectId: 'sample', category: 'paint', amount: 6000 },
+    { projectId: 'sample', category: 'material', amount: 1500 },
+  ],
+);
+
 export default function BudgetScreen() {
   const { db, session, loading } = useSession();
   return (
@@ -204,9 +214,18 @@ export default function BudgetScreen() {
         <HomeBudget />
       ) : (
         <SignInGate
-          feature="cost"
+          feature="budget"
           icon="wallet"
           title={t('Ev Bütçem')}
+          preview={{
+            caption: t('Bütçen burada böyle görünecek.'),
+            content: (
+              <>
+                <Overview s={SAMPLE_BUDGET} sample />
+                <Categories s={SAMPLE_BUDGET} />
+              </>
+            ),
+          }}
           message={t('Giriş yapınca tüm projelerinin bütçesini ve harcamalarını tek yerde görürsün.')}
           benefits={[t('Toplam bütçe, harcanan ve kalan tutar.'), t('Boya, malzeme ve işçiliğe ne kadar gittiğini gör.'), t('Fişlerini harcamaya ekle.')]}
         />

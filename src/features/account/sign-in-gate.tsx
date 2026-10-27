@@ -1,14 +1,18 @@
 import { router } from 'expo-router';
+import type { ReactNode } from 'react';
 import { StyleSheet, View } from 'react-native';
 
 import { t } from '@/i18n';
 import { IconBubble } from '@/ui/brand';
 import { AppText, Button, Icon, type IconName } from '@/ui/components';
+import { SamplePreview } from '@/ui/showcase';
 import { radius, shadowOf, space, useFeatureColour, usePalette, type FeatureKey } from '@/ui/theme';
 
 /**
  * What a signed-out user sees on a screen that needs an account: what they
- * get by signing in, and one clear button.
+ * get by signing in, and one clear button. With a `preview`, a faded sample
+ * of the screen comes first, tagged "Örnek", so the screen shows what it is
+ * for instead of a wall.
  */
 export function SignInGate({
   feature,
@@ -16,13 +20,27 @@ export function SignInGate({
   title,
   message,
   benefits,
+  preview,
 }: {
   feature: FeatureKey;
   icon: IconName;
   title: string;
   message: string;
   benefits: string[];
+  preview?: { caption: string; content: ReactNode };
 }) {
+  const card = <GateCard feature={feature} icon={icon} title={title} message={message} benefits={benefits} />;
+  if (!preview) return card;
+  return (
+    <View style={{ gap: space.md }}>
+      <AppText variant="bodyStrong">{preview.caption}</AppText>
+      <SamplePreview testID="sign-in-preview">{preview.content}</SamplePreview>
+      {card}
+    </View>
+  );
+}
+
+function GateCard({ feature, icon, title, message, benefits }: { feature: FeatureKey; icon: IconName; title: string; message: string; benefits: string[] }) {
   const p = usePalette();
   const f = useFeatureColour(feature);
   return (
