@@ -1,3 +1,5 @@
+import { BricolageGrotesque_700Bold } from '@expo-google-fonts/bricolage-grotesque/700Bold';
+import { BricolageGrotesque_800ExtraBold } from '@expo-google-fonts/bricolage-grotesque/800ExtraBold';
 import { PlusJakartaSans_400Regular } from '@expo-google-fonts/plus-jakarta-sans/400Regular';
 import { PlusJakartaSans_500Medium } from '@expo-google-fonts/plus-jakarta-sans/500Medium';
 import { PlusJakartaSans_600SemiBold } from '@expo-google-fonts/plus-jakarta-sans/600SemiBold';
@@ -63,6 +65,8 @@ function App() {
     PlusJakartaSans_600SemiBold,
     PlusJakartaSans_700Bold,
     PlusJakartaSans_800ExtraBold,
+    BricolageGrotesque_700Bold,
+    BricolageGrotesque_800ExtraBold,
   });
   const ready = (fontsLoaded || !!fontError) && localeReady;
   useEffect(() => {
@@ -84,6 +88,7 @@ function App() {
               headerBackTitle: t('Geri'),
               headerTintColor: p.text,
               headerTitleStyle: { color: p.text, fontFamily: fonts.bold, fontSize: 17 },
+              headerTitleAlign: 'center',
               headerShadowVisible: false,
               headerStyle: { backgroundColor: p.background },
               contentStyle: { backgroundColor: p.background },
