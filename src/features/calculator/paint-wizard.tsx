@@ -346,7 +346,7 @@ export function PaintWizard({ initialSpace }: { initialSpace?: SpaceKind } = {})
           </Notice>
         ) : hasErrors ? (
           <Notice tone="danger" icon="alert-circle">
-            {t('Lütfen kırmızı işaretli alanları düzeltin.')}
+            {t('Kırmızı alanlara bir göz atalım, sonra devam edelim.')}
           </Notice>
         ) : null}
       </FadeIn>

@@ -81,7 +81,7 @@ export function RoomFormFields({
 
       {errors.form ? <Notice tone="danger" icon="alert-circle">{errors.form}</Notice> : null}
       {Object.keys(errors).length > 0 && !errors.form ? (
-        <Notice tone="danger" icon="alert-circle">{t('Lütfen kırmızı işaretli alanları düzeltin.')}</Notice>
+        <Notice tone="danger" icon="alert-circle">{t('Kırmızı alanlara bir göz atalım, sonra devam edelim.')}</Notice>
       ) : null}
     </View>
   );

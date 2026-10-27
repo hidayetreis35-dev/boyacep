@@ -543,7 +543,7 @@ export function ErrorState({ message, onRetry }: { message: string; onRetry?: ()
   return (
     <EmptyState
       icon="cloud-offline"
-      title={t('Bir sorun oluştu')}
+      title={t('Bir şeyler ters gitti')}
       message={message}
       action={onRetry ? <Button label={t('Tekrar dene')} icon="refresh" variant="secondary" onPress={onRetry} /> : undefined}
     />

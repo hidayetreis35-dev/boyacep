@@ -70,7 +70,7 @@ function GuideEditor({ existing }: { existing?: GuideArticleRow }) {
       queryClient.setQueryData(adminKeys.guide(saved.id), saved);
       router.back();
     } catch (e) {
-      setSaveError(e instanceof Error ? e.message : t('Kaydedilemedi.'));
+      setSaveError(e instanceof Error ? e.message : t('Kaydedemedik. Bir daha dener misin?'));
     } finally {
       setBusy(false);
     }

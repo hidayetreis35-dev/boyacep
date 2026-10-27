@@ -109,7 +109,7 @@ export default function ServicesScreen() {
           </View>
         ) : null}
       </View>
-      {shown.length === 0 ? <AppText tone="muted">{t('Bu adla bir hizmet bulunamadı.')}</AppText> : null}
+      {shown.length === 0 ? <AppText tone="muted">{t('Bu adla bir hizmet bulamadık.')}</AppText> : null}
 
       <PainterSteps />
 

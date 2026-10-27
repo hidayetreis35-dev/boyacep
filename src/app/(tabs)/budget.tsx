@@ -147,7 +147,7 @@ function HomeBudget() {
       projects.refetch();
       expenses.refetch();
     };
-    return <ErrorState message={t('Bütçe yüklenemedi. İnternet bağlantını kontrol et.')} onRetry={retry} />;
+    return <ErrorState message={t('Bütçeni yükleyemedik. İnternet bağlantını kontrol eder misin?')} onRetry={retry} />;
   }
   if (projects.data.length === 0) {
     return (

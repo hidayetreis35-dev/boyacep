@@ -56,7 +56,7 @@ export async function saveExport(data: Json): Promise<void> {
  */
 export async function deleteMyAccount(db: DbClient, userId: string): Promise<void> {
   const { data: photos, error } = await db.from('project_photos').select('storage_path').eq('owner_id', userId);
-  if (error) throw new Error(t('Hesap silinemedi. İnternet bağlantını kontrol et.'));
+  if (error) throw new Error(t('Hesabını silemedik. İnternet bağlantını kontrol eder misin?'));
   const paths = photos.map((p) => p.storage_path);
   for (let i = 0; i < paths.length; i += 100) {
     const removed = await db.storage.from(PHOTO_BUCKET).remove(paths.slice(i, i + 100));
@@ -70,7 +70,7 @@ export async function deleteMyAccount(db: DbClient, userId: string): Promise<voi
   const { error: deleteError } = await db.rpc('delete_my_account');
   if (deleteError) {
     if (deleteError.message.includes('admins must')) throw new Error(t('Yönetici hesapları önce başka bir yönetici tarafından yetkisiz bırakılmalı.'));
-    throw new Error(t('Hesap silinemedi. İnternet bağlantını kontrol et.'));
+    throw new Error(t('Hesabını silemedik. İnternet bağlantını kontrol eder misin?'));
   }
   await writeLocalRoles([]);
   // The session belongs to a deleted user now; drop it on this device only.

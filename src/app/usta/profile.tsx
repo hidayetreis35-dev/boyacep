@@ -135,7 +135,7 @@ export default function ProProfileScreen() {
   const profile = useMyProProfile();
   if (profile.isPending) return <Screen edges={['bottom']}><LoadingState /></Screen>;
   if (profile.isError) {
-    return <Screen edges={['bottom']}><ErrorState message={t('Profil yüklenemedi.')} onRetry={() => profile.refetch()} /></Screen>;
+    return <Screen edges={['bottom']}><ErrorState message={t('Profilini yükleyemedik.')} onRetry={() => profile.refetch()} /></Screen>;
   }
   return (
     <Screen edges={['bottom']}>

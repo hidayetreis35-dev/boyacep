@@ -73,7 +73,7 @@ describe('Projelerim (signed in)', () => {
   it('shows an error with retry when loading fails', async () => {
     api.listProjects.mockRejectedValue(new Error('offline'));
     await renderRouter('./src/app', { initialUrl: '/projects' });
-    expect(await screen.findByText('Bir sorun oluştu', {}, { timeout: 3000 })).toBeTruthy();
+    expect(await screen.findByText('Bir şeyler ters gitti', {}, { timeout: 3000 })).toBeTruthy();
     api.listProjects.mockResolvedValue([project()]);
     await fireEvent.press(screen.getByText('Tekrar dene'));
     expect(await screen.findByText('Salon boyası')).toBeTruthy();

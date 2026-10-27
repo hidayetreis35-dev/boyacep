@@ -77,7 +77,7 @@ export default function RoomScreen() {
   const query = useProject(id);
 
   if (query.isPending) return <Screen edges={['bottom']}><LoadingState /></Screen>;
-  if (query.isError) return <Screen edges={['bottom']}><ErrorState message={t('Proje yüklenemedi.')} onRetry={() => query.refetch()} /></Screen>;
+  if (query.isError) return <Screen edges={['bottom']}><ErrorState message={t('Projeyi yükleyemedik.')} onRetry={() => query.refetch()} /></Screen>;
 
   const existing = roomId ? query.data.rooms.find((r) => r.id === roomId) : undefined;
   if (roomId && !existing) {

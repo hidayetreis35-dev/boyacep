@@ -24,7 +24,7 @@ describe('PaintWizard, one room', () => {
     await next();
     expect(screen.getByText('ADIM 2 / 6')).toBeTruthy();
     await next();
-    expect(screen.getByText('Lütfen kırmızı işaretli alanları düzeltin.')).toBeTruthy();
+    expect(screen.getByText('Kırmızı alanlara bir göz atalım, sonra devam edelim.')).toBeTruthy();
     expect(screen.getByText('Oda uzunluğu 0 ile 50 m arasında olmalı.')).toBeTruthy();
     expect(screen.getByText('ADIM 2 / 6')).toBeTruthy();
   });

@@ -47,7 +47,7 @@ describe('Giriş', () => {
     await fireEvent.changeText(screen.getByTestId('code'), '123456');
     for (let i = 0; i < 5; i++) {
       await fireEvent.press(screen.getByText('Giriş yap'));
-      await screen.findByText('Kod hatalı veya süresi dolmuş. Yeni kod isteyin.');
+      await screen.findByText('Bu kod çalışmadı ya da süresi geçti. Yeni bir kod ister misin?');
     }
     expect(mockAuth.verifyOtp).toHaveBeenCalledTimes(5);
     await fireEvent.press(screen.getByText('Giriş yap'));

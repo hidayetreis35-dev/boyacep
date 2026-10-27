@@ -246,7 +246,7 @@ export default function ProjectScreen() {
           />
           {setStatus.isError ? (
             <Notice tone="danger" icon="alert-circle">
-              {t('Durum kaydedilemedi.')}
+              {t('Durumu kaydedemedik.')}
             </Notice>
           ) : null}
           </>

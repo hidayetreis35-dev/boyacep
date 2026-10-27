@@ -47,7 +47,7 @@ export default function SharedProjectScreen() {
   const meta = list.data?.find((p) => p.id === id);
   if (list.isPending || data.isPending) return <Screen edges={['bottom']}><LoadingState /></Screen>;
   if (list.isError || data.isError) {
-    return <Screen edges={['bottom']}><ErrorState message={t('Proje yüklenemedi.')} onRetry={() => { list.refetch(); data.refetch(); }} /></Screen>;
+    return <Screen edges={['bottom']}><ErrorState message={t('Projeyi yükleyemedik.')} onRetry={() => { list.refetch(); data.refetch(); }} /></Screen>;
   }
   if (!meta) {
     return (

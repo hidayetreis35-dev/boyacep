@@ -310,7 +310,7 @@ function MovePhotosButton({ title }: { title: string }) {
       <Button label={t('Önce ve sonra fotoğrafları için proje aç')} icon="camera" variant="secondary" loading={create.isPending} onPress={openProject} />
       {create.isError ? (
         <Notice tone="danger" icon="alert-circle">
-          {t('Proje oluşturulamadı: {message}', { message: create.error.message })}
+          {t('Projeyi oluşturamadık: {message}', { message: create.error.message })}
         </Notice>
       ) : null}
     </>

@@ -129,7 +129,7 @@ function HomeLog() {
         />
       );
     }
-    return <ErrorState message={t('Ev Hafızası yüklenemedi.')} onRetry={() => log.refetch()} />;
+    return <ErrorState message={t('Ev Hafızanı yükleyemedik.')} onRetry={() => log.refetch()} />;
   }
 
   const rows = searchHomeLog(log.data, query);

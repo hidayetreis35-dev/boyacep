@@ -34,7 +34,7 @@ export function validateQuestion(subject: string, body: string): QuestionErrors 
 function askErrorMessage(message: string): string {
   if (message.includes('daily question limit')) return t('Bugün en fazla 5 soru sorabilirsin. Yarın tekrar dene.');
   if (message.includes('consultation is closed')) return t('Bu soru kapandı. Yeni bir soru açabilirsin.');
-  return t('Gönderilemedi. İnternet bağlantını kontrol et.');
+  return t('Gönderemedik. İnternet bağlantını kontrol eder misin?');
 }
 
 /** Mine for users; every question for the team (RLS decides). */

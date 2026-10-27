@@ -123,7 +123,7 @@ describe('Usta Bul', () => {
     expect(screen.getByText('Marangoz')).toBeTruthy();
     expect(screen.queryByText('Boyacı')).toBeNull();
     await fireEvent.changeText(screen.getByTestId('service-search'), 'zzz');
-    expect(screen.getByText('Bu adla bir hizmet bulunamadı.')).toBeTruthy();
+    expect(screen.getByText('Bu adla bir hizmet bulamadık.')).toBeTruthy();
   });
 });
 

@@ -173,7 +173,7 @@ function NewProject({ count }: { count: number }) {
       />
       {create.isError ? (
         <Notice tone="danger" icon="alert-circle">
-          {t('Proje oluşturulamadı: {message}', { message: create.error.message })}
+          {t('Projeyi oluşturamadık: {message}', { message: create.error.message })}
         </Notice>
       ) : null}
       <View style={{ flexDirection: 'row', gap: space.sm }}>
@@ -192,7 +192,7 @@ function ProjectList() {
   const projects = useProjects();
   const [filter, setFilter] = useState<Filter>('all');
   if (projects.isPending) return <LoadingState label={t('Projeler yükleniyor…')} />;
-  if (projects.isError) return <ErrorState message={t('Projeler yüklenemedi. İnternet bağlantını kontrol et.')} onRetry={() => projects.refetch()} />;
+  if (projects.isError) return <ErrorState message={t('Projelerini yükleyemedik. İnternet bağlantını kontrol eder misin?')} onRetry={() => projects.refetch()} />;
 
   return (
     <View style={{ gap: space.md }}>

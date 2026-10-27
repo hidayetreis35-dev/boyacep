@@ -43,7 +43,7 @@ export async function listInvites(db: DbClient, projectId: string): Promise<Proj
 
 export async function createInvite(db: DbClient, projectId: string): Promise<ProjectInviteRow> {
   const { data, error } = await db.from('project_invites').insert({ project_id: projectId }).select('*').single();
-  if (error) throw new Error(t('Paylaşım kodu oluşturulamadı.'));
+  if (error) throw new Error(t('Paylaşım kodunu oluşturamadık. Bir daha dener misin?'));
   return data;
 }
 

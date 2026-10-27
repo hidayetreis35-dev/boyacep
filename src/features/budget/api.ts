@@ -22,7 +22,7 @@ export function expenseErrorMessage(message: string): string {
   if (isNotEnabled(message)) return t('Akıllı Bütçe sunucuda henüz açılmadı.');
   if (message.includes('expense limit reached')) return t('Bu projede en fazla 300 harcama olabilir.');
   if (message.includes('row-level security')) return t('Bu projeye harcama ekleme yetkin yok.');
-  return t('Harcama kaydedilemedi. İnternet bağlantını kontrol et.');
+  return t('Harcamayı kaydedemedik. İnternet bağlantını kontrol eder misin?');
 }
 
 export async function listExpenses(db: DbClient, projectId: string): Promise<ExpenseWithReceipt[]> {
@@ -70,7 +70,7 @@ export async function addExpense(
 
 export async function deleteExpense(db: DbClient, expense: Pick<ProjectExpenseRow, 'id' | 'receipt_path'>): Promise<void> {
   const { error } = await db.from('project_expenses').delete().eq('id', expense.id);
-  if (error) throw new Error(t('Harcama silinemedi. İnternet bağlantını kontrol et.'));
+  if (error) throw new Error(t('Harcamayı silemedik. İnternet bağlantını kontrol eder misin?'));
   // A leftover file is private and harmless; the row is what the user sees.
   if (expense.receipt_path) await db.storage.from(RECEIPT_BUCKET).remove([expense.receipt_path]);
 }

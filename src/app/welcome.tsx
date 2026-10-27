@@ -219,7 +219,7 @@ function CityStep({ onDone, onBack }: { onDone: (province: ProvinceCode | null, 
       </AppText>
       <SelectBox
         icon="location-outline"
-        label={t('Şehir seçin')}
+        label={t('Şehir seç')}
         value={province ? (provinceByCode(province)?.name ?? null) : null}
         placeholder={t('Seçilmedi')}
         open={open === 'province'}
@@ -238,7 +238,7 @@ function CityStep({ onDone, onBack }: { onDone: (province: ProvinceCode | null, 
       ) : null}
       <SelectBox
         icon="map-outline"
-        label={t('İlçe seçin')}
+        label={t('İlçe seç')}
         value={district}
         placeholder={province && districts.length === 0 ? t('Bu il için ilçe listesi henüz yok') : t('Seçilmedi')}
         open={open === 'district'}

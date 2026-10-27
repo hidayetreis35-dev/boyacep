@@ -94,7 +94,7 @@ function AccountProfile() {
 
   if (account.isPending) return <LoadingState />;
   if (account.isError || !db || !session) {
-    return <ErrorState message={t('Profil yüklenemedi. İnternet bağlantını kontrol et.')} onRetry={() => account.refetch()} />;
+    return <ErrorState message={t('Profilini yükleyemedik. İnternet bağlantını kontrol eder misin?')} onRetry={() => account.refetch()} />;
   }
 
   const userId = session.user.id;
@@ -108,7 +108,7 @@ function AccountProfile() {
       await task();
       await queryClient.invalidateQueries({ queryKey: ['account', userId] });
     } catch (e) {
-      setError(e instanceof Error ? e.message : t('Kaydedilemedi.'));
+      setError(e instanceof Error ? e.message : t('Kaydedemedik. Bir daha dener misin?'));
     } finally {
       setBusy(false);
     }

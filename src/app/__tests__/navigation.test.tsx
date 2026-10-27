@@ -41,7 +41,7 @@ describe('first launch', () => {
     await fireEvent.press(screen.getAllByLabelText('İzmir')[0]);
     await fireEvent.press(screen.getByTestId('select-district'));
     await fireEvent.press(screen.getByLabelText('Bornova'));
-    expect(screen.getByLabelText('İlçe seçin: Bornova')).toBeTruthy();
+    expect(screen.getByLabelText('İlçe seç: Bornova')).toBeTruthy();
     await fireEvent.press(screen.getByText('Devam Et'));
     await screen.findByText('Evin için güzel fikirler burada başlıyor.');
     expect(JSON.parse((await AsyncStorage.getItem('boyacep.city.v1')) ?? '{}')).toEqual({ province: '35', district: 'Bornova', answered: true });
