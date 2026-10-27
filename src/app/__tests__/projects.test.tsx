@@ -263,7 +263,7 @@ describe('Ana sayfa: devam eden proje', () => {
   it('shows nothing when every project is finished', async () => {
     api.listProjects.mockResolvedValue([project({ status: 'completed' })]);
     await renderRouter('./src/app', { initialUrl: '/' });
-    await screen.findByText('Evin için bugün neler yapmak istersin?');
+    await screen.findByText('Evin için güzel fikirler burada başlıyor.');
     await waitFor(() => expect(api.listProjects).toHaveBeenCalled());
     expect(screen.queryByText('DEVAM EDEN PROJEN')).toBeNull();
   });

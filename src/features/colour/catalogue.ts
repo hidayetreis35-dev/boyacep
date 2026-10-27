@@ -252,7 +252,8 @@ export function searchColours(query: string, list: CatalogColour[] = COLOURS): C
   );
 }
 
-function fold(s: string): string {
+/** Lower-case with Turkish letters folded to plain Latin ones, for loose matching. */
+export function fold(s: string): string {
   return s
     .toLocaleLowerCase('tr')
     .replace(/ı/g, 'i')

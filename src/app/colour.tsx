@@ -2,6 +2,7 @@ import { useLocalSearchParams } from 'expo-router';
 import { useState } from 'react';
 import { StyleSheet, View } from 'react-native';
 
+import { colourByHex } from '@/features/colour/catalogue';
 import { ColourHarmonies, CompareColours, ColourExplorer, SelectedColour, toPicked, type PickedColour } from '@/features/colour/colour-explorer';
 import { ColourStudio } from '@/features/colour/colour-studio';
 import { useFavourites } from '@/features/colour/favourites';
@@ -90,10 +91,11 @@ function ProjectPhoto({ photoId, colour, quickColours, onPickColour, onBrowse }:
 }
 
 export default function ColourScreen() {
-  const { photoId } = useLocalSearchParams<{ photoId?: string }>();
+  const { photoId, hex } = useLocalSearchParams<{ photoId?: string; hex?: string }>();
   const scrollToTop = useScrollToTop();
   const [tab, setTab] = useState<Tab>(photoId ? 'photo' : 'colours');
-  const [colour, setColour] = useState<PickedColour>(() => toPicked('#A3B49A'));
+  // A colour picked in search arrives as ?hex=; anything that is not a catalogue colour is ignored.
+  const [colour, setColour] = useState<PickedColour>(() => toPicked(hex && colourByHex(hex) ? hex : '#A3B49A'));
   const [recent, setRecent] = useState<string[]>([]);
   const [compare, setCompare] = useState<string[]>([]);
   const favourites = useFavourites();

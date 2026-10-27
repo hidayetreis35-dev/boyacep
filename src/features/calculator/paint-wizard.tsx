@@ -69,9 +69,9 @@ function CoatsPicker({ value, onChange }: { value: number; onChange: (v: number)
 }
 
 /** "Ne Kadar Boya?": one question per screen, then a result screen. The maths is the unchanged engine. */
-export function PaintWizard() {
+export function PaintWizard({ initialSpace }: { initialSpace?: SpaceKind } = {}) {
   const scrollToTop = useScrollToTop();
-  const [space_, setSpace] = useState<SpaceKind | null>(null);
+  const [space_, setSpace] = useState<SpaceKind | null>(initialSpace ?? null);
   const [step, setStep] = useState<Step>('space');
   const [form, setForm] = useState<RoomForm>(EMPTY_ROOM_FORM);
   const [home, setHome] = useState<HomeForm>(EMPTY_HOME);

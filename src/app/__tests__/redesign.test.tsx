@@ -58,7 +58,7 @@ describe('Ana sayfa', () => {
   it('greets the user by first name and shows their initials', async () => {
     api.listProjects.mockResolvedValue([]);
     await renderRouter('./src/app', { initialUrl: '/' });
-    expect(await screen.findByText('Merhaba Ayşe,')).toBeTruthy();
+    expect(await screen.findByText('Merhaba Ayşe')).toBeTruthy();
     expect(screen.getByText('AK')).toBeTruthy();
     await fireEvent.press(screen.getByLabelText('Ev Bütçesi'));
     expect(screen).toHavePathname('/budget');
