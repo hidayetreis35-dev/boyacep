@@ -120,8 +120,8 @@ export function FeatureHeader({
   return (
     <View style={[styles.featureHeader, { backgroundColor: f.soft }]}>
       <View style={styles.featureHeaderRow}>
-        <View style={[styles.featureIcon, { backgroundColor: f.base }]}>
-          <Icon name={icon} size={24} color="#FFFFFF" />
+        <View style={[styles.featureIcon, { backgroundColor: f.ink }]}>
+          <Icon name={icon} size={24} color={f.soft} />
         </View>
         <View style={{ flex: 1, gap: 2 }}>
           <AppText variant="title" style={{ color: f.ink }}>
@@ -190,8 +190,8 @@ export function OptionCard({
   ) : swatch ? (
     <View style={[styles.optionSwatch, { backgroundColor: swatch, borderColor: p.border }]} />
   ) : icon ? (
-    <View style={[styles.optionIcon, { backgroundColor: selected ? f.base : f.soft }]}>
-      <Icon name={icon} size={22} color={selected ? '#FFFFFF' : f.ink} />
+    <View style={[styles.optionIcon, { backgroundColor: selected ? f.ink : f.soft }]}>
+      <Icon name={icon} size={22} color={selected ? f.soft : f.ink} />
     </View>
   ) : null;
   return (

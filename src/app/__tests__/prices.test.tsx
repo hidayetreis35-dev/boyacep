@@ -57,6 +57,15 @@ describe('Türkiye Boya Fiyatları', () => {
     expect(screen.getAllByText('Bu bir teklif değildir', { exact: false }).length).toBeGreaterThan(0);
   });
 
+  it('answers first: the city\'s labour range per m², with its quality', async () => {
+    await AsyncStorage.setItem(CITY_KEY, JSON.stringify({ province: '45', answered: true }));
+    await renderRouter('./src/app', { initialUrl: '/prices' });
+    const headline = within(await screen.findByTestId('price-headline'));
+    expect(headline.getByText('Manisa · iç duvar işçiliği')).toBeTruthy();
+    expect(headline.getByText('75–180 ₺')).toBeTruthy();
+    expect(headline.getByText('Yön gösterir, teklif değildir.')).toBeTruthy();
+  });
+
   it('says so when a province has no data, and never borrows another city', async () => {
     await AsyncStorage.setItem(CITY_KEY, JSON.stringify({ province: '02', answered: true }));
     await renderRouter('./src/app', { initialUrl: '/prices' });
