@@ -131,14 +131,15 @@ describe('regional cost on calculator results', () => {
     expect(screen.getByText('Şehir seçmediğin için Türkiye geneli gösteriliyor.')).toBeTruthy();
     // 100–150 ₺/m² × 120 m²; 100,3 L × 165–335 ₺/L.
     expect(screen.getByText('12.000–18.000 ₺')).toBeTruthy();
-    expect(screen.getByText('16.500–33.500 ₺')).toBeTruthy();
-    expect(screen.getByText('28.500–51.500 ₺')).toBeTruthy();
+    // Painting it yourself costs the paint; a painter adds the labour on top.
+    expect(within(screen.getByTestId('diy-cost')).getByText('16.500–33.500 ₺')).toBeTruthy();
+    expect(within(screen.getByTestId('pro-cost')).getByText('28.500–51.500 ₺')).toBeTruthy();
   });
 
   it('uses the chosen city\'s own labour range', async () => {
     await AsyncStorage.setItem(CITY_KEY, JSON.stringify({ province: '45', answered: true }));
     await wholeHome('120');
-    expect(await screen.findByText('Ustayla yaklaşık maliyet · Manisa')).toBeTruthy();
+    expect(await screen.findByText('Manisa fiyatlarıyla')).toBeTruthy();
     // 75–180 ₺/m² × 120 m².
     expect(screen.getByText('9.000–21.500 ₺')).toBeTruthy();
     expect(screen.queryByText('Türkiye geneli gösteriliyor', { exact: false })).toBeNull();
