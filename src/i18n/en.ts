@@ -1806,6 +1806,8 @@ export const en: Record<string, Translation> = {
   "Devam eden projen yok.": "No projects in progress.",
   "Fiyat ekle": "Add price",
   "Toplam Tahmini Maliyet": "Total estimated cost",
+  "Kalemlere fiyat ekledikçe toplam burada oluşur.": "The total builds up here as you add prices.",
+  "Yaklaşık mağaza fiyatını yaz: {price}/L": "Use a typical shop price: {price}/L",
   "Macun + Zımpara": "Filler + sanding",
   "Malzeme (rulo, fırça vb.)": "Supplies (roller, brush etc.)",
   "BoyaCep renk önerisi: {name} ({hex})": "BoyaCep colour idea: {name} ({hex})",

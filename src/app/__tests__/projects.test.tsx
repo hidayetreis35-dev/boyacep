@@ -444,6 +444,17 @@ describe('Maliyet Hesapla (no account needed)', () => {
     await fireEvent.changeText(screen.getByTestId('cost-paint'), '200');
     expect(screen.getByTestId('cost-total')).toHaveTextContent('2.780,00 ₺');
   });
+
+  it('starts with no total and offers a labelled shop price instead of inventing one', async () => {
+    await renderRouter('./src/app', { initialUrl: '/cost?paint=10&primer=0' });
+    expect(await screen.findByText('Kalemlere fiyat ekledikçe toplam burada oluşur.')).toBeTruthy();
+    expect(screen.getByTestId('cost-total')).toHaveTextContent('–');
+    await fireEvent.press(screen.getByText('Yaklaşık mağaza fiyatını yaz: 250 ₺/L'));
+    // 10 L × 250 ₺/L, marked as an estimate, not a checked price
+    expect(screen.getByTestId('cost-total')).toHaveTextContent('2.500,00 ₺');
+    expect(screen.getByText('Tahmini: 2.500,00 ₺')).toBeTruthy();
+    expect(screen.queryByText('Yaklaşık mağaza fiyatını yaz: 250 ₺/L')).toBeNull();
+  });
 });
 
 describe('Projeye kaydet (from Ne Kadar Boya?)', () => {
