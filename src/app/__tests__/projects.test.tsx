@@ -31,6 +31,8 @@ jest.mock('@/features/account/api', () => ({
 }));
 
 jest.mock('@/features/projects/api');
+jest.mock('@/features/photos/api', () => ({ listProjectPhotos: jest.fn(async () => []) }));
+const photosMock = jest.mocked(jest.requireMock('@/features/photos/api') as { listProjectPhotos: jest.Mock });
 const api = jest.mocked(projectsApi);
 jest.mock('@/features/materials/api');
 const mapi = jest.mocked(materialsApi);
@@ -90,6 +92,17 @@ describe('Projelerim (signed in)', () => {
     expect(api.createProject).toHaveBeenCalledWith(expect.anything(), 'Mutfak');
     expect(await screen.findByText('Henüz oda yok')).toBeTruthy();
     expect(screen).toHavePathname('/projects/p9');
+  });
+
+  it('uses the project\'s own photo as its cover', async () => {
+    api.listProjects.mockResolvedValue([project({ id: 'p1' }), project({ id: 'p2', title: 'Mutfak' })]);
+    photosMock.listProjectPhotos.mockImplementation(async (_db: unknown, id: string) =>
+      id === 'p1' ? [{ id: 'ph1', project_id: 'p1', url: 'https://example.invalid/salon.jpg', surfaces: [] }] : [],
+    );
+    await renderRouter('./src/app', { initialUrl: '/projects' });
+    expect(await screen.findByText('Mutfak')).toBeTruthy();
+    // Only the project with a photo gets one; nobody else's room is borrowed.
+    expect(await screen.findAllByTestId('project-cover-photo')).toHaveLength(1);
   });
 
   it('blocks a fourth project on the free plan', async () => {

@@ -1,8 +1,10 @@
 import { router } from 'expo-router';
 import { useState } from 'react';
-import { StyleSheet, View } from 'react-native';
+import { Image, StyleSheet, View } from 'react-native';
 
 import { useSession } from '@/features/account/session';
+import { useProjectColours } from '@/features/colour/project-colours';
+import { useProjectPhotos } from '@/features/photos/queries';
 import { SignInGate } from '@/features/account/sign-in-gate';
 import { useMyPlan } from '@/features/plans/queries';
 import { FREE_PROJECT_LIMIT } from '@/features/projects/limits';
@@ -73,6 +75,26 @@ function CardProgress({ project }: { project: ProjectRow }) {
   return <LiveProgress project={project} rooms={detail.data.rooms.length} />;
 }
 
+/** The project's own newest photo, else its saved colours as paint chips, else an icon. Never a stock photo. */
+function ProjectCover({ project }: { project: ProjectRow }) {
+  const p = usePalette();
+  const photos = useProjectPhotos(project.id);
+  const colours = useProjectColours(project.id);
+  const url = photos.data?.find((photo) => photo.url)?.url;
+  if (url) return <Image source={{ uri: url }} style={[styles.cover, { backgroundColor: p.surfaceMuted }]} accessible={false} testID="project-cover-photo" />;
+  const hexes = (colours.data ?? []).slice(0, 3).map((c) => c.hex);
+  if (hexes.length > 0) {
+    return (
+      <View style={[styles.cover, styles.chips, { borderColor: p.border }]} testID="project-cover-colours">
+        {hexes.map((hex, i) => (
+          <View key={`${hex}-${i}`} style={{ flex: 1, backgroundColor: hex }} />
+        ))}
+      </View>
+    );
+  }
+  return <IconBubble icon={project.status === 'completed' ? 'checkmark-done' : 'home'} feature="projects" size={56} />;
+}
+
 function ProjectCard({ project }: { project: ProjectRow }) {
   const p = usePalette();
   const done = project.status === 'completed';
@@ -83,9 +105,9 @@ function ProjectCard({ project }: { project: ProjectRow }) {
       onPress={() => router.push({ pathname: '/projects/[id]', params: { id: project.id } })}
       style={[styles.card, { backgroundColor: p.surface, borderColor: p.border }, shadowOf(p)]}>
       <View style={{ flexDirection: 'row', alignItems: 'center', gap: space.md }}>
-        <IconBubble icon={done ? 'checkmark-done' : 'home'} feature="projects" />
+        <ProjectCover project={project} />
         <View style={{ flex: 1, gap: 2 }}>
-          <AppText variant="bodyStrong" numberOfLines={1}>
+          <AppText variant="cardTitle" numberOfLines={1}>
             {project.title}
           </AppText>
           <AppText variant="caption" tone="muted">
@@ -260,6 +282,8 @@ export default function ProjectsScreen() {
 }
 
 const styles = StyleSheet.create({
+  cover: { width: 56, height: 56, borderRadius: 14 },
+  chips: { flexDirection: 'row', overflow: 'hidden', borderWidth: StyleSheet.hairlineWidth },
   card: { gap: space.md, padding: space.lg, borderRadius: radius.lg, borderWidth: StyleSheet.hairlineWidth },
   track: { flex: 1, height: 8, borderRadius: radius.pill, overflow: 'hidden' },
   fill: { height: '100%', borderRadius: radius.pill },
