@@ -1,6 +1,6 @@
 import type { HomeLogRow } from '@/lib/database.types';
 
-import { careReminders, careRule, monthsSince, paintedAgo } from '../care';
+import { addMonths, careDueDates, careReminders, careRule, monthsSince, paintedAgo } from '../care';
 
 function row(id: string, place: string, painted_on: string): HomeLogRow {
   return {
@@ -73,3 +73,31 @@ describe('care reminders', () => {
     expect(reminders).toEqual([]);
   });
 });
+
+describe('care due dates', () => {
+  it('adds whole months and keeps the day inside the month', () => {
+    expect(addMonths('2026-10-27', 3)).toBe('2027-01-27');
+    expect(addMonths('2020-02-29', 72)).toBe('2026-02-28');
+    expect(addMonths('2026-01-31', 1)).toBe('2026-02-28');
+    expect(addMonths('2024-01-31', 1)).toBe('2024-02-29');
+  });
+
+  it('gives each place the day it reaches its interval, soonest first, future only', () => {
+    const due = careDueDates(
+      [
+        row('a', 'Salon', '2019-05-01'), // 2025-05-01: already due, shown on screen instead
+        row('b', 'Mutfak', '2023-01-10'), // 4 years: 2027-01-10
+        row('c', 'Yatak odası', '2024-06-01'), // 6 years: 2030-06-01
+        row('d', 'Balkon', '2020-03-15'), // 8 years: 2028-03-15
+        row('e', 'mutfak', '2021-01-10'), // older coat of the kitchen: ignored
+      ],
+      '2026-10-27',
+    );
+    expect(due.map((d) => [d.entry.id, d.dueOn])).toEqual([
+      ['b', '2027-01-10'],
+      ['d', '2028-03-15'],
+      ['c', '2030-06-01'],
+    ]);
+  });
+});
+

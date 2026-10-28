@@ -15,6 +15,7 @@ import { useEffect, useState } from 'react';
 import { useColorScheme, View } from 'react-native';
 
 import { SessionProvider } from '@/features/account/session';
+import { useCareReminderLinks } from '@/features/home-log/reminders';
 import { t } from '@/i18n';
 import { LocaleProvider, useLocale } from '@/i18n/provider';
 import { reportError } from '@/lib/report-error';
@@ -51,6 +52,12 @@ export default function RootLayout() {
   );
 }
 
+/** Opens the right screen when a reminder notification is tapped. */
+function NotificationLinks() {
+  useCareReminderLinks();
+  return null;
+}
+
 /** Rendered inside LocaleProvider, so a language switch re-renders every title. */
 function App() {
   const scheme = useColorScheme() === 'dark' ? 'dark' : 'light';
@@ -83,6 +90,7 @@ function App() {
             colors: { ...base.colors, primary: p.primary, background: p.background, card: p.surface, text: p.text, border: p.border },
           }}>
           <StatusBar style={scheme === 'dark' ? 'light' : 'dark'} />
+          <NotificationLinks />
           <Stack
             screenOptions={{
               headerBackTitle: t('Geri'),

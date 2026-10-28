@@ -1,7 +1,9 @@
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { fireEvent, screen, waitFor, within } from '@testing-library/react-native';
+import * as Notifications from 'expo-notifications';
 import { renderRouter } from 'expo-router/testing-library';
 
+import { monthLabel } from '@/features/budget/charts';
 import * as colourApi from '@/features/colour/project-colours';
 import * as homeLogApi from '@/features/home-log/api';
 import * as projectsApi from '@/features/projects/api';
@@ -150,5 +152,57 @@ describe('Ev Hafızası', () => {
       expect.objectContaining({ project_id: 'p1', place: 'Duvarlar', colour_name: 'Kırık beyaz', colour_hex: '#F4F1EA' }),
     ]);
     await waitFor(() => expect(screen).toHavePathname('/home-log'));
+  });
+
+  it('reminds on the phone when a place reaches its interval, once allowed', async () => {
+    const d = new Date();
+    const painted = `${d.getFullYear() - 3}-${String(d.getMonth() + 1).padStart(2, '0')}-01`;
+    const due = `${d.getFullYear() + 1}-${String(d.getMonth() + 1).padStart(2, '0')}`;
+    api.listHomeLog.mockResolvedValue([salon, { ...salon, id: 'h2', place: 'Mutfak', painted_on: painted }]);
+    await renderRouter('./src/app', { initialUrl: '/home-log' });
+    const reminders = within(await screen.findByTestId('care-reminder-switch'));
+    expect(Notifications.scheduleNotificationAsync).not.toHaveBeenCalled();
+
+    await fireEvent.press(reminders.getByRole('checkbox', { name: 'Zamanı gelince hatırlat' }));
+    await waitFor(() => expect(reminders.getByRole('checkbox', { name: 'Zamanı gelince hatırlat' })).toBeChecked());
+    expect(Notifications.requestPermissionsAsync).toHaveBeenCalledTimes(1);
+    expect(Notifications.scheduleNotificationAsync).toHaveBeenCalledWith(
+      expect.objectContaining({
+        identifier: 'care-h2',
+        content: expect.objectContaining({ title: 'Mutfak: yenileme zamanı', data: { url: '/home-log' } }),
+      }),
+    );
+    const trigger = jest.mocked(Notifications.scheduleNotificationAsync).mock.calls[0][0].trigger as { date: Date };
+    expect([trigger.date.getFullYear(), trigger.date.getMonth() + 1, trigger.date.getDate(), trigger.date.getHours()]).toEqual([d.getFullYear() + 1, d.getMonth() + 1, 1, 10]);
+    expect(reminders.getByText(`Sıradaki hatırlatma: Mutfak, ${monthLabel(due)}`)).toBeTruthy();
+    expect(await AsyncStorage.getItem('boyacep.care-reminders.v1')).toBe('1');
+
+    // Turned off: every BoyaCep reminder leaves the phone.
+    await fireEvent.press(reminders.getByRole('checkbox', { name: 'Zamanı gelince hatırlat' }));
+    await waitFor(() => expect(reminders.getByRole('checkbox', { name: 'Zamanı gelince hatırlat' })).not.toBeChecked());
+    expect(await Notifications.getAllScheduledNotificationsAsync()).toEqual([]);
+    expect(await AsyncStorage.getItem('boyacep.care-reminders.v1')).toBe('0');
+  });
+
+  it('says where to allow notifications when the phone says no', async () => {
+    jest.mocked(Notifications.requestPermissionsAsync).mockResolvedValueOnce({ granted: false, canAskAgain: false } as never);
+    api.listHomeLog.mockResolvedValue([salon]);
+    await renderRouter('./src/app', { initialUrl: '/home-log' });
+    const reminders = within(await screen.findByTestId('care-reminder-switch'));
+    await fireEvent.press(reminders.getByRole('checkbox', { name: 'Zamanı gelince hatırlat' }));
+    expect(await reminders.findByText(/Bildirim izni kapalı/)).toBeTruthy();
+    expect(reminders.getByRole('checkbox', { name: 'Zamanı gelince hatırlat' })).not.toBeChecked();
+    expect(Notifications.scheduleNotificationAsync).not.toHaveBeenCalled();
+  });
+
+  it('opens Ev Hafızası from a tapped reminder, once', async () => {
+    jest.mocked(Notifications.getLastNotificationResponse).mockReturnValueOnce({
+      notification: { request: { content: { data: { url: '/home-log' } } } },
+    } as never);
+    api.listHomeLog.mockResolvedValue([]);
+    projects.listProjects.mockResolvedValue([]);
+    await renderRouter('./src/app', { initialUrl: '/' });
+    await waitFor(() => expect(screen).toHavePathname('/home-log'));
+    expect(Notifications.clearLastNotificationResponse).toHaveBeenCalled();
   });
 });

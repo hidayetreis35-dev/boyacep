@@ -1956,4 +1956,12 @@ export const en: Record<string, Translation> = {
   "İşlerin burada": "Your work is here",
   "Ev sahiplerinin paylaştığı projeleri gör, ölçülere göre PDF teklif hazırla.": "See projects homeowners shared with you and make PDF quotes from their measurements.",
   "Usta Paneli’ni aç": "Open the Painter Panel",
+  "Bakım hatırlatmaları": "Care reminders",
+  "{place}: yenileme zamanı": "{place}: time for a fresh coat",
+  "{place} genelde {years} yılda bir boyanır. Bu tahmini bir hatırlatma; duvar iyi duruyorsa bekleyebilirsin.": "{place} is usually repainted every {years} years. This is an estimate; if the wall still looks good, it can wait.",
+  "Zamanı gelince hatırlat": "Remind me when it’s time",
+  "Bir yer olağan yenileme zamanına geldiğinde telefonuna bildirim gelir. Süreler tahminidir; istediğin zaman kapatabilirsin.": "When a place reaches its usual repaint time, your phone gets a notification. The intervals are estimates; you can turn this off any time.",
+  "Sıradaki hatırlatma: {place}, {month}": "Next reminder: {place}, {month}",
+  "Bildirim izni kapalı. Telefonunun ayarlarından BoyaCep bildirimlerini açabilirsin.": "Notifications are off. You can allow BoyaCep notifications in your phone’s settings.",
+  "Hatırlatma kurulamadı. Biraz sonra tekrar dene.": "Couldn’t set the reminder. Try again in a moment.",
 };

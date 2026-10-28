@@ -42,19 +42,24 @@ export type CareReminder = { entry: HomeLogRow; months: number; rule: CareRule; 
 /** Within this many months of the usual interval a place counts as "soon". */
 export const SOON_MONTHS = 6;
 
-/**
- * Places that may be due a fresh coat, most overdue first. Only the latest
- * entry for a place counts: a wall painted again last year is not due.
- */
-export function careReminders(rows: HomeLogRow[], today: string): CareReminder[] {
+/** The latest entry for each place: a wall painted again last year is judged by that coat. */
+function latestPerPlace(rows: HomeLogRow[]): HomeLogRow[] {
   const latest = new Map<string, HomeLogRow>();
   for (const row of rows) {
     const key = fold(row.place.trim());
     const seen = latest.get(key);
     if (!seen || row.painted_on > seen.painted_on) latest.set(key, row);
   }
+  return [...latest.values()];
+}
+
+/**
+ * Places that may be due a fresh coat, most overdue first. Only the latest
+ * entry for a place counts: a wall painted again last year is not due.
+ */
+export function careReminders(rows: HomeLogRow[], today: string): CareReminder[] {
   const out: (CareReminder & { over: number })[] = [];
-  for (const entry of latest.values()) {
+  for (const entry of latestPerPlace(rows)) {
     const months = monthsSince(entry.painted_on, today);
     const rule = careRule(entry.place);
     const over = months - rule.years * 12;
@@ -62,4 +67,30 @@ export function careReminders(rows: HomeLogRow[], today: string): CareReminder[]
     else if (over >= -SOON_MONTHS) out.push({ entry, months, rule, status: 'soon', over });
   }
   return out.sort((a, b) => b.over - a.over).map(({ over: _, ...r }) => r);
+}
+
+/** A YYYY-MM-DD day `months` later; the 31st becomes the month's last day when it is shorter. */
+export function addMonths(day: string, months: number): string {
+  const [y, m, d] = day.split('-').map(Number);
+  const index = y * 12 + (m - 1) + months;
+  const year = Math.floor(index / 12);
+  const month = (index % 12) + 1;
+  const last = new Date(Date.UTC(year, month, 0)).getUTCDate();
+  return `${year}-${String(month).padStart(2, '0')}-${String(Math.min(d, last)).padStart(2, '0')}`;
+}
+
+export type CareDue = { entry: HomeLogRow; rule: CareRule; dueOn: string };
+
+/**
+ * The day each place reaches its usual interval, for reminders: only days
+ * after `today`, soonest first. Places already due are on the screen instead.
+ */
+export function careDueDates(rows: HomeLogRow[], today: string): CareDue[] {
+  return latestPerPlace(rows)
+    .map((entry) => {
+      const rule = careRule(entry.place);
+      return { entry, rule, dueOn: addMonths(entry.painted_on, rule.years * 12) };
+    })
+    .filter((d) => d.dueOn > today)
+    .sort((a, b) => a.dueOn.localeCompare(b.dueOn));
 }

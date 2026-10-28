@@ -32,3 +32,28 @@ jest.mock('./src/features/colour/photo-stage', () => require('./src/features/col
 
 // Tests read the Turkish source text, whatever language the machine uses.
 jest.mock('./src/i18n/device', () => ({ deviceLocale: () => 'tr' }));
+
+// Notifications are scheduled by the phone; a fake keeps the schedule in memory.
+jest.mock('expo-notifications', () => {
+  const scheduled = new Map();
+  return {
+    AndroidImportance: { DEFAULT: 3 },
+    SchedulableTriggerInputTypes: { DATE: 'date' },
+    getPermissionsAsync: jest.fn(async () => ({ granted: false, canAskAgain: true })),
+    requestPermissionsAsync: jest.fn(async () => ({ granted: true, canAskAgain: true })),
+    setNotificationChannelAsync: jest.fn(async () => null),
+    setNotificationHandler: jest.fn(),
+    scheduleNotificationAsync: jest.fn(async (request) => {
+      scheduled.set(request.identifier, request);
+      return request.identifier;
+    }),
+    getAllScheduledNotificationsAsync: jest.fn(async () => [...scheduled.values()]),
+    cancelScheduledNotificationAsync: jest.fn(async (id) => {
+      scheduled.delete(id);
+    }),
+    getLastNotificationResponse: jest.fn(() => null),
+    clearLastNotificationResponse: jest.fn(),
+    addNotificationResponseReceivedListener: jest.fn(() => ({ remove: () => {} })),
+    __scheduled: scheduled,
+  };
+});

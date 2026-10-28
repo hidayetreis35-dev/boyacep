@@ -1,19 +1,21 @@
 import { router, useLocalSearchParams } from 'expo-router';
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import { StyleSheet, View } from 'react-native';
 
 import { useSession } from '@/features/account/session';
 import { SignInGate } from '@/features/account/sign-in-gate';
 import { isNotEnabled } from '@/features/home-log/api';
-import { careReminders, monthsSince, paintedAgo, type CareReminder } from '@/features/home-log/care';
+import { monthLabel } from '@/features/budget/charts';
+import { careDueDates, careReminders, monthsSince, paintedAgo, type CareReminder } from '@/features/home-log/care';
 import { emptyHomeLogForm, FINISH_LABEL, FINISH_OPTIONS, searchHomeLog, toHomeLogDraft, type HomeLogErrors, type HomeLogForm } from '@/features/home-log/form';
 import { useHomeLog, useHomeLogActions } from '@/features/home-log/queries';
+import { careRemindersOn, careRemindersSupported, scheduleCareReminders, turnOffCareReminders, turnOnCareReminders } from '@/features/home-log/reminders';
 import { formatDate } from '@/features/quotes/pdf';
 import { t } from '@/i18n';
 import type { HomeLogRow, PaintFinish } from '@/lib/database.types';
 import { todayIso } from '@/lib/day';
 import { SectionTitle } from '@/ui/brand';
-import { AppText, Badge, Button, Card, ChoiceChips, EmptyState, ErrorState, FieldRow, Icon, LoadingState, Notice, Screen, TextField } from '@/ui/components';
+import { AppText, Badge, Button, Card, ChoiceChips, EmptyState, ErrorState, FieldRow, Icon, LoadingState, Notice, Screen, TextField, Toggle } from '@/ui/components';
 import { radius, space, usePalette } from '@/ui/theme';
 
 const NO_FINISH = 'none';
@@ -112,6 +114,70 @@ function CareCard({ reminders }: { reminders: CareReminder[] }) {
   );
 }
 
+/** A phone reminder on the day each place reaches its usual interval. Off until turned on; phones only. */
+function ReminderSwitch({ rows }: { rows: HomeLogRow[] }) {
+  const [on, setOn] = useState<boolean | null>(null);
+  const [problem, setProblem] = useState<'denied' | 'failed' | null>(null);
+  const [busy, setBusy] = useState(false);
+  const today = todayIso();
+  const next = careDueDates(rows, today)[0];
+
+  useEffect(() => {
+    let alive = true;
+    void careRemindersOn().then((value) => alive && setOn(value));
+    return () => {
+      alive = false;
+    };
+  }, []);
+
+  // Keep the phone's reminders in step with the entries: added, changed or deleted.
+  useEffect(() => {
+    if (on) void scheduleCareReminders(rows, today).catch(() => {});
+  }, [on, rows, today]);
+
+  if (!careRemindersSupported || on === null) return null;
+
+  const change = async (value: boolean) => {
+    if (busy) return;
+    setBusy(true);
+    setProblem(null);
+    try {
+      if (value) {
+        const result = await turnOnCareReminders(rows, today);
+        setOn(result === 'on');
+        if (result === 'denied') setProblem('denied');
+      } else {
+        await turnOffCareReminders();
+        setOn(false);
+      }
+    } catch {
+      setProblem('failed');
+    } finally {
+      setBusy(false);
+    }
+  };
+
+  return (
+    <View testID="care-reminder-switch">
+      <Card>
+        <Toggle label={t('Zamanı gelince hatırlat')} value={on} onChange={change} />
+        <AppText variant="caption" tone="muted">
+          {t('Bir yer olağan yenileme zamanına geldiğinde telefonuna bildirim gelir. Süreler tahminidir; istediğin zaman kapatabilirsin.')}
+        </AppText>
+        {on && next ? (
+          <AppText variant="small">{t('Sıradaki hatırlatma: {place}, {month}', { place: next.entry.place, month: monthLabel(next.dueOn.slice(0, 7)) })}</AppText>
+        ) : null}
+        {problem === 'denied' ? (
+          <Notice tone="accent" icon="notifications-off">
+            {t('Bildirim izni kapalı. Telefonunun ayarlarından BoyaCep bildirimlerini açabilirsin.')}
+          </Notice>
+        ) : null}
+        {problem === 'failed' ? <Notice tone="danger">{t('Hatırlatma kurulamadı. Biraz sonra tekrar dene.')}</Notice> : null}
+      </Card>
+    </View>
+  );
+}
+
 function Entry({ entry }: { entry: HomeLogRow }) {
   const p = usePalette();
   const [confirming, setConfirming] = useState(false);
@@ -187,6 +253,7 @@ function HomeLog() {
         </AppText>
       </Card>
       {reminders.length > 0 ? <CareCard reminders={reminders} /> : null}
+      {log.data.length > 0 ? <ReminderSwitch rows={log.data} /> : null}
       <AddEntry projectId={projectId} place={place} />
       <View style={{ gap: space.sm }}>
         <SectionTitle title={t('Kayıtların')} />
