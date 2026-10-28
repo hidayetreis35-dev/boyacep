@@ -1964,4 +1964,5 @@ export const en: Record<string, Translation> = {
   "Sıradaki hatırlatma: {place}, {month}": "Next reminder: {place}, {month}",
   "Bildirim izni kapalı. Telefonunun ayarlarından BoyaCep bildirimlerini açabilirsin.": "Notifications are off. You can allow BoyaCep notifications in your phone’s settings.",
   "Hatırlatma kurulamadı. Biraz sonra tekrar dene.": "Couldn’t set the reminder. Try again in a moment.",
+  "Senin seçimlerine göre değerlendirildi": "Based on what you chose",
 };

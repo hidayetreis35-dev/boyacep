@@ -5,15 +5,14 @@ import { StyleSheet, View } from 'react-native';
 import { t } from '@/i18n';
 import { Segmented, SectionTitle } from '@/ui/brand';
 import { AppText, Button, Card, Icon, Notice, type IconName } from '@/ui/components';
-import { PressableScale } from '@/ui/motion';
+import { FadeIn, Pop, PressableScale } from '@/ui/motion';
 import { HeroPanel } from '@/ui/showcase';
 import { fonts, radius, space, useFeatureColour, usePalette } from '@/ui/theme';
 
 import { SaveInspection } from '@/features/survey/save-inspection';
 
-import { assess, SEVERITY_LABEL, workPlan, type Place, type Severity, type Symptom } from './rules';
+import { assess, PLACES, SEVERITY_LABEL, workPlan, type Place, type Severity, type Symptom } from './rules';
 import { SpotPhoto, type Spot } from './spot-photo';
-
 
 /** Deep fixed shades for the verdict banner: brick, amber, navy and sage. */
 export const VERDICT_SHADES = {
@@ -131,6 +130,39 @@ function Finding({ symptom, open, onToggle, first }: { symptom: Symptom; open: b
   );
 }
 
+/** Time between the pieces of the result as they come in. */
+const STAGGER = 90;
+
+/**
+ * What the result is built from: the place and the signs the user chose,
+ * ticking in one by one. It names only the user's own answers, because the
+ * photo is not analysed.
+ */
+function Basis({ place, symptoms }: { place: Place; symptoms: Symptom[] }) {
+  const p = usePalette();
+  const f = useFeatureColour('inspect');
+  const items = [t(PLACES.find((pl) => pl.value === place)?.label ?? ''), ...symptoms.map((s) => t(s.label))];
+  return (
+    <View style={{ gap: space.sm }} testID="inspect-basis">
+      <AppText variant="small" tone="muted">
+        {t('Senin seçimlerine göre değerlendirildi')}
+      </AppText>
+      <View style={styles.chips}>
+        {items.map((label, i) => (
+          <FadeIn key={label} delay={i * STAGGER}>
+            <View style={[styles.basisChip, { backgroundColor: f.soft }]}>
+              <Icon name="checkmark" size={14} color={f.ink} />
+              <AppText variant="small" style={{ color: p.text, fontFamily: fonts.semibold }}>
+                {label}
+              </AppText>
+            </View>
+          </FadeIn>
+        ))}
+      </View>
+    </View>
+  );
+}
+
 export function InspectResult({
   selected,
   place,
@@ -156,6 +188,8 @@ export function InspectResult({
   const [opened, setOpened] = useState<string[]>([]);
   const allOpen = symptoms.length > 0 && symptoms.every((s) => opened.includes(s.id));
   const toggle = (id: string) => setOpened((list) => (list.includes(id) ? list.filter((x) => x !== id) : [...list, id]));
+  // The verdict comes in after the last chosen sign, then each section after it.
+  const after = (symptoms.length + 1) * STAGGER;
 
   return (
     <View style={{ gap: space.lg }} testID="inspect-result">
@@ -184,47 +218,56 @@ export function InspectResult({
               <SpotPhoto uri={photo.uri} aspect={photo.width / photo.height} spots={spots} marking={false} maxHeight={200} />
             </View>
           ) : null}
-          <HeroPanel from={verdict.from} to={verdict.to}>
-            <View style={{ flexDirection: 'row', alignItems: 'center', gap: space.sm }}>
-              <Icon name={verdict.icon} size={22} color="#FFFFFF" />
-              <AppText variant="overline" style={{ color: '#FFFFFF', opacity: 0.9 }}>
-                {symptoms.length > 0 ? t('{count} bulgu', { count: symptoms.length }) : t('Sorun işaretlenmedi')}
-              </AppText>
-            </View>
-            <AppText variant="title" style={{ color: '#FFFFFF', fontSize: 26, lineHeight: 32 }} testID="inspect-verdict">
-              {verdict.title}
-            </AppText>
-            <AppText style={{ color: '#FFFFFF', opacity: 0.92 }}>{verdict.text}</AppText>
-          </HeroPanel>
-
-          {symptoms.length > 0 ? (
-            <Card>
+          <Basis place={place} symptoms={symptoms} />
+          <FadeIn delay={after}>
+            <HeroPanel from={verdict.from} to={verdict.to}>
               <View style={{ flexDirection: 'row', alignItems: 'center', gap: space.sm }}>
-                <Icon name="warning" size={20} color={p.danger} />
-                <AppText variant="heading" style={{ color: p.danger, flex: 1 }}>
-                  {t('Tespit Edilen Sorunlar')}
+                <Pop delay={after + STAGGER}>
+                  <Icon name={verdict.icon} size={22} color="#FFFFFF" />
+                </Pop>
+                <AppText variant="overline" style={{ color: '#FFFFFF', opacity: 0.9 }}>
+                  {symptoms.length > 0 ? t('{count} bulgu', { count: symptoms.length }) : t('Sorun işaretlenmedi')}
                 </AppText>
               </View>
-              <View>
-                {symptoms.map((s, i) => (
-                  <Finding key={s.id} symptom={s} first={i === 0} open={opened.includes(s.id)} onToggle={() => toggle(s.id)} />
-                ))}
-              </View>
-            </Card>
+              <AppText variant="title" style={{ color: '#FFFFFF', fontSize: 26, lineHeight: 32 }} testID="inspect-verdict">
+                {verdict.title}
+              </AppText>
+              <AppText style={{ color: '#FFFFFF', opacity: 0.92 }}>{verdict.text}</AppText>
+            </HeroPanel>
+          </FadeIn>
+
+          {symptoms.length > 0 ? (
+            <FadeIn delay={after + 2 * STAGGER}>
+              <Card>
+                <View style={{ flexDirection: 'row', alignItems: 'center', gap: space.sm }}>
+                  <Icon name="warning" size={20} color={p.danger} />
+                  <AppText variant="heading" style={{ color: p.danger, flex: 1 }}>
+                    {t('Tespit Edilen Sorunlar')}
+                  </AppText>
+                </View>
+                <View>
+                  {symptoms.map((s, i) => (
+                    <Finding key={s.id} symptom={s} first={i === 0} open={opened.includes(s.id)} onToggle={() => toggle(s.id)} />
+                  ))}
+                </View>
+              </Card>
+            </FadeIn>
           ) : null}
 
-          <SectionTitle title={t('Öneriler')} />
-          <Card>
-            {plan.steps.map((s) => {
-              const urgent = s.key === 'expert' || s.key === 'water';
-              return (
-                <View key={s.key} style={styles.step}>
-                  <Icon name={urgent ? 'alert-circle' : 'checkmark-circle'} size={22} color={urgent ? p.danger : f.base} />
-                  <AppText style={{ flex: 1 }}>{s.text}</AppText>
-                </View>
-              );
-            })}
-          </Card>
+          <FadeIn delay={after + 3 * STAGGER} style={{ gap: space.lg }}>
+            <SectionTitle title={t('Öneriler')} />
+            <Card>
+              {plan.steps.map((s) => {
+                const urgent = s.key === 'expert' || s.key === 'water';
+                return (
+                  <View key={s.key} style={styles.step}>
+                    <Icon name={urgent ? 'alert-circle' : 'checkmark-circle'} size={22} color={urgent ? p.danger : f.base} />
+                    <AppText style={{ flex: 1 }}>{s.text}</AppText>
+                  </View>
+                );
+              })}
+            </Card>
+          </FadeIn>
 
           <SectionTitle title={t('Gerekecekler')} />
           <View style={styles.chips}>
@@ -260,7 +303,9 @@ export function InspectResult({
       </View>
 
       <Notice icon="information-circle">
-        {t('Bu bir teşhis değildir. BoyaCep fotoğrafını otomatik olarak incelemez; senin işaretlediğin belirtilere göre genel bilgi verir. Emin olmadığın durumlarda bir ustaya göster.')}
+        {t(
+          'Bu bir teşhis değildir. BoyaCep fotoğrafını otomatik olarak incelemez; senin işaretlediğin belirtilere göre genel bilgi verir. Emin olmadığın durumlarda bir ustaya göster.',
+        )}
       </Notice>
     </View>
   );
@@ -269,6 +314,7 @@ export function InspectResult({
 const styles = StyleSheet.create({
   chips: { flexDirection: 'row', flexWrap: 'wrap', gap: space.xs },
   chip: { borderRadius: radius.pill, paddingHorizontal: space.md, paddingVertical: 6 },
+  basisChip: { flexDirection: 'row', alignItems: 'center', gap: 4, borderRadius: radius.pill, paddingHorizontal: space.sm + 2, paddingVertical: 5 },
   step: { flexDirection: 'row', gap: space.md, alignItems: 'flex-start', paddingVertical: space.xs },
   finding: { flexDirection: 'row', alignItems: 'center', gap: space.md, minHeight: 56, paddingVertical: space.sm },
   findingIcon: { width: 38, height: 38, borderRadius: 12, alignItems: 'center', justifyContent: 'center' },

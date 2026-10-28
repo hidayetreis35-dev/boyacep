@@ -101,3 +101,18 @@ export function FadeIn({ children, delay = 0, style }: { children: ReactNode; de
     </Animated.View>
   );
 }
+
+/** Grows its child in with a small spring, for a result's icon. Still when motion is reduced. */
+export function Pop({ children, delay = 0 }: { children: ReactNode; delay?: number }) {
+  const reduced = useReducedMotion();
+  const [scale] = useState(() => new Animated.Value(reduceMotion ? 1 : 0.4));
+  useEffect(() => {
+    if (reduced) {
+      scale.setValue(1);
+      return;
+    }
+    Animated.spring(scale, { toValue: 1, delay, useNativeDriver: Platform.OS !== 'web', speed: 14, bounciness: 12 }).start();
+  }, [scale, delay, reduced]);
+  return <Animated.View style={{ transform: [{ scale }] }}>{children}</Animated.View>;
+}
+

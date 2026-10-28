@@ -208,6 +208,8 @@ describe('app navigation', () => {
     await fireEvent.press(screen.getByText('Sonucu göster'));
 
     expect(screen.getByTestId('inspect-result')).toBeTruthy();
+    // The result names what it is built from: the user's own answers, not the photo.
+    expect(screen.getByTestId('inspect-basis')).toHaveTextContent('Senin seçimlerine göre değerlendirildiBanyo ya da mutfakGeniş çatlakKüf');
     expect(screen.getByTestId('inspect-verdict')).toHaveTextContent('Önce bir uzmana göster');
     expect(screen.getByText(/inşaat mühendisine/)).toBeTruthy();
     expect(screen.getByText(/küfe dayanıklı/)).toBeTruthy();
