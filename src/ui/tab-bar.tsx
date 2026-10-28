@@ -4,7 +4,7 @@ import { useEffect, useState, type ComponentProps } from 'react';
 import { Animated, Platform, StyleSheet, View } from 'react-native';
 
 import { AppText } from './components';
-import { PressableScale } from './motion';
+import { PressableScale, useReducedMotion } from './motion';
 import { fonts, shadowOf, space, usePalette } from './theme';
 
 type IconName = ComponentProps<typeof Ionicons>['name'];
@@ -25,10 +25,12 @@ function TabButton({
   onLongPress: () => void;
 }) {
   const p = usePalette();
+  const reduced = useReducedMotion();
   const [progress] = useState(() => new Animated.Value(focused ? 1 : 0));
   useEffect(() => {
-    Animated.spring(progress, { toValue: focused ? 1 : 0, useNativeDriver: Platform.OS !== 'web', speed: 20, bounciness: 8 }).start();
-  }, [focused, progress]);
+    if (reduced) progress.setValue(focused ? 1 : 0);
+    else Animated.spring(progress, { toValue: focused ? 1 : 0, useNativeDriver: Platform.OS !== 'web', speed: 20, bounciness: 8 }).start();
+  }, [focused, progress, reduced]);
 
   return (
     <PressableScale

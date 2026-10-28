@@ -29,7 +29,7 @@ import {
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 
-import { PressableScale } from './motion';
+import { PressableScale, useReducedMotion } from './motion';
 import { MAX_CONTENT_WIDTH, MAX_WIDE_WIDTH, MIN_TOUCH, WIDE_BREAKPOINT, fonts, radius, shadowOf, space, type, usePalette, type Palette, type TypeVariant } from './theme';
 
 import { t, toUpper } from '@/i18n';
@@ -131,14 +131,18 @@ const WEB_MAIN = Platform.OS === 'web' ? 'main' : undefined;
 export function Screen({ children, edges = ['top'], wide = false }: { children: ReactNode; edges?: ('top' | 'bottom')[]; wide?: boolean }) {
   const p = usePalette();
   const isWide = useWide() && wide;
+  const reduced = useReducedMotion();
   const scrollRef = useRef<ScrollViewInstance>(null);
   const innerRef = useRef<HostInstance>(null);
-  const scrollToView = useCallback<ScrollToView>((view) => {
-    const inner = innerRef.current;
-    if (!view || !inner) return;
-    view.measureLayout(inner, (_x, y) => scrollRef.current?.scrollTo({ y: Math.max(0, y), animated: true }));
-  }, []);
-  const scrollToTop = useCallback(() => scrollRef.current?.scrollTo({ y: 0, animated: true }), []);
+  const scrollToView = useCallback<ScrollToView>(
+    (view) => {
+      const inner = innerRef.current;
+      if (!view || !inner) return;
+      view.measureLayout(inner, (_x, y) => scrollRef.current?.scrollTo({ y: Math.max(0, y), animated: !reduced }));
+    },
+    [reduced],
+  );
+  const scrollToTop = useCallback(() => scrollRef.current?.scrollTo({ y: 0, animated: !reduced }), [reduced]);
 
   return (
     <SafeAreaView edges={edges} style={{ flex: 1, backgroundColor: p.background }}>

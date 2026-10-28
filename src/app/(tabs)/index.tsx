@@ -84,7 +84,7 @@ function Header() {
             accessibilityRole="button"
             accessibilityLabel={place ? t('Konum: {city}. Değiştir', { city: place }) : t('Şehir seç')}
             onPress={() => router.push({ pathname: '/prices', params: { pick: '1' } })}
-            hitSlop={6}
+            hitSlop={{ top: 10, bottom: 10, left: 6, right: 6 }}
             style={styles.city}>
             <Icon name="location-outline" size={14} color={p.textMuted} />
             <AppText variant="small" tone="muted" numberOfLines={1} style={{ flexShrink: 1, fontFamily: fonts.semibold }}>

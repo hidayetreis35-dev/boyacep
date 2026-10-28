@@ -8,7 +8,7 @@ import { t } from '@/i18n';
 import { SectionTitle } from '@/ui/brand';
 import { AppText, Button, Icon, Notice, TextField } from '@/ui/components';
 import { PressableScale } from '@/ui/motion';
-import { fonts, radius, shadowOf, space, usePalette } from '@/ui/theme';
+import { fonts, MIN_TOUCH, radius, shadowOf, space, usePalette } from '@/ui/theme';
 
 import { CLASSICS, colourByHex, COLOURS, familyLabel, FAMILIES, searchColours, TRENDS, type CatalogColour, type FamilyKey } from './catalogue';
 import { colourFacts, TEMPERATURE_LABEL } from './colour-data';
@@ -320,6 +320,7 @@ export function ColourHarmonies({
                     accessibilityRole="button"
                     accessibilityLabel={`${h.title}: ${t(c.name)}`}
                     onPress={() => onSelect(c)}
+                    hitSlop={7}
                     style={[styles.harmonyDot, { backgroundColor: c.hex, borderColor: p.border }]}
                   />
                 ))}
@@ -454,7 +455,7 @@ const styles = StyleSheet.create({
     borderRadius: radius.pill,
     borderWidth: StyleSheet.hairlineWidth,
     paddingHorizontal: space.md,
-    minHeight: 40,
+    minHeight: MIN_TOUCH,
   },
   familyDot: { width: 16, height: 16, borderRadius: 8, borderWidth: StyleSheet.hairlineWidth },
   custom: { flexDirection: 'row', alignItems: 'center', gap: space.md, borderRadius: radius.lg, borderWidth: StyleSheet.hairlineWidth, padding: space.md },
@@ -467,7 +468,7 @@ const styles = StyleSheet.create({
   bigDot: { width: 60, height: 60, borderRadius: 30, borderWidth: StyleSheet.hairlineWidth },
   dotRing: { padding: 3, borderRadius: 24, borderWidth: 2 },
   dot: { width: 36, height: 36, borderRadius: 18, borderWidth: StyleSheet.hairlineWidth },
-  pill: { flexDirection: 'row', alignItems: 'center', gap: 6, borderRadius: radius.pill, paddingHorizontal: space.md, minHeight: 40 },
+  pill: { flexDirection: 'row', alignItems: 'center', gap: 6, borderRadius: radius.pill, paddingHorizontal: space.md, minHeight: MIN_TOUCH },
   save: { borderRadius: radius.lg, borderWidth: StyleSheet.hairlineWidth, padding: space.lg, gap: space.md },
   compare: { borderRadius: radius.lg, borderWidth: StyleSheet.hairlineWidth, padding: space.md, gap: space.sm },
   compareSwatch: { height: 150, borderRadius: radius.md, borderWidth: StyleSheet.hairlineWidth, padding: space.xs },

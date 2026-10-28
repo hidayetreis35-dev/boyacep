@@ -1,11 +1,11 @@
 import { useEffect, useState, type ReactNode } from 'react';
-import { AccessibilityInfo, Animated, Platform, ScrollView, StyleSheet, View, type DimensionValue, type StyleProp, type ViewStyle } from 'react-native';
+import { Animated, Platform, ScrollView, StyleSheet, View, type DimensionValue, type StyleProp, type ViewStyle } from 'react-native';
 
 import { t } from '@/i18n';
 
 import { Gradient } from './brand';
 import { AppText, Icon, type IconName } from './components';
-import { PressableScale } from './motion';
+import { PressableScale, useReducedMotion } from './motion';
 import { Photo, type PhotoName } from './photos';
 import { duration, fonts, radius, shadowOf, space, useFeatureColour, usePalette, type FeatureKey } from './theme';
 
@@ -277,22 +277,6 @@ export function SamplePreview({ children, testID }: { children: ReactNode; testI
       </View>
     </View>
   );
-}
-
-function useReducedMotion(): boolean {
-  const [reduced, setReduced] = useState(false);
-  useEffect(() => {
-    let alive = true;
-    AccessibilityInfo.isReduceMotionEnabled()
-      .then((on) => alive && setReduced(on))
-      .catch(() => {});
-    const sub = AccessibilityInfo.addEventListener?.('reduceMotionChanged', setReduced);
-    return () => {
-      alive = false;
-      sub?.remove();
-    };
-  }, []);
-  return reduced;
 }
 
 /** A grey placeholder block that gently pulses while content loads. Still when the system asks for less motion. */

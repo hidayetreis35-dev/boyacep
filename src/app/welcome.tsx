@@ -39,6 +39,7 @@ function HeroLanguage() {
             aria-selected={active}
             accessibilityLabel={l.label}
             onPress={() => setLocale(l.value, '/welcome')}
+            hitSlop={6}
             style={[styles.langItem, active && { backgroundColor: p.surface }]}>
             <AppText variant="caption" style={{ color: active ? p.heroFrom : p.onHero, fontFamily: fonts.bold }}>
               {l.value.toUpperCase()}
