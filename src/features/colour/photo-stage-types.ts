@@ -9,6 +9,12 @@ import type { Lab } from './recolour';
 /** How the surface being added is picked: tap similar colour, or draw its corners. */
 export type SelectMode = 'tap' | 'corners';
 
+/** Text in a corner of the shared photo: a line per painted surface, then a short note. */
+export type PhotoCaption = { lines: string[]; note: string };
+
+/** Draws the painted photo for sharing, without selection guides, as JPEG bytes. Null if it could not be drawn. */
+export type PaintedPhotoExport = (caption: PhotoCaption) => Uint8Array | null;
+
 export type PhotoStageProps = {
   uri: string;
   /** width / height of the photo */
@@ -28,6 +34,8 @@ export type PhotoStageProps = {
   /** Where the last colour was taken from; marked on the photo while picking. */
   pickedAt?: [number, number] | null;
   onPick?: (colour: Lab, point: [number, number]) => void;
+  /** Set by the stage once the photo is ready, so the studio can share the painted room. */
+  exportRef?: { current: PaintedPhotoExport | null };
 };
 
 /** A press on a view of the given size as a 0–1 point, or null. */

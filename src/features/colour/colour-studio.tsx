@@ -1,11 +1,11 @@
-import { useMemo, useState } from 'react';
+import { useMemo, useRef, useState } from 'react';
 import { ScrollView, StyleSheet, View } from 'react-native';
 
 import { msg, t } from '@/i18n';
 import type { PhotoSurface, WallOutline } from '@/lib/database.types';
 import { Segmented } from '@/ui/brand';
 import { AppText, Button, ChoiceChips, Icon, Notice } from '@/ui/components';
-import { PressableScale, tick } from '@/ui/motion';
+import { afterPaint, PressableScale, tick } from '@/ui/motion';
 import { fonts, radius, space, usePalette } from '@/ui/theme';
 
 import { CLASSICS, TRENDS } from './catalogue';
@@ -13,8 +13,9 @@ import { toPicked, type PickedColour } from './colour-explorer';
 import { closestColours, matchLabel, rgbToHex } from './harmony';
 import { isUsableOutline, MAX_OUTLINE_POINTS, MAX_SURFACES } from './outline';
 import { PhotoStage } from './photo-stage';
-import type { SelectMode } from './photo-stage-types';
+import type { PaintedPhotoExport, SelectMode } from './photo-stage-types';
 import { DEFAULT_TOLERANCE, labToRgb, MAX_SEEDS, TOLERANCES, toleranceKeyOf, type Lab, type ToleranceKey } from './recolour';
+import { sharePaintedPhoto } from './share-photo';
 
 const STRENGTHS = [
   { value: 'light', label: msg('Hafif'), amount: 0.55 },
@@ -89,6 +90,48 @@ function PickPanel({ picked, onUse, onDone }: { picked: Lab | null; onUse: (hex:
 }
 
 /**
+ * "Paylaş, fikir al": sends the painted room, with each surface's colour name
+ * written on it, through the phone's share sheet.
+ */
+function ShareButton({ surfaces, exportRef }: { surfaces: PhotoSurface[]; exportRef: { current: PaintedPhotoExport | null } }) {
+  const [busy, setBusy] = useState(false);
+  const [error, setError] = useState<string | null>(null);
+
+  const share = async () => {
+    setError(null);
+    setBusy(true);
+    try {
+      // Drawing the full photo holds the app for a moment; let the button show it is working first.
+      await afterPaint();
+      const jpeg = exportRef.current?.({
+        lines: surfaces.flatMap((s) => (s.hex ? [`${t(s.label)}: ${t(toPicked(s.hex).name)}`] : [])),
+        note: t('BoyaCep renk önizlemesi'),
+      });
+      if (!jpeg) setError(t('Fotoğraf henüz hazır değil. Birkaç saniye sonra tekrar dene.'));
+      else if (!(await sharePaintedPhoto(jpeg))) setError(t('Bu cihazda paylaşma açılamıyor.'));
+    } catch {
+      setError(t('Fotoğraf paylaşılamadı. Tekrar dene.'));
+    } finally {
+      setBusy(false);
+    }
+  };
+
+  return (
+    <View style={{ gap: space.sm }}>
+      <Button label={t('Paylaş, fikir al')} icon="share-social" variant="secondary" loading={busy} onPress={share} />
+      <AppText variant="caption" tone="muted">
+        {t('Boyanmış hâlini, renk adlarıyla birlikte ailene ya da ustana gönder; ne düşündüklerini sor.')}
+      </AppText>
+      {error ? (
+        <Notice tone="danger" icon="alert-circle">
+          {error}
+        </Notice>
+      ) : null}
+    </View>
+  );
+}
+
+/**
  * Outline one or more surfaces on a room photo and try colours on each.
  * Works fully on the device; saving is optional and handled by the caller.
  */
@@ -132,6 +175,7 @@ export function ColourStudio({
   const [choosingKind, setChoosingKind] = useState(false);
   const [picking, setPicking] = useState(false);
   const [picked, setPicked] = useState<{ lab: Lab; point: [number, number] } | null>(null);
+  const exportRef = useRef<PaintedPhotoExport | null>(null);
   const draft: WallOutline = taps.filter((value) => !value.remove).map((value) => value.point);
   const excludes: WallOutline = taps.filter((value) => value.remove).map((value) => value.point);
   const usable = mode === 'tap' ? draft.length > 0 : isUsableOutline(draft);
@@ -250,6 +294,7 @@ export function ColourStudio({
         picking={picking}
         pickedAt={picked?.point ?? null}
         onPick={(lab, point) => setPicked({ lab, point })}
+        exportRef={exportRef}
       />
 
       {drawing && !picking && mode === 'tap' ? (
@@ -397,6 +442,8 @@ export function ColourStudio({
             ) : null}
             {onChangePhoto ? <Button label={t('Başka fotoğraf')} icon="images" variant="ghost" onPress={onChangePhoto} /> : null}
           </View>
+
+          {surfaces.some((s) => s.hex) ? <ShareButton surfaces={surfaces} exportRef={exportRef} /> : null}
         </>
       )}
 

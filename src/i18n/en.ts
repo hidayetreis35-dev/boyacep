@@ -1965,4 +1965,12 @@ export const en: Record<string, Translation> = {
   "Bildirim izni kapalı. Telefonunun ayarlarından BoyaCep bildirimlerini açabilirsin.": "Notifications are off. You can allow BoyaCep notifications in your phone’s settings.",
   "Hatırlatma kurulamadı. Biraz sonra tekrar dene.": "Couldn’t set the reminder. Try again in a moment.",
   "Senin seçimlerine göre değerlendirildi": "Based on what you chose",
+  "Paylaş, fikir al": "Share and ask",
+  "Boyanmış hâlini, renk adlarıyla birlikte ailene ya da ustana gönder; ne düşündüklerini sor.": "Send the painted room, with the colour names on it, to your family or your painter and ask what they think.",
+  "BoyaCep renk önizlemesi": "BoyaCep colour preview",
+  "Fotoğraf henüz hazır değil. Birkaç saniye sonra tekrar dene.": "The photo isn't ready yet. Try again in a few seconds.",
+  "Bu cihazda paylaşma açılamıyor.": "Sharing isn't available on this device.",
+  "Fotoğraf paylaşılamadı. Tekrar dene.": "Couldn't share the photo. Try again.",
+  "Boyanmış odayı paylaş": "Share the painted room",
+  "Boyanmış oda": "Painted room",
 };

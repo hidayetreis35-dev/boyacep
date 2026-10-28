@@ -48,6 +48,11 @@ export function tick() {
   }
 }
 
+/** Resolves once the screen has drawn the latest change, such as a busy button, before work that holds the app for a moment. */
+export function afterPaint(): Promise<void> {
+  return new Promise((resolve) => requestAnimationFrame(() => setTimeout(resolve, 0)));
+}
+
 /** A Pressable that springs down slightly while pressed, and stays still when motion is reduced. */
 export function PressableScale({ style, onPressIn, onPressOut, ...rest }: PressableProps) {
   const reduced = useReducedMotion();

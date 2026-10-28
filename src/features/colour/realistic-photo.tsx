@@ -1,3 +1,4 @@
+import { PlusJakartaSans_700Bold } from '@expo-google-fonts/plus-jakarta-sans/700Bold';
 import {
   AlphaType,
   Canvas,
@@ -5,17 +6,23 @@ import {
   ColorType,
   FilterMode,
   Group,
+  ImageFormat,
   Image as SkiaImage,
   ImageShader,
   MipmapMode,
   Path,
+  processUniforms,
   Rect,
   Shader,
   Skia,
+  TileMode,
   useImage,
+  useTypeface,
+  type SkCanvas,
   type SkImage,
+  type SkTypeface,
 } from '@shopify/react-native-skia';
-import { useMemo, useState } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 import { ActivityIndicator, Image, Pressable, View } from 'react-native';
 
 import { t } from '@/i18n';
@@ -23,7 +30,7 @@ import type { PhotoSurface, WallOutline } from '@/lib/database.types';
 import { radius, usePalette } from '@/ui/theme';
 
 import { isUsableOutline } from './outline';
-import { pressPoint, stageLabel, type PhotoStageProps } from './photo-stage-types';
+import { pressPoint, stageLabel, type PhotoCaption, type PhotoStageProps } from './photo-stage-types';
 import {
   DARKER_WEIGHT,
   DEFAULT_TOLERANCE,
@@ -154,23 +161,100 @@ function maskOf(img: LabImage, g: Geometry): Uint8Array {
   return polygonMask(g.points, img.width, img.height);
 }
 
-function useMask(img: LabImage | null, g: Geometry): { image: SkImage; wall: Lab; tolerance: number } | null {
+type PaintMask = { image: SkImage; wall: Lab; tolerance: number };
+
+/** A surface's mask as an image, with the photo's colour under it, at the working size. */
+function paintMask(img: LabImage, g: Geometry): PaintMask | null {
+  const mask = maskOf(img, g);
+  const data = Skia.Data.fromBytes(maskToRgba(mask, img.width, img.height));
+  const image = Skia.Image.MakeImage(
+    { width: img.width, height: img.height, colorType: ColorType.RGBA_8888, alphaType: AlphaType.Unpremul },
+    data,
+    img.width * 4,
+  );
+  // Corner outlines are where the user drew them; only tapped surfaces snap to colour edges.
+  const snap = g.seeds && g.seeds.length > 0 ? (g.tolerance ?? DEFAULT_TOLERANCE) : 0;
+  return image ? { image, wall: meanLab(img, mask), tolerance: snap } : null;
+}
+
+function useMask(img: LabImage | null, g: Geometry): PaintMask | null {
   const key = JSON.stringify([g.points, g.seeds ?? null, g.excludes ?? null, g.tolerance ?? null]);
   return useMemo(() => {
     if (!img) return null;
     const [points, seeds, excludes, tolerance] = JSON.parse(key) as [WallOutline, WallOutline | null, WallOutline | null, number | null];
-    const geometry = { points, seeds: seeds ?? undefined, excludes: excludes ?? undefined, tolerance: tolerance ?? undefined };
-    const mask = maskOf(img, geometry);
-    const data = Skia.Data.fromBytes(maskToRgba(mask, img.width, img.height));
-    const image = Skia.Image.MakeImage(
-      { width: img.width, height: img.height, colorType: ColorType.RGBA_8888, alphaType: AlphaType.Unpremul },
-      data,
-      img.width * 4,
-    );
-    // Corner outlines are where the user drew them; only tapped surfaces snap to colour edges.
-    const snap = seeds && seeds.length > 0 ? (tolerance ?? DEFAULT_TOLERANCE) : 0;
-    return image ? { image, wall: meanLab(img, mask), tolerance: snap } : null;
+    return paintMask(img, { points, seeds: seeds ?? undefined, excludes: excludes ?? undefined, tolerance: tolerance ?? undefined });
   }, [img, key]);
+}
+
+function recolourUniforms(mask: PaintMask, hex: string | null, white: number, amount: number, preview: boolean, highlight: string) {
+  const h = parseInt(highlight.slice(1), 16);
+  return {
+    swatchLab: hexToLab(hex ?? '#808080'),
+    white,
+    wallLab: mask.wall,
+    tolerance: mask.tolerance,
+    amount,
+    preview: preview ? 1 : 0,
+    highlight: [((h >> 16) & 255) / 255, ((h >> 8) & 255) / 255, (h & 255) / 255],
+  };
+}
+
+/** Long side of the shared photo: sharp on a phone, small enough for messaging apps. */
+const SHARE_SIZE = 1280;
+const CAPTION_BACK = 'rgba(20, 27, 45, 0.74)';
+
+/** A dark rounded box in the bottom-left corner: one line per painted surface, then the note in smaller type. */
+function drawCaption(canvas: SkCanvas, typeface: SkTypeface, { lines, note }: PhotoCaption, width: number, height: number) {
+  const size = Math.max(14, Math.round(Math.min(width, height) * 0.034));
+  const big = Skia.Font(typeface, size);
+  const small = Skia.Font(typeface, Math.round(size * 0.72));
+  const pad = Math.round(size * 0.7);
+  const rows = [...lines.map((text) => ({ text, font: big })), { text: note, font: small }];
+  const metrics = rows.map(({ text, font }) => {
+    const m = font.getMetrics();
+    return { width: font.measureText(text).width, ascent: -m.ascent, height: m.descent - m.ascent };
+  });
+  const boxWidth = Math.min(width - 2 * pad, Math.max(...metrics.map((m) => m.width)) + 2 * pad);
+  const boxHeight = metrics.reduce((sum, m) => sum + m.height, 0) + 2 * pad;
+  const top = height - pad - boxHeight;
+  const back = Skia.Paint();
+  back.setColor(Skia.Color(CAPTION_BACK));
+  canvas.drawRRect(Skia.RRectXY(Skia.XYWHRect(pad, top, boxWidth, boxHeight), pad, pad), back);
+  let y = top + pad;
+  rows.forEach(({ text, font }, i) => {
+    const ink = Skia.Paint();
+    ink.setColor(Skia.Color(i < lines.length ? '#FFFFFF' : 'rgba(255, 255, 255, 0.8)'));
+    canvas.drawText(text, 2 * pad, y + metrics[i].ascent, ink, font);
+    y += metrics[i].height;
+  });
+}
+
+type PaintedOptions = { white: number; surfaces: PhotoSurface[]; amount: number; typeface: SkTypeface | null; caption: PhotoCaption };
+
+/** The painted photo as a JPEG for sharing: same recolouring as the screen, without guides, with a caption. */
+function renderPainted(photo: SkImage, img: LabImage, { white, surfaces, amount, typeface, caption }: PaintedOptions): Uint8Array | null {
+  const scale = Math.min(1, SHARE_SIZE / Math.max(photo.width(), photo.height()));
+  const width = Math.max(1, Math.round(photo.width() * scale));
+  const height = Math.max(1, Math.round(photo.height() * scale));
+  const surface = Skia.Surface.Make(width, height);
+  if (!surface) return null;
+  const canvas = surface.getCanvas();
+  const all = Skia.XYWHRect(0, 0, width, height);
+  canvas.drawImageRectOptions(photo, Skia.XYWHRect(0, 0, photo.width(), photo.height()), all, FilterMode.Linear, MipmapMode.Linear, Skia.Paint());
+  const stretch = (w: number, h: number) => Skia.Matrix().scale(width / w, height / h);
+  const photoShader = photo.makeShaderOptions(TileMode.Clamp, TileMode.Clamp, SMOOTH.filter, SMOOTH.mipmap, stretch(photo.width(), photo.height()));
+  for (const s of surfaces) {
+    const mask = s.hex ? paintMask(img, s) : null;
+    if (!mask) continue;
+    const maskShader = mask.image.makeShaderOptions(TileMode.Clamp, TileMode.Clamp, SMOOTH.filter, SMOOTH.mipmap, stretch(img.width, img.height));
+    const paint = Skia.Paint();
+    const uniforms = processUniforms(RECOLOUR, recolourUniforms(mask, s.hex, white, amount, false, '#000000'));
+    paint.setShader(RECOLOUR.makeShaderWithChildren(uniforms, [photoShader, maskShader]));
+    canvas.drawRect(all, paint);
+  }
+  if (typeface) drawCaption(canvas, typeface, caption, width, height);
+  surface.flush();
+  return surface.makeImageSnapshot().encodeToBytes(ImageFormat.JPEG, 88);
 }
 
 function Layer({
@@ -199,21 +283,9 @@ function Layer({
 }) {
   const mask = useMask(img, geometry);
   if (!mask || (!hex && !preview)) return null;
-  const paint = hexToLab(hex ?? '#808080');
-  const h = parseInt(highlight.slice(1), 16);
   return (
     <Rect x={0} y={0} width={width} height={height}>
-      <Shader
-        source={RECOLOUR}
-        uniforms={{
-          swatchLab: paint,
-          white,
-          wallLab: mask.wall,
-          tolerance: mask.tolerance,
-          amount,
-          preview: preview ? 1 : 0,
-          highlight: [((h >> 16) & 255) / 255, ((h >> 8) & 255) / 255, (h & 255) / 255],
-        }}>
+      <Shader source={RECOLOUR} uniforms={recolourUniforms(mask, hex, white, amount, preview, highlight)}>
         <ImageShader image={photo} fit="fill" rect={{ x: 0, y: 0, width, height }} sampling={SMOOTH} />
         <ImageShader image={mask.image} fit="fill" rect={{ x: 0, y: 0, width, height }} sampling={SMOOTH} />
       </Shader>
@@ -230,7 +302,21 @@ function outlinePath(points: WallOutline, width: number, height: number, close: 
 const REMOVE_COLOUR = '#D92D20';
 
 /** Realistic preview drawn with Skia; works on phone (Expo Go) and web. */
-export default function RealisticPhoto({ uri, aspect, surfaces, active, draft, drawing: selecting, showColour, amount, onTap, picking, pickedAt, onPick }: PhotoStageProps) {
+export default function RealisticPhoto({
+  uri,
+  aspect,
+  surfaces,
+  active,
+  draft,
+  drawing: selecting,
+  showColour,
+  amount,
+  onTap,
+  picking,
+  pickedAt,
+  onPick,
+  exportRef,
+}: PhotoStageProps) {
   // While picking a colour the selection on hold stays hidden, and taps go to the picker.
   const drawing = selecting && !picking;
   const p = usePalette();
@@ -240,6 +326,16 @@ export default function RealisticPhoto({ uri, aspect, surfaces, active, draft, d
   const [width, setWidth] = useState(0);
   const height = width > 0 ? width / aspect : 0;
   const ready = !!photo && !!img && width > 0;
+  // The caption's typeface; without it the shared photo simply has no caption.
+  const typeface = useTypeface(PlusJakartaSans_700Bold);
+
+  useEffect(() => {
+    if (!exportRef) return;
+    exportRef.current = photo && img ? (caption) => renderPainted(photo, img, { white, surfaces, amount, typeface, caption }) : null;
+    return () => {
+      exportRef.current = null;
+    };
+  }, [exportRef, photo, img, white, surfaces, amount, typeface]);
 
   const label = t(stageLabel({ picking, drawing, draft }));
   const touchable = drawing || !!picking;
