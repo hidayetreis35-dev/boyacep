@@ -33,7 +33,7 @@ function TabButton({
   return (
     <PressableScale
       accessibilityRole="tab"
-      accessibilityState={{ selected: focused }}
+      aria-selected={focused}
       accessibilityLabel={label}
       onPress={onPress}
       onLongPress={onLongPress}
@@ -57,7 +57,7 @@ function SideButton({ label, icon, focused, onPress }: { label: string; icon: Ta
   return (
     <PressableScale
       accessibilityRole="tab"
-      accessibilityState={{ selected: focused }}
+      aria-selected={focused}
       accessibilityLabel={label}
       onPress={onPress}
       style={[styles.side, { backgroundColor: focused ? p.primarySoft : 'transparent' }]}>
@@ -73,6 +73,9 @@ function SideButton({ label, icon, focused, onPress }: { label: string; icon: Ta
  * Flat bottom navigation on phones, the active tab orange. On wide screens
  * (tabBarPosition 'left') the same tabs become a sidebar with the logo on top.
  */
+/** The tab bar is the app's menu: a navigation landmark on the web. */
+const WEB_NAV = Platform.OS === 'web' ? 'navigation' : undefined;
+
 export function AppTabBar({ state, descriptors, emitter, navigateToTab, insets, icons, sidebar }: BottomTabBarProps & { icons: Record<string, TabIcon>; sidebar?: boolean }) {
   const p = usePalette();
   const tabs = state.routes.map((route, index) => {
@@ -89,7 +92,7 @@ export function AppTabBar({ state, descriptors, emitter, navigateToTab, insets, 
 
   if (sidebar) {
     return (
-      <View style={[styles.sidebar, { paddingTop: insets.top + space.xl, backgroundColor: p.surface, borderColor: p.border }]}>
+      <View role={WEB_NAV} style={[styles.sidebar, { paddingTop: insets.top + space.xl, backgroundColor: p.surface, borderColor: p.border }]}>
         <View style={styles.brand}>
           <View style={[styles.logo, { backgroundColor: p.cta }]}>
             <Ionicons name="color-fill" size={18} color={p.onCta} />
@@ -108,7 +111,7 @@ export function AppTabBar({ state, descriptors, emitter, navigateToTab, insets, 
   }
 
   return (
-    <View style={[styles.outer, { paddingBottom: Math.max(insets.bottom, space.sm), backgroundColor: p.surface, borderColor: p.border }, shadowOf(p, 2)]}>
+    <View role={WEB_NAV} style={[styles.outer, { paddingBottom: Math.max(insets.bottom, space.sm), backgroundColor: p.surface, borderColor: p.border }, shadowOf(p, 2)]}>
       <View style={styles.bar} accessibilityRole="tablist">
         {tabs.map((tab) => (
           <TabButton key={tab.key} label={tab.label} icon={tab.icon} focused={tab.focused} onPress={tab.onPress} onLongPress={tab.onLongPress} />

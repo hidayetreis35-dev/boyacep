@@ -57,7 +57,7 @@ function PriceField({
       />
       <Pressable
         accessibilityRole="switch"
-        accessibilityState={{ checked: sure }}
+        aria-checked={sure}
         accessibilityLabel={t('{label}: kesin fiyat', { label })}
         onPress={() => onChange({ ...price, source: sure ? 'estimate' : 'store' })}
         style={{ flexDirection: 'row', alignItems: 'center', gap: 6, alignSelf: 'flex-start', minHeight: 32 }}>
@@ -91,7 +91,7 @@ function CostItem({
   const p = usePalette();
   return (
     <View style={!first && { borderTopWidth: StyleSheet.hairlineWidth, borderColor: p.border }}>
-      <Pressable accessibilityRole="button" accessibilityLabel={label} accessibilityState={{ expanded: open }} onPress={onToggle} style={styles.item}>
+      <Pressable accessibilityRole="button" accessibilityLabel={label} aria-expanded={open} onPress={onToggle} style={styles.item}>
         <Icon name={icon} size={20} color={p.primary} />
         <AppText style={{ flex: 1 }}>{label}</AppText>
         {amount !== null ? (

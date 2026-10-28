@@ -199,7 +199,8 @@ export function OptionCard({
       testID={testID}
       accessibilityRole={multiple ? 'checkbox' : 'radio'}
       accessibilityLabel={badge ? `${title}, ${badge}` : title}
-      accessibilityState={multiple ? { checked: selected, disabled: !!disabled } : { selected, disabled: !!disabled }}
+      aria-checked={selected}
+      aria-disabled={!!disabled}
       disabled={disabled}
       onPress={onPress}
       style={[
@@ -271,7 +272,13 @@ export function StepProgress({ step, total, label, feature = 'calculate' }: { st
   const p = usePalette();
   const f = useFeatureColour(feature);
   return (
-    <View style={{ gap: space.sm }} accessibilityRole="progressbar" accessibilityValue={{ min: 1, max: total, now: step }}>
+    <View
+      style={{ gap: space.sm }}
+      accessibilityRole="progressbar"
+      accessibilityLabel={`${t('Adım {step} / {total}', { step, total })}, ${label}`}
+      aria-valuemin={1}
+      aria-valuemax={total}
+      aria-valuenow={step}>
       <View style={{ flexDirection: 'row', alignItems: 'center', gap: space.sm }}>
         <AppText variant="overline" style={{ color: f.ink }}>
           {t('Adım {step} / {total}', { step, total })}
@@ -351,7 +358,7 @@ export function Disclosure({ title, children, initiallyOpen = false }: { title: 
     <View style={[styles.disclosure, { backgroundColor: p.surface, borderColor: p.border }]}>
       <PressableScale
         accessibilityRole="button"
-        accessibilityState={{ expanded: open }}
+        aria-expanded={open}
         onPress={() => setOpen((o) => !o)}
         style={styles.disclosureHead}>
         <AppText variant="bodyStrong" style={{ flex: 1 }}>
@@ -383,7 +390,7 @@ export function Segmented<T extends string>({
           <PressableScale
             key={o.value}
             accessibilityRole="tab"
-            accessibilityState={{ selected: active }}
+            aria-selected={active}
             accessibilityLabel={t(o.label)}
             onPress={() => onChange(o.value)}
             style={[styles.segment, { backgroundColor: active ? p.primary : p.surfaceMuted }]}>
@@ -427,7 +434,7 @@ export function WizardNav({
       <PressableScale
         accessibilityRole="button"
         accessibilityLabel={nextLabel}
-        accessibilityState={{ disabled: !!nextDisabled }}
+        aria-disabled={!!nextDisabled}
         disabled={nextDisabled}
         onPress={onNext}
         style={({ pressed }) => [

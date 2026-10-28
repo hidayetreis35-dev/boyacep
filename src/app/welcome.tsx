@@ -36,7 +36,7 @@ function HeroLanguage() {
           <PressableScale
             key={l.value}
             accessibilityRole="tab"
-            accessibilityState={{ selected: active }}
+            aria-selected={active}
             accessibilityLabel={l.label}
             onPress={() => setLocale(l.value, '/welcome')}
             style={[styles.langItem, active && { backgroundColor: p.surface }]}>
@@ -170,7 +170,8 @@ function SelectBox({
   return (
     <PressableScale
       accessibilityRole="button"
-      accessibilityState={{ expanded: open, disabled }}
+      aria-expanded={open}
+      aria-disabled={disabled}
       accessibilityLabel={`${label}: ${value ?? placeholder}`}
       disabled={disabled}
       onPress={onToggle}

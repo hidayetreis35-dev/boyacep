@@ -29,16 +29,19 @@ export const PHOTOS = {
 
 export type PhotoName = keyof typeof PHOTOS;
 
-/** A decorative photo that fills its box. */
+/**
+ * A decorative photo that fills its box. Screen readers skip it: the empty
+ * label becomes alt="" on the web.
+ */
 export function Photo({ name, style }: { name: PhotoName; style?: StyleProp<ImageStyle> }) {
-  return <Image source={PHOTOS[name]} contentFit="cover" transition={150} style={style} accessible={false} />;
+  return <Image source={PHOTOS[name]} contentFit="cover" transition={150} style={style} accessible={false} accessibilityLabel="" />;
 }
 
 /** The sample room with its wall painted in `wall`. */
 export function RoomPhoto({ wall, style }: { wall: string; style?: StyleProp<ViewStyle> }) {
   return (
     <View style={[{ backgroundColor: wall, overflow: 'hidden' }, style]}>
-      <Image source={PHOTOS.colourRoomWall} contentFit="cover" style={StyleSheet.absoluteFill} accessible={false} />
+      <Image source={PHOTOS.colourRoomWall} contentFit="cover" style={StyleSheet.absoluteFill} accessible={false} accessibilityLabel="" />
     </View>
   );
 }

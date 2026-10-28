@@ -31,7 +31,7 @@ function SpecialtyPicker({ value, onChange, error }: { value: ProForm['specialti
             <Pressable
               key={s.value}
               accessibilityRole="checkbox"
-              accessibilityState={{ checked: selected }}
+              aria-checked={selected}
               onPress={() => onChange(selected ? value.filter((v) => v !== s.value) : [...value, s.value])}
               style={{
                 minHeight: 40,

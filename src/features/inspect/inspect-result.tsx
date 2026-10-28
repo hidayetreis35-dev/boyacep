@@ -84,7 +84,7 @@ function Finding({ symptom, open, onToggle, first }: { symptom: Symptom; open: b
     <View style={[!first && { borderTopWidth: StyleSheet.hairlineWidth, borderColor: p.border }]}>
       <PressableScale
         accessibilityRole="button"
-        accessibilityState={{ expanded: open }}
+        aria-expanded={open}
         accessibilityLabel={`${t(symptom.label)}, ${t(SEVERITY_LABEL[symptom.severity])}`}
         onPress={onToggle}
         style={styles.finding}>

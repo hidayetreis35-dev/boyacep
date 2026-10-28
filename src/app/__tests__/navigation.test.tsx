@@ -119,14 +119,14 @@ describe('app navigation', () => {
     await fireEvent.press(await screen.findByLabelText('Mutfak'));
     expect(screen).toHavePathname('/calculate');
     expect(screen).toHaveSearchParams({ space: 'kitchen' });
-    expect(screen.getByRole('radio', { name: 'Mutfak' })).toBeSelected();
+    expect(screen.getByRole('radio', { name: 'Mutfak' })).toBeChecked();
   });
 
   it('opens the hallway as a custom space', async () => {
     await renderRouter('./src/app', { initialUrl: '/' });
     await fireEvent.press(await screen.findByLabelText('Koridor'));
     expect(screen).toHaveSearchParams({ space: 'custom' });
-    expect(screen.getByRole('radio', { name: 'Özel alan' })).toBeSelected();
+    expect(screen.getByRole('radio', { name: 'Özel alan' })).toBeChecked();
   });
 
   it('marks AI design as coming soon instead of pretending it works', async () => {

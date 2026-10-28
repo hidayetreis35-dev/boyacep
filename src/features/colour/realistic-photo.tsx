@@ -343,7 +343,7 @@ export default function RealisticPhoto({ uri, aspect, surfaces, active, draft, d
             <View style={{ width, height }}>
               <Image source={{ uri }} style={{ width, height }} resizeMode="cover" />
               <View style={{ position: 'absolute', inset: 0, alignItems: 'center', justifyContent: 'center' }}>
-                <ActivityIndicator color="#FFFFFF" />
+                <ActivityIndicator color="#FFFFFF" accessibilityLabel={t('Yükleniyor')} />
               </View>
             </View>
           )}

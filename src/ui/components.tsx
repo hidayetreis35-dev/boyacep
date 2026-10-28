@@ -125,6 +125,9 @@ export function Grid({ children }: { children: ReactNode }) {
 }
 
 /** `wide` lets a screen with Columns or Grid use the desktop width. */
+/** Landmarks for the web build, so browsers' screen readers can jump between page and menu. */
+const WEB_MAIN = Platform.OS === 'web' ? 'main' : undefined;
+
 export function Screen({ children, edges = ['top'], wide = false }: { children: ReactNode; edges?: ('top' | 'bottom')[]; wide?: boolean }) {
   const p = usePalette();
   const isWide = useWide() && wide;
@@ -144,7 +147,7 @@ export function Screen({ children, edges = ['top'], wide = false }: { children: 
         contentContainerStyle={styles.screenContent}
         keyboardShouldPersistTaps="handled"
         style={{ backgroundColor: p.background }}>
-        <View ref={innerRef} style={[styles.screenInner, isWide && { maxWidth: MAX_WIDE_WIDTH, paddingHorizontal: space.xl }]}>
+        <View ref={innerRef} role={WEB_MAIN} style={[styles.screenInner, isWide && { maxWidth: MAX_WIDE_WIDTH, paddingHorizontal: space.xl }]}>
           <ScrollTopContext.Provider value={scrollToTop}>
             <ScrollContext.Provider value={scrollToView}>{children}</ScrollContext.Provider>
           </ScrollTopContext.Provider>
@@ -194,7 +197,8 @@ export function Button({
     <PressableScale
       accessibilityRole="button"
       accessibilityLabel={label}
-      accessibilityState={{ disabled: !!disabled, busy: !!loading }}
+      aria-disabled={!!disabled}
+      aria-busy={!!loading}
       disabled={disabled || loading}
       onPress={onPress}
       style={({ pressed }) => [
@@ -206,7 +210,7 @@ export function Button({
         variant === 'ghost' && { backgroundColor: pressed ? p.surfaceMuted : 'transparent' },
         (disabled || loading) && { opacity: 0.45 },
       ]}>
-      {loading ? <ActivityIndicator color={fg} /> : icon ? <Icon name={icon} size={20} color={fg} /> : null}
+      {loading ? <ActivityIndicator color={fg} aria-hidden /> : icon ? <Icon name={icon} size={20} color={fg} /> : null}
       <AppText variant="bodyStrong" style={{ color: fg, fontFamily: fonts.bold }}>
         {label}
       </AppText>
@@ -326,7 +330,7 @@ export function ChoiceChips<T extends string>({
             <Pressable
               key={o.value}
               accessibilityRole="radio"
-              accessibilityState={{ selected }}
+              aria-checked={selected}
               onPress={() => onChange(o.value)}
               style={[
                 styles.chip,
@@ -351,7 +355,7 @@ export function Toggle({ label, value, onChange }: { label: string; value: boole
   return (
     <Pressable
       accessibilityRole="checkbox"
-      accessibilityState={{ checked: value }}
+      aria-checked={value}
       onPress={() => onChange(!value)}
       style={[styles.toggle, { borderColor: value ? p.primary : 'transparent', backgroundColor: value ? p.primarySoft : p.surfaceMuted }]}>
       <Icon name={value ? 'checkmark-circle' : 'ellipse-outline'} color={value ? p.primary : p.textMuted} />
@@ -384,7 +388,7 @@ export function SelectField<T extends string>({
       </AppText>
       <Pressable
         accessibilityRole="button"
-        accessibilityState={{ expanded: open }}
+        aria-expanded={open}
         accessibilityLabel={`${label}: ${current ? t(current.label) : ''}`}
         onPress={() => setOpen((o) => !o)}
         testID={testID}
@@ -402,7 +406,7 @@ export function SelectField<T extends string>({
               <Pressable
                 key={o.value}
                 accessibilityRole="radio"
-                accessibilityState={{ selected }}
+                aria-checked={selected}
                 accessibilityLabel={t(o.label)}
                 onPress={() => {
                   onChange(o.value);
@@ -426,7 +430,7 @@ export function Checkbox({ label, value, onChange }: { label: string; value: boo
   return (
     <Pressable
       accessibilityRole="checkbox"
-      accessibilityState={{ checked: value }}
+      aria-checked={value}
       accessibilityLabel={label}
       onPress={() => onChange(!value)}
       style={styles.checkboxRow}>
@@ -533,7 +537,7 @@ export function LoadingState({ label = t('Yükleniyor…') }: { label?: string }
   const p = usePalette();
   return (
     <View style={styles.empty} accessibilityRole="progressbar" accessibilityLabel={label}>
-      <ActivityIndicator color={p.primary} size="large" />
+      <ActivityIndicator color={p.primary} size="large" aria-hidden />
       <AppText tone="muted">{label}</AppText>
     </View>
   );

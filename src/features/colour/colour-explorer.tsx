@@ -44,7 +44,7 @@ export function SwatchCard({
   return (
     <PressableScale
       accessibilityRole="radio"
-      accessibilityState={{ selected: !!selected }}
+      aria-checked={!!selected}
       accessibilityLabel={t(colour.name)}
       onPress={onPress}
       style={[
@@ -150,7 +150,7 @@ export function ColourExplorer({ selected, favourites, onSelect }: { selected: s
                 <PressableScale
                   key={f.key}
                   accessibilityRole="tab"
-                  accessibilityState={{ selected: active }}
+                  aria-selected={active}
                   accessibilityLabel={t(f.label)}
                   onPress={() => setShelf(f.key)}
                   style={[styles.familyChip, { backgroundColor: active ? p.primary : p.surface, borderColor: active ? p.primary : p.border }]}>

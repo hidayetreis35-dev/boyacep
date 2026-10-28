@@ -320,7 +320,7 @@ export function ColourStudio({
                 <PressableScale
                   key={`${s.label}-${i}`}
                   accessibilityRole="radio"
-                  accessibilityState={{ selected: i === active }}
+                  aria-checked={i === active}
                   accessibilityLabel={t(s.label)}
                   onPress={() => setActive(i)}
                   style={[styles.surfaceChip, { backgroundColor: i === active ? p.primary : p.surface, borderColor: i === active ? p.primary : p.border }]}>
@@ -368,7 +368,7 @@ export function ColourStudio({
                     <PressableScale
                       key={hex}
                       accessibilityRole="radio"
-                      accessibilityState={{ selected }}
+                      aria-checked={selected}
                       accessibilityLabel={t(c.name)}
                       onPress={() => applyColour(c)}
                       style={[styles.quick, { backgroundColor: hex, borderColor: selected ? p.text : p.border, borderWidth: selected ? 3 : StyleSheet.hairlineWidth }]}
