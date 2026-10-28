@@ -5,7 +5,7 @@ import { msg, t } from '@/i18n';
 import type { PhotoSurface, WallOutline } from '@/lib/database.types';
 import { Segmented } from '@/ui/brand';
 import { AppText, Button, ChoiceChips, Icon, Notice } from '@/ui/components';
-import { PressableScale } from '@/ui/motion';
+import { PressableScale, tick } from '@/ui/motion';
 import { fonts, radius, space, usePalette } from '@/ui/theme';
 
 import { CLASSICS, TRENDS } from './catalogue';
@@ -370,7 +370,10 @@ export function ColourStudio({
                       accessibilityRole="radio"
                       aria-checked={selected}
                       accessibilityLabel={t(c.name)}
-                      onPress={() => applyColour(c)}
+                      onPress={() => {
+                        if (!selected) tick();
+                        applyColour(c);
+                      }}
                       style={[styles.quick, { backgroundColor: hex, borderColor: selected ? p.text : p.border, borderWidth: selected ? 3 : StyleSheet.hairlineWidth }]}
                     />
                   );

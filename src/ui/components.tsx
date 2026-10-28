@@ -29,7 +29,7 @@ import {
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 
-import { PressableScale, useReducedMotion } from './motion';
+import { PressableScale, tick, useReducedMotion } from './motion';
 import { MAX_CONTENT_WIDTH, MAX_WIDE_WIDTH, MIN_TOUCH, WIDE_BREAKPOINT, fonts, radius, shadowOf, space, type, usePalette, type Palette, type TypeVariant } from './theme';
 
 import { t, toUpper } from '@/i18n';
@@ -335,7 +335,10 @@ export function ChoiceChips<T extends string>({
               key={o.value}
               accessibilityRole="radio"
               aria-checked={selected}
-              onPress={() => onChange(o.value)}
+              onPress={() => {
+                if (!selected) tick();
+                onChange(o.value);
+              }}
               style={[
                 styles.chip,
                 {
@@ -360,7 +363,10 @@ export function Toggle({ label, value, onChange }: { label: string; value: boole
     <Pressable
       accessibilityRole="checkbox"
       aria-checked={value}
-      onPress={() => onChange(!value)}
+      onPress={() => {
+        tick();
+        onChange(!value);
+      }}
       style={[styles.toggle, { borderColor: value ? p.primary : 'transparent', backgroundColor: value ? p.primarySoft : p.surfaceMuted }]}>
       <Icon name={value ? 'checkmark-circle' : 'ellipse-outline'} color={value ? p.primary : p.textMuted} />
       <AppText variant="bodyStrong">{label}</AppText>
@@ -413,6 +419,7 @@ export function SelectField<T extends string>({
                 aria-checked={selected}
                 accessibilityLabel={t(o.label)}
                 onPress={() => {
+                  if (!selected) tick();
                   onChange(o.value);
                   setOpen(false);
                 }}
@@ -436,7 +443,10 @@ export function Checkbox({ label, value, onChange }: { label: string; value: boo
       accessibilityRole="checkbox"
       aria-checked={value}
       accessibilityLabel={label}
-      onPress={() => onChange(!value)}
+      onPress={() => {
+        tick();
+        onChange(!value);
+      }}
       style={styles.checkboxRow}>
       <View style={[styles.checkbox, { backgroundColor: value ? p.primary : p.surface, borderColor: value ? p.primary : p.border }]}>
         {value ? <Icon name="checkmark" size={16} color={p.onPrimary} /> : null}

@@ -7,7 +7,7 @@ import { useProjects } from '@/features/projects/queries';
 import { t } from '@/i18n';
 import { SectionTitle } from '@/ui/brand';
 import { AppText, Button, Icon, Notice, TextField } from '@/ui/components';
-import { PressableScale } from '@/ui/motion';
+import { PressableScale, tick } from '@/ui/motion';
 import { fonts, MIN_TOUCH, radius, shadowOf, space, usePalette } from '@/ui/theme';
 
 import { CLASSICS, colourByHex, COLOURS, familyLabel, FAMILIES, searchColours, TRENDS, type CatalogColour, type FamilyKey } from './catalogue';
@@ -46,7 +46,10 @@ export function SwatchCard({
       accessibilityRole="radio"
       aria-checked={!!selected}
       accessibilityLabel={t(colour.name)}
-      onPress={onPress}
+      onPress={() => {
+        if (!selected) tick();
+        onPress();
+      }}
       style={[
         styles.swatch,
         width ? { width } : null,

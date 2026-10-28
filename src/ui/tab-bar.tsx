@@ -4,7 +4,7 @@ import { useEffect, useState, type ComponentProps } from 'react';
 import { Animated, Platform, StyleSheet, View } from 'react-native';
 
 import { AppText } from './components';
-import { PressableScale, useReducedMotion } from './motion';
+import { PressableScale, tick, useReducedMotion } from './motion';
 import { fonts, shadowOf, space, usePalette } from './theme';
 
 type IconName = ComponentProps<typeof Ionicons>['name'];
@@ -87,7 +87,10 @@ export function AppTabBar({ state, descriptors, emitter, navigateToTab, insets, 
     const icon = icons[route.name] ?? { active: 'ellipse', inactive: 'ellipse-outline' };
     const onPress = () => {
       const event = emitter.emit({ type: 'tabPress', target: route.key, canPreventDefault: true });
-      if (!focused && !event.defaultPrevented) navigateToTab(route.key);
+      if (!focused && !event.defaultPrevented) {
+        tick();
+        navigateToTab(route.key);
+      }
     };
     return { key: route.key, label, focused, icon, onPress, onLongPress: () => emitter.emit({ type: 'tabLongPress', target: route.key }) };
   });

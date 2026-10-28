@@ -1,7 +1,11 @@
 import { act, fireEvent, render, screen } from '@testing-library/react-native';
+import * as Haptics from 'expo-haptics';
 import { AccessibilityInfo, Animated, Text } from 'react-native';
 
+import { Checkbox, ChoiceChips } from '@/ui/components';
 import { FadeIn, PressableScale, useReducedMotion } from '@/ui/motion';
+
+jest.mock('expo-haptics', () => ({ selectionAsync: jest.fn(() => Promise.resolve()) }));
 
 // The phone starts with "reduce motion" on; `setSystem` flips it like the settings app would.
 let setSystem: (on: boolean) => void = () => {};
@@ -54,5 +58,27 @@ describe('reduce motion', () => {
     expect(timing).toHaveBeenCalled();
     await fireEvent(screen.getByRole('button', { name: 'Dene' }), 'pressIn');
     expect(spring).toHaveBeenCalled();
+  });
+});
+
+describe('selection tick', () => {
+  it('ticks once when a choice changes, not when it is chosen again', async () => {
+    const onChange = jest.fn();
+    const options = [
+      { value: 'a', label: 'Mat' },
+      { value: 'b', label: 'Saten' },
+    ];
+    await render(<ChoiceChips options={options} value="a" onChange={onChange} />);
+    await fireEvent.press(screen.getByRole('radio', { name: 'Mat' }));
+    expect(Haptics.selectionAsync).not.toHaveBeenCalled();
+    await fireEvent.press(screen.getByRole('radio', { name: 'Saten' }));
+    expect(Haptics.selectionAsync).toHaveBeenCalledTimes(1);
+    expect(onChange).toHaveBeenLastCalledWith('b');
+  });
+
+  it('ticks on every checkbox toggle', async () => {
+    await render(<Checkbox label="Tavan dahil" value={false} onChange={() => {}} />);
+    await fireEvent.press(screen.getByRole('checkbox', { name: 'Tavan dahil' }));
+    expect(Haptics.selectionAsync).toHaveBeenCalledTimes(1);
   });
 });

@@ -1,3 +1,4 @@
+import * as Haptics from 'expo-haptics';
 import { useEffect, useState, useSyncExternalStore, type ReactNode } from 'react';
 import { AccessibilityInfo, Animated, Platform, Pressable, type PressableProps, type StyleProp, type ViewStyle } from 'react-native';
 
@@ -32,6 +33,19 @@ function subscribe(listener: () => void) {
 /** True when the phone (or browser) asks apps for less motion: then nothing springs, slides or pulses. */
 export function useReducedMotion(): boolean {
   return useSyncExternalStore(subscribe, () => reduceMotion, () => false);
+}
+
+/**
+ * A light tick under the finger when a choice changes: a chip, a checkbox, a
+ * tab. Phones only; quietly does nothing where haptics are missing.
+ */
+export function tick() {
+  if (Platform.OS === 'web') return;
+  try {
+    Haptics.selectionAsync().catch(() => {});
+  } catch {
+    // No haptics module in this build.
+  }
 }
 
 /** A Pressable that springs down slightly while pressed, and stays still when motion is reduced. */
