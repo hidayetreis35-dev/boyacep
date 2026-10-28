@@ -24,10 +24,25 @@ export default function CalculateScreen() {
   const { space } = useLocalSearchParams<{ space?: string }>();
   const initialSpace = readySpace(space);
   const [mode, setMode] = useState<Mode>(initialSpace ? 'rooms' : 'manual');
+  const tabs = <Segmented options={MODES} value={mode} onChange={setMode} />;
+  if (mode === 'rooms') {
+    // The wizard's back and next buttons stay pinned under the page, so "Devam" never scrolls away.
+    return (
+      <PaintWizard
+        initialSpace={initialSpace}
+        frame={(body, footer) => (
+          <Screen edges={['bottom']} footer={footer}>
+            {tabs}
+            {body}
+          </Screen>
+        )}
+      />
+    );
+  }
   return (
     <Screen edges={['bottom']}>
-      <Segmented options={MODES} value={mode} onChange={setMode} />
-      {mode === 'manual' ? <ManualCalculator onMeasure={() => setMode('rooms')} /> : <PaintWizard initialSpace={initialSpace} />}
+      {tabs}
+      <ManualCalculator onMeasure={() => setMode('rooms')} />
     </Screen>
   );
 }

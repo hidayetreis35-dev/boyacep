@@ -1,7 +1,16 @@
 import { router } from 'expo-router';
 import { StyleSheet, View } from 'react-native';
 
-import { DEFAULT_CAN_SIZES, planPackages, type MaterialCategory, type MaterialItem, type PackagePlan, type ProjectCalculation, type QuickEstimate } from '@/engine';
+import {
+  DEFAULT_CAN_SIZES,
+  planPackages,
+  type MaterialCategory,
+  type MaterialItem,
+  type PackagePlan,
+  type ProjectCalculation,
+  type QuickEstimate,
+  type ValueSource,
+} from '@/engine';
 import { useSession } from '@/features/account/session';
 import { setPendingRoom } from '@/features/projects/pending-room';
 import { useCreateProject } from '@/features/projects/queries';
@@ -10,12 +19,15 @@ import { t } from '@/i18n';
 import { formatNumber, parseDecimal } from '@/lib/number';
 import { Disclosure, SectionTitle, StatTile, TileRow } from '@/ui/brand';
 import { AppText, Badge, Button, Card, Icon, Notice, Row, type IconName } from '@/ui/components';
+import { FadeIn } from '@/ui/motion';
+import { Odometer } from '@/ui/odometer';
 import { HeroPanel } from '@/ui/showcase';
 import { fonts, radius, space, useFeatureColour, usePalette } from '@/ui/theme';
 
 import type { RoomForm } from './form';
 import { quantityText, SOURCE_LABEL } from './labels';
 import { MOVE_STEPS, type PaintReason } from './move';
+import { PaintCans } from './paint-cans';
 import { ProductAdvice, roomUse } from './product-advice';
 import { packageText } from './results';
 import { SPACE_LABEL, type SpaceKind } from './wizard';
@@ -66,8 +78,37 @@ function buyText(paints: MaterialItem[]): string {
     .join(' · ');
 }
 
-/** Navy result banner with the headline number. */
-function ResultHero({ overline, litres, caption, buy, estimate }: { overline: string; litres: number; caption: string; buy: string; estimate: boolean }) {
+/** Paint colours for the cans in the result: sage for walls, cream for ceilings, as in the room drawing. */
+export const CAN_COLOUR = { wall: '#A9BFA0', ceiling: '#F3EEE5' };
+
+export type CanGroup = { label?: string; colour: string; plan: PackagePlan };
+
+/** Wall and ceiling paint cans as the hero draws them; labelled only when there are both. */
+export function canGroups(paints: { category: MaterialCategory; plan: PackagePlan }[]): CanGroup[] {
+  const both = paints.length > 1;
+  return paints.map((m) =>
+    m.category === 'ceiling_paint'
+      ? { label: both ? t('Tavan') : undefined, colour: CAN_COLOUR.ceiling, plan: m.plan }
+      : { label: both ? t('Duvar') : undefined, colour: CAN_COLOUR.wall, plan: m.plan },
+  );
+}
+
+/** Navy result banner: the litres roll into place and the cans to buy fill up. */
+export function ResultHero({
+  overline,
+  litres,
+  caption,
+  buy,
+  estimate,
+  cans,
+}: {
+  overline: string;
+  litres: number;
+  caption: string;
+  buy: string;
+  estimate: boolean;
+  cans: CanGroup[];
+}) {
   const p = usePalette();
   return (
     <HeroPanel>
@@ -78,14 +119,22 @@ function ResultHero({ overline, litres, caption, buy, estimate }: { overline: st
         </AppText>
       </View>
       <View style={{ flexDirection: 'row', alignItems: 'baseline', gap: space.sm }}>
-        <AppText variant="display" style={{ color: p.onHero, fontSize: 52, lineHeight: 58 }} testID="total-litres">
-          {formatNumber(litres)}
-        </AppText>
+        <Odometer
+          value={formatNumber(litres)}
+          lineHeight={58}
+          style={{ fontFamily: fonts.display, color: p.onHero, fontSize: 52, letterSpacing: -1, fontVariant: ['tabular-nums'] }}
+          testID="total-litres"
+        />
         <AppText variant="heading" style={{ color: p.onHero }}>
           {t('litre boya')}
         </AppText>
       </View>
       <AppText style={{ color: p.onHeroMuted }}>{caption}</AppText>
+      {cans.length > 0 ? (
+        <View style={{ marginTop: space.sm }}>
+          <PaintCans groups={cans} />
+        </View>
+      ) : null}
       <View style={[styles.heroBuy, { backgroundColor: p.surface }]}>
         <Icon name="cart" size={18} color={p.text} />
         <AppText variant="small" style={{ flex: 1, fontFamily: fonts.semibold }}>
@@ -97,7 +146,8 @@ function ResultHero({ overline, litres, caption, buy, estimate }: { overline: st
   );
 }
 
-function MaterialLine({ item }: { item: MaterialItem }) {
+/** `showSource` adds the line's own source badge, when the list as a whole has none. */
+function MaterialLine({ item, showSource = true }: { item: MaterialItem; showSource?: boolean }) {
   const p = usePalette();
   const source = SOURCE_LABEL[item.source];
   return (
@@ -122,7 +172,7 @@ function MaterialLine({ item }: { item: MaterialItem }) {
             ) : null}
           </>
         ) : null}
-        {LIQUID.includes(item.category) ? <Badge label={t(source.label)} tone={source.tone} /> : null}
+        {showSource && LIQUID.includes(item.category) ? <Badge label={t(source.label)} tone={source.tone} /> : null}
       </View>
     </View>
   );
@@ -204,6 +254,10 @@ export function RoomResult({
   const liquids = result.materials.filter((m) => LIQUID.includes(m.category));
   const supplies = result.materials.filter((m) => !LIQUID.includes(m.category));
   const estimate = liquids.some((m) => m.source === 'estimate');
+  // One source badge for the whole list when every paint has the same source, instead of one per line.
+  const sources = new Set<ValueSource>(liquids.map((m) => m.source));
+  const shared = sources.size === 1 ? SOURCE_LABEL[liquids[0].source] : null;
+  const finishPaints = liquids.filter((m) => m.category !== 'primer');
 
   return (
     <View style={{ gap: space.lg }} testID="room-results" accessibilityLiveRegion="polite">
@@ -211,21 +265,24 @@ export function RoomResult({
         overline={t('Sonuç · {space}', { space: t(SPACE_LABEL[kind]) })}
         litres={finish}
         caption={t('{area} m² alana {count} kat', { area: formatNumber(totals.totalPaintable, 2), count: form.coats })}
-        buy={buyText(liquids.filter((m) => m.category !== 'primer'))}
+        buy={buyText(finishPaints)}
         estimate={estimate}
+        cans={canGroups(finishPaints.flatMap((m) => (m.packages ? [{ category: m.category, plan: m.packages }] : [])))}
       />
 
-      <TileRow>
-        <StatTile label={t('Boyanacak alan')} value={formatNumber(totals.totalPaintable, 1)} unit="m²" icon="resize" feature="calculate" />
-        <StatTile
-          label={t('Astar')}
-          value={totals.primerLitres > 0 ? formatNumber(totals.primerLitres) : t('Gerekmiyor')}
-          unit={totals.primerLitres > 0 ? 'L' : undefined}
-          icon="water"
-          feature="ask"
-          hint={totals.primerLitres > 0 ? t('Boyadan önce 1 kat') : undefined}
-        />
-      </TileRow>
+      <FadeIn delay={250}>
+        <TileRow>
+          <StatTile label={t('Boyanacak alan')} value={formatNumber(totals.totalPaintable, 1)} unit="m²" icon="resize" feature="calculate" />
+          <StatTile
+            label={t('Astar')}
+            value={totals.primerLitres > 0 ? formatNumber(totals.primerLitres) : t('Gerekmiyor')}
+            unit={totals.primerLitres > 0 ? 'L' : undefined}
+            icon="water"
+            feature="ask"
+            hint={totals.primerLitres > 0 ? t('Boyadan önce 1 kat') : undefined}
+          />
+        </TileRow>
+      </FadeIn>
 
       {kind === 'kitchen' || kind === 'bathroom' ? (
         <Notice icon="water" tone="info">
@@ -235,20 +292,24 @@ export function RoomResult({
         </Notice>
       ) : null}
 
-      <Card>
-        <SectionTitle title={t('Alacağın boyalar')} />
-        {liquids.map((m) => (
-          <MaterialLine key={m.category} item={m} />
-        ))}
-      </Card>
-
-      {supplies.length > 0 ? (
+      <FadeIn delay={350}>
         <Card>
-          <SectionTitle title={t('Yardımcı malzemeler')} />
-          {supplies.map((m) => (
-            <MaterialLine key={m.category} item={m} />
+          <SectionTitle title={t('Alacağın boyalar')} action={shared ? <Badge label={t(shared.label)} tone={shared.tone} /> : undefined} />
+          {liquids.map((m) => (
+            <MaterialLine key={m.category} item={m} showSource={!shared} />
           ))}
         </Card>
+      </FadeIn>
+
+      {supplies.length > 0 ? (
+        <FadeIn delay={450}>
+          <Card>
+            <SectionTitle title={t('Yardımcı malzemeler')} />
+            {supplies.map((m) => (
+              <MaterialLine key={m.category} item={m} />
+            ))}
+          </Card>
+        </FadeIn>
       ) : null}
 
       <ProductAdvice
@@ -351,9 +412,12 @@ export function HomeResult({
   onEdit: () => void;
   onRestart: () => void;
 }) {
+  const wallPlan = planPackages(result.wallLitres, DEFAULT_CAN_SIZES);
+  const ceilingPlan = home.ceilings && result.ceilingLitres > 0 ? planPackages(result.ceilingLitres, DEFAULT_CAN_SIZES) : null;
   return (
     <View style={{ gap: space.lg }} testID="quick-results" accessibilityLiveRegion="polite">
       <ResultHero
+        cans={canGroups([{ category: 'interior_paint', plan: wallPlan }, ...(ceilingPlan ? [{ category: 'ceiling_paint' as const, plan: ceilingPlan }] : [])])}
         overline={t('Sonuç · Tüm ev ({houseType})', { houseType: home.houseType })}
         litres={result.totalLitres}
         caption={
@@ -362,18 +426,20 @@ export function HomeResult({
             : t('{area} m² ev, {count} kat', { area: home.area, count: home.coats })
         }
         buy={
-          home.ceilings && result.ceilingLitres > 0
-            ? `${t('Duvar: {cans}', { cans: packageText(planPackages(result.wallLitres, DEFAULT_CAN_SIZES)) })} · ${t('Tavan: {cans}', { cans: packageText(planPackages(result.ceilingLitres, DEFAULT_CAN_SIZES)) })}`
-            : t('Al: {cans}', { cans: packageText(planPackages(result.wallLitres, DEFAULT_CAN_SIZES)) })
+          ceilingPlan
+            ? `${t('Duvar: {cans}', { cans: packageText(wallPlan) })} · ${t('Tavan: {cans}', { cans: packageText(ceilingPlan) })}`
+            : t('Al: {cans}', { cans: packageText(wallPlan) })
         }
         estimate
       />
-      <TileRow>
-        <StatTile label={t('Duvar boyası')} value={formatNumber(result.wallLitres)} unit="L" icon="color-fill" feature="calculate" hint={t('≈ {area} m² duvar', { area: formatNumber(result.wallArea) })} />
-        {home.ceilings ? (
-          <StatTile label={t('Tavan boyası')} value={formatNumber(result.ceilingLitres)} unit="L" icon="arrow-up-circle" feature="ask" hint={t('≈ {area} m² tavan', { area: formatNumber(result.ceilingArea) })} />
-        ) : null}
-      </TileRow>
+      <FadeIn delay={250}>
+        <TileRow>
+          <StatTile label={t('Duvar boyası')} value={formatNumber(result.wallLitres)} unit="L" icon="color-fill" feature="calculate" hint={t('≈ {area} m² duvar', { area: formatNumber(result.wallArea) })} />
+          {home.ceilings ? (
+            <StatTile label={t('Tavan boyası')} value={formatNumber(result.ceilingLitres)} unit="L" icon="arrow-up-circle" feature="ask" hint={t('≈ {area} m² tavan', { area: formatNumber(result.ceilingArea) })} />
+          ) : null}
+        </TileRow>
+      </FadeIn>
       {home.reason && home.reason !== 'refresh' ? <MovePlan reason={home.reason} houseType={home.houseType} /> : null}
       <CostTeaser paintLitres={result.totalLitres} primerLitres={0} />
       <RegionalCostCard kind="home" floorArea={parseDecimal(home.area)} litres={result.totalLitres} />

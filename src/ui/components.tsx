@@ -128,7 +128,18 @@ export function Grid({ children }: { children: ReactNode }) {
 /** Landmarks for the web build, so browsers' screen readers can jump between page and menu. */
 const WEB_MAIN = Platform.OS === 'web' ? 'main' : undefined;
 
-export function Screen({ children, edges = ['top'], wide = false }: { children: ReactNode; edges?: ('top' | 'bottom')[]; wide?: boolean }) {
+/** `footer` stays fixed under the scrolling page, e.g. a wizard's next button. */
+export function Screen({
+  children,
+  edges = ['top'],
+  wide = false,
+  footer,
+}: {
+  children: ReactNode;
+  edges?: ('top' | 'bottom')[];
+  wide?: boolean;
+  footer?: ReactNode;
+}) {
   const p = usePalette();
   const isWide = useWide() && wide;
   const reduced = useReducedMotion();
@@ -157,6 +168,11 @@ export function Screen({ children, edges = ['top'], wide = false }: { children: 
           </ScrollTopContext.Provider>
         </View>
       </ScrollView>
+      {footer ? (
+        <View style={[styles.screenFooter, { backgroundColor: p.background, borderTopColor: p.border }]}>
+          <View style={styles.screenFooterInner}>{footer}</View>
+        </View>
+      ) : null}
     </SafeAreaView>
   );
 }
@@ -585,6 +601,8 @@ const webNoOutline = Platform.OS === 'web' ? ({ outlineStyle: 'none' } as unknow
 const styles = StyleSheet.create({
   screenContent: { flexGrow: 1, alignItems: 'center', paddingBottom: space.xxl },
   screenInner: { width: '100%', maxWidth: MAX_CONTENT_WIDTH, padding: space.lg, gap: space.lg },
+  screenFooter: { borderTopWidth: StyleSheet.hairlineWidth, alignItems: 'center' },
+  screenFooterInner: { width: '100%', maxWidth: MAX_CONTENT_WIDTH, paddingHorizontal: space.lg, paddingVertical: space.md },
   columns: { flexDirection: 'row', alignItems: 'flex-start', gap: space.xl },
   mainColumn: { flex: 3, minWidth: 0, gap: space.lg },
   sideColumn: { flex: 2, minWidth: 0, gap: space.lg },
