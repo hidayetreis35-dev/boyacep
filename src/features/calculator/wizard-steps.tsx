@@ -500,7 +500,7 @@ export function HomeLiveCard({ litres, wallArea, estimate }: { litres: number | 
         </AppText>
         {estimate && litres !== null ? <Badge label={t('Tahmini')} tone="accent" /> : null}
       </View>
-      <View style={{ flexDirection: 'row', alignItems: 'flex-end', gap: space.lg }} accessibilityLiveRegion="polite">
+      <View style={{ flexDirection: 'row', alignItems: 'flex-start', gap: space.lg }} accessibilityLiveRegion="polite">
         <View style={{ gap: 2, flex: 1 }}>
           <AppText variant="caption" style={{ color: 'rgba(255,255,255,0.8)' }}>
             {t('Gereken boya')}
@@ -511,7 +511,7 @@ export function HomeLiveCard({ litres, wallArea, estimate }: { litres: number | 
             </AppText>
           </FadeIn>
         </View>
-        <View style={{ gap: 2, flex: 1, paddingBottom: 6 }}>
+        <View style={{ gap: 2, flex: 1 }}>
           <AppText variant="caption" style={{ color: 'rgba(255,255,255,0.8)' }}>
             {t('Duvar alanı')}
           </AppText>
