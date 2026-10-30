@@ -1994,4 +1994,7 @@ export const en: Record<string, Translation> = {
   "Şu ana kadarki cevaplarla": "With your answers so far",
   "Oda, salon, mutfak": "Rooms, living room, kitchen",
   "Bina ve bahçe duvarı": "Building and garden walls",
+  "Metrekareyle": "By area",
+  "Metrekareyle hesapla": "Work out by area",
+  "Duvar alanını yazarak hesapla": "Type the wall area to work it out",
 };

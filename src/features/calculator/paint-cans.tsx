@@ -11,8 +11,13 @@ import { canFills } from './cans';
 const RIM = 'rgba(255, 255, 255, 0.72)';
 const MAX_CANS = 8;
 
-function Can({ size, fill, colour, delay }: { size: number; fill: number; colour: string; delay: number }) {
-  const height = Math.round(22 + 26 * Math.sqrt(size / 15));
+/** Smaller cans when there are many, so one row holds them on a phone. */
+function scaleFor(count: number): number {
+  return count <= 4 ? 1 : count <= 6 ? 0.82 : 0.7;
+}
+
+function Can({ size, fill, colour, delay, scale }: { size: number; fill: number; colour: string; delay: number; scale: number }) {
+  const height = Math.round((22 + 26 * Math.sqrt(size / 15)) * scale);
   const width = Math.round(height * 0.82);
   const level = useAnimatedTo(height * (1 - fill), { from: height, duration: 760, delay });
   return (
@@ -22,7 +27,7 @@ function Can({ size, fill, colour, delay }: { size: number; fill: number; colour
       <View style={[styles.body, { width: width - 4, height }]}>
         <Animated.View style={[StyleSheet.absoluteFill, { backgroundColor: colour, transform: [{ translateY: level }] }]} />
       </View>
-      <AppText variant="caption" style={{ color: RIM, fontFamily: fonts.bold, marginTop: 4 }}>
+      <AppText variant="caption" style={[{ color: RIM, fontFamily: fonts.bold, marginTop: 4 }, scale < 1 && { fontSize: 11, lineHeight: 14 }]}>
         {`${formatNumber(size)} L`}
       </AppText>
     </View>
@@ -41,6 +46,7 @@ export function PaintCans({ groups }: { groups: { label?: string; colour: string
       {groups.map((g) => {
         const cans = canFills(g.plan);
         const shown = cans.slice(0, MAX_CANS);
+        const scale = scaleFor(shown.length);
         return (
           <View key={g.label ?? g.colour} style={{ gap: 4 }}>
             {g.label ? (
@@ -48,9 +54,9 @@ export function PaintCans({ groups }: { groups: { label?: string; colour: string
                 {g.label}
               </AppText>
             ) : null}
-            <View style={styles.row}>
+            <View style={[styles.row, scale < 1 && { gap: 6 }]}>
               {shown.map((c, i) => (
-                <Can key={i} size={c.size} fill={c.fill} colour={g.colour} delay={350 + 110 * index++} />
+                <Can key={i} size={c.size} fill={c.fill} colour={g.colour} delay={350 + 110 * index++} scale={scale} />
               ))}
               {cans.length > shown.length ? (
                 <AppText variant="bodyStrong" style={{ color: RIM, alignSelf: 'center' }}>

@@ -6,7 +6,7 @@ import { msg, t } from '@/i18n';
 import { parseDecimal } from '@/lib/number';
 import { Disclosure, OptionCard, OptionGrid, StepProgress, WizardNav } from '@/ui/brand';
 import { AppText, ChoiceChips, FieldRow, Notice, NumberField, useScrollToTop } from '@/ui/components';
-import { FadeIn, SlideIn } from '@/ui/motion';
+import { SlideIn } from '@/ui/motion';
 import { space } from '@/ui/theme';
 
 import { EMPTY_ROOM_FORM, toRoomInput, type FormErrors, type RoomForm } from './form';
@@ -81,7 +81,19 @@ const inline: WizardFrame = (body, footer) => (
  * room, a live drawing above the questions shows what the answers mean. The
  * maths is the unchanged engine.
  */
-export function PaintWizard({ initialSpace, frame = inline }: { initialSpace?: SpaceKind; frame?: WizardFrame } = {}) {
+export function PaintWizard({
+  initialSpace,
+  frame = inline,
+  backRef,
+  onExterior,
+}: {
+  initialSpace?: SpaceKind;
+  frame?: WizardFrame;
+  /** Filled with "go back one question", for the phone's back button; null on the first question. */
+  backRef?: { current: (() => boolean) | null };
+  /** Exterior walls are worked out from their area; without this the tile says "Yakında". */
+  onExterior?: () => void;
+} = {}) {
   const [space_, setSpace] = useState<SpaceKind | null>(initialSpace ?? null);
   const [step, setStep] = useState<Step>('space');
   const [form, setForm] = useState<RoomForm>(EMPTY_ROOM_FORM);
@@ -97,8 +109,19 @@ export function PaintWizard({ initialSpace, frame = inline }: { initialSpace?: S
   const steps: { key: Step; label: string }[] = isHome ? HOME_STEPS : ROOM_STEPS;
   const index = steps.findIndex((s) => s.key === step);
 
-  const set = <K extends keyof RoomForm>(key: K, value: RoomForm[K]) => setForm((f) => ({ ...f, [key]: value }));
-  const patch = (p: Partial<RoomForm>) => setForm((f) => ({ ...f, ...p }));
+  // Editing a field clears its red message; the rest stay until the next "Devam".
+  const set = <K extends keyof RoomForm>(key: K, value: RoomForm[K]) => {
+    setForm((f) => ({ ...f, [key]: value }));
+    setErrors((e) => {
+      if (!(key in e)) return e;
+      const { [key]: _, ...rest } = e;
+      return rest;
+    });
+  };
+  const patch = (p: Partial<RoomForm>) => {
+    setForm((f) => ({ ...f, ...p }));
+    setErrors((e) => (Object.keys(p).some((key) => key in e) ? Object.fromEntries(Object.entries(e).filter(([key]) => !(key in p))) : e));
+  };
 
   const go = (next: Step, way: 1 | -1 = 1) => {
     setErrors({});
@@ -159,6 +182,17 @@ export function PaintWizard({ initialSpace, frame = inline }: { initialSpace?: S
     go(steps[index + 1].key);
   };
 
+  useEffect(() => {
+    if (!backRef) return;
+    backRef.current =
+      index > 0 || step === 'result'
+        ? () => {
+            back();
+            return true;
+          }
+        : null;
+  });
+
   const restart = () => {
     setSpace(null);
     setForm(EMPTY_ROOM_FORM);
@@ -169,15 +203,16 @@ export function PaintWizard({ initialSpace, frame = inline }: { initialSpace?: S
   };
 
   if (step === 'result') {
+    // No fade on the way in: the result shows at once, and its number and cans bring their own motion.
     return frame(
-      <FadeIn key="result" style={{ gap: space.lg }}>
+      <View key="result" style={{ gap: space.lg }}>
         <ScrollUpOn step={step} />
         {isHome && homeResult ? (
           <HomeResult result={homeResult} home={home} onEdit={back} onRestart={restart} />
         ) : roomResult && space_ ? (
           <RoomResult result={roomResult} space={space_} form={form} onEdit={back} onRestart={restart} />
         ) : null}
-      </FadeIn>,
+      </View>,
       null,
     );
   }
@@ -198,7 +233,7 @@ export function PaintWizard({ initialSpace, frame = inline }: { initialSpace?: S
         {step === 'space' && (
           <>
             <Question title={t('Hangi alanı boyayacaksın?')} hint={t('Seç, sana sadece gereken soruları soralım.')} />
-            <SpacePicker value={space_} onChange={setSpace} />
+            <SpacePicker value={space_} onChange={setSpace} onExterior={onExterior} />
           </>
         )}
 
@@ -299,7 +334,10 @@ export function PaintWizard({ initialSpace, frame = inline }: { initialSpace?: S
               label={t('Net kullanım alanı')}
               unit="m²"
               value={home.area}
-              onChangeText={(value) => setHome((h) => ({ ...h, area: value }))}
+              onChangeText={(value) => {
+                setHome((h) => ({ ...h, area: value }));
+                setHomeError(undefined);
+              }}
               error={homeError}
               testID="floor-area"
             />

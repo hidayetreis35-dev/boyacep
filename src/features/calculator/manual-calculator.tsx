@@ -18,7 +18,7 @@ import { canGroups, ResultHero } from './wizard-result';
 import { CoatsDial } from './wizard-steps';
 
 type RoomKind = 'living' | 'bedroom' | 'kids' | 'kitchen' | 'bathroom' | 'hall';
-type PaintKind = 'interior' | 'exterior';
+export type PaintKind = 'interior' | 'exterior';
 
 const ROOMS: { value: RoomKind; label: string; photo: PhotoName }[] = [
   { value: 'living', label: msg('Salon'), photo: 'livingRoom' },
@@ -133,11 +133,17 @@ function shopCost(e: AreaEstimate, paint: PaintKind): RangeEstimate | null {
   ]);
 }
 
-/** "Manuel Giriş": the user already knows the wall area. */
-export function ManualCalculator({ onMeasure }: { onMeasure: () => void }) {
+/**
+ * "Manuel Giriş": the user already knows the wall area. The paint kind can be
+ * held by the screen (`paint`, `onPaint`), so another part of it can pick
+ * exterior paint here.
+ */
+export function ManualCalculator({ onMeasure, paint: heldPaint, onPaint }: { onMeasure: () => void; paint?: PaintKind; onPaint?: (paint: PaintKind) => void }) {
   const [wall, setWall] = useState('');
   const [room, setRoom] = useState<RoomKind>('living');
-  const [paint, setPaint] = useState<PaintKind>('interior');
+  const [ownPaint, setOwnPaint] = useState<PaintKind>('interior');
+  const paint = heldPaint ?? ownPaint;
+  const setPaint = onPaint ?? setOwnPaint;
   const [ceiling, setCeiling] = useState(false);
   const [ceilingArea, setCeilingArea] = useState('');
   const [coats, setCoats] = useState(2);
@@ -204,6 +210,7 @@ export function ManualCalculator({ onMeasure }: { onMeasure: () => void }) {
             <ScrollView
               horizontal
               showsHorizontalScrollIndicator={false}
+              keyboardShouldPersistTaps="handled"
               contentContainerStyle={{ gap: space.sm, paddingVertical: 4, paddingRight: space.lg }}
               accessibilityRole="radiogroup"
               testID="manual-room">

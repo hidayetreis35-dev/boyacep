@@ -120,7 +120,7 @@ export function ResultHero({
       </View>
       <View style={{ flexDirection: 'row', alignItems: 'baseline', gap: space.sm }}>
         <Odometer
-          value={formatNumber(litres)}
+          value={litres}
           lineHeight={58}
           style={{ fontFamily: fonts.display, color: p.onHero, fontSize: 52, letterSpacing: -1, fontVariant: ['tabular-nums'] }}
           testID="total-litres"
@@ -264,7 +264,7 @@ export function RoomResult({
       <ResultHero
         overline={t('Sonuç · {space}', { space: t(SPACE_LABEL[kind]) })}
         litres={finish}
-        caption={t('{area} m² alana {count} kat', { area: formatNumber(totals.totalPaintable, 2), count: form.coats })}
+        caption={t('{area} m² alana {count} kat', { area: formatNumber(totals.totalPaintable, 1), count: form.coats })}
         buy={buyText(finishPaints)}
         estimate={estimate}
         cans={canGroups(finishPaints.flatMap((m) => (m.packages ? [{ category: m.category, plan: m.packages }] : [])))}

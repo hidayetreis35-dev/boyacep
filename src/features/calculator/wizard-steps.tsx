@@ -31,27 +31,44 @@ function Check({ on }: { on: boolean }) {
   );
 }
 
-function SpaceTile({ value, selected, onPress, index, wide }: { value: SpaceKind; selected: boolean; onPress: () => void; index: number; wide?: boolean }) {
+function SpaceTile({
+  value,
+  selected,
+  onPress,
+  index,
+  wide,
+  handoff,
+}: {
+  value: SpaceKind;
+  selected: boolean;
+  onPress: () => void;
+  index: number;
+  wide?: boolean;
+  /** For a space the questions don't cover yet, but "Manuel Giriş" does: the tile opens that instead. */
+  handoff?: () => void;
+}) {
   const p = usePalette();
   const s = SPACES.find((x) => x.value === value)!;
   const zoom = useAnimatedTo(selected ? 1.08 : 1, { duration: 520 });
-  const label = s.ready ? t(s.label) : `${t(s.label)}, ${t('Yakında')}`;
+  const enabled = s.ready || !!handoff;
+  const label = s.ready ? t(s.label) : handoff ? `${t(s.label)}, ${t('Metrekareyle hesapla')}` : `${t(s.label)}, ${t('Yakında')}`;
   return (
     <FadeIn delay={index * 45} style={wide ? styles.cellWide : styles.cell}>
       <PressableScale
         testID={`space-${s.value}`}
-        accessibilityRole="radio"
+        accessibilityRole={handoff && !s.ready ? 'button' : 'radio'}
         accessibilityLabel={label}
-        aria-checked={selected}
-        aria-disabled={!s.ready}
-        disabled={!s.ready}
+        aria-checked={s.ready ? selected : undefined}
+        aria-disabled={!enabled}
+        disabled={!enabled}
         onPress={() => {
           tick();
-          onPress();
+          if (!s.ready && handoff) handoff();
+          else onPress();
         }}
         style={[
           styles.tile,
-          { height: wide ? 108 : 136, borderColor: selected ? p.cta : p.surface, opacity: s.ready ? 1 : 0.6, backgroundColor: p.surfaceMuted },
+          { height: wide ? 108 : 136, borderColor: selected ? p.cta : p.surface, opacity: enabled ? 1 : 0.6, backgroundColor: p.surfaceMuted },
           shadowOf(p, selected ? 2 : 1),
         ]}>
         {s.photo ? (
@@ -64,14 +81,14 @@ function SpaceTile({ value, selected, onPress, index, wide }: { value: SpaceKind
           <View style={[styles.tileIcon, { backgroundColor: selected ? p.cta : 'rgba(255,255,255,0.92)' }]}>
             <Icon name={s.icon} size={16} color={selected ? p.onCta : NAVY} />
           </View>
-          {s.ready ? <Check on={selected} /> : <Badge label={t('Yakında')} tone="accent" />}
+          {s.ready ? <Check on={selected} /> : handoff ? <Badge label={t('Metrekareyle')} tone="primary" /> : <Badge label={t('Yakında')} tone="accent" />}
         </View>
         <View style={styles.tileText}>
           <AppText variant="heading" style={{ color: '#FFFFFF', fontSize: 18, lineHeight: 22 }} numberOfLines={1}>
             {t(s.label)}
           </AppText>
           <AppText variant="caption" style={{ color: 'rgba(255,255,255,0.86)' }} numberOfLines={2}>
-            {t(s.hint)}
+            {!s.ready && handoff ? t('Duvar alanını yazarak hesapla') : t(s.hint)}
           </AppText>
         </View>
       </PressableScale>
@@ -80,12 +97,19 @@ function SpaceTile({ value, selected, onPress, index, wide }: { value: SpaceKind
 }
 
 /** "Hangi alanı boyayacaksın?": photo tiles, the whole home as a wide tile at the end. */
-export function SpacePicker({ value, onChange }: { value: SpaceKind | null; onChange: (v: SpaceKind) => void }) {
+export function SpacePicker({ value, onChange, onExterior }: { value: SpaceKind | null; onChange: (v: SpaceKind) => void; onExterior?: () => void }) {
   const rooms = SPACES.filter((s) => s.value !== 'home');
   return (
     <View style={styles.grid} accessibilityRole="radiogroup">
       {rooms.map((s, i) => (
-        <SpaceTile key={s.value} value={s.value} index={i} selected={value === s.value} onPress={() => onChange(s.value)} />
+        <SpaceTile
+          key={s.value}
+          value={s.value}
+          index={i}
+          selected={value === s.value}
+          onPress={() => onChange(s.value)}
+          handoff={s.value === 'exterior' ? onExterior : undefined}
+        />
       ))}
       <SpaceTile value="home" wide index={rooms.length} selected={value === 'home'} onPress={() => onChange('home')} />
     </View>
@@ -122,7 +146,12 @@ function ChipRow({ title, icon, children }: { title: string; icon: IconName; chi
           {title}
         </AppText>
       </View>
-      <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={{ gap: space.sm, paddingRight: space.lg }} accessibilityRole="radiogroup">
+      <ScrollView
+        horizontal
+        showsHorizontalScrollIndicator={false}
+        keyboardShouldPersistTaps="handled"
+        contentContainerStyle={{ gap: space.sm, paddingRight: space.lg }}
+        accessibilityRole="radiogroup">
         {children}
       </ScrollView>
     </View>
@@ -472,7 +501,7 @@ export function HomeLiveCard({ litres, wallArea, estimate }: { litres: number | 
         {estimate && litres !== null ? <Badge label={t('Tahmini')} tone="accent" /> : null}
       </View>
       <View style={{ flexDirection: 'row', alignItems: 'flex-end', gap: space.lg }} accessibilityLiveRegion="polite">
-        <View style={{ gap: 2 }}>
+        <View style={{ gap: 2, flex: 1 }}>
           <AppText variant="caption" style={{ color: 'rgba(255,255,255,0.8)' }}>
             {t('Gereken boya')}
           </AppText>
@@ -482,7 +511,7 @@ export function HomeLiveCard({ litres, wallArea, estimate }: { litres: number | 
             </AppText>
           </FadeIn>
         </View>
-        <View style={{ gap: 2, paddingBottom: 6 }}>
+        <View style={{ gap: 2, flex: 1, paddingBottom: 6 }}>
           <AppText variant="caption" style={{ color: 'rgba(255,255,255,0.8)' }}>
             {t('Duvar alanı')}
           </AppText>

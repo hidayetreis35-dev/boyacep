@@ -158,5 +158,19 @@ describe('PaintWizard, whole home', () => {
     await fireEvent.changeText(screen.getByTestId('floor-area'), '3');
     await next();
     expect(screen.getByText('Net alan 10 ile 1000 m² arasında olmalı.')).toBeTruthy();
+    // Fixing the number takes the warning away before the next "Devam".
+    await fireEvent.changeText(screen.getByTestId('floor-area'), '110');
+    expect(screen.queryByText('Net alan 10 ile 1000 m² arasında olmalı.')).toBeNull();
+  });
+
+  it('clears a measurement warning once that field is filled in', async () => {
+    await renderWizard();
+    await fireEvent.press(screen.getByTestId('space-room'));
+    await next();
+    await next();
+    expect(screen.getByText('Oda uzunluğu 0 ile 50 m arasında olmalı.')).toBeTruthy();
+    await fireEvent.press(screen.getByLabelText('3,5 m en, 4 m boy'));
+    expect(screen.queryByText('Oda uzunluğu 0 ile 50 m arasında olmalı.')).toBeNull();
+    expect(screen.queryByText('Kırmızı alanlara bir göz atalım, sonra devam edelim.')).toBeNull();
   });
 });
