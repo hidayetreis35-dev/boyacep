@@ -135,7 +135,7 @@ export function ProvincePicker({ onPick, scope = 'labour' }: { onPick: (code: Pr
   return (
     <View style={{ gap: space.sm }}>
       <TextField label={t('İl ara')} value={query} onChangeText={setQuery} placeholder={t('Örnek: Manisa')} testID="province-search" />
-      {list.length === 0 ? <AppText tone="muted">{t('Bu adla bir il bulunamadı.')}</AppText> : null}
+      {list.length === 0 ? <AppText tone="muted">{t('Bu adla bir il bulamadık.')}</AppText> : null}
       <View style={{ gap: 2 }}>
         {list.map((province) => {
           const data = hasProvinceData(province.code, 'labour') || hasProvinceData(province.code, 'materials');

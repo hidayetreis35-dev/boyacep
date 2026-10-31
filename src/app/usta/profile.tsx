@@ -31,7 +31,7 @@ function SpecialtyPicker({ value, onChange, error }: { value: ProForm['specialti
             <Pressable
               key={s.value}
               accessibilityRole="checkbox"
-              accessibilityState={{ checked: selected }}
+              aria-checked={selected}
               onPress={() => onChange(selected ? value.filter((v) => v !== s.value) : [...value, s.value])}
               style={{
                 minHeight: 40,
@@ -135,7 +135,7 @@ export default function ProProfileScreen() {
   const profile = useMyProProfile();
   if (profile.isPending) return <Screen edges={['bottom']}><LoadingState /></Screen>;
   if (profile.isError) {
-    return <Screen edges={['bottom']}><ErrorState message={t('Profil yüklenemedi.')} onRetry={() => profile.refetch()} /></Screen>;
+    return <Screen edges={['bottom']}><ErrorState message={t('Profilini yükleyemedik.')} onRetry={() => profile.refetch()} /></Screen>;
   }
   return (
     <Screen edges={['bottom']}>

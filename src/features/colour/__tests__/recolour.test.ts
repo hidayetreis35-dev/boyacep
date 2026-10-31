@@ -10,6 +10,7 @@ import {
   polygonMask,
   recolourPixel,
   rgbToLab,
+  sampleColour,
   selectRegion,
   toLabImage,
   workingSize,
@@ -237,5 +238,36 @@ describe('lighting', () => {
   it('scales the working copy down to the mask size', () => {
     expect(workingSize(4032, 3024)).toEqual({ width: 480, height: 360 });
     expect(workingSize(200, 100)).toEqual({ width: 200, height: 100 });
+  });
+});
+
+describe('picking a colour from the photo', () => {
+  function plain(rgb: [number, number, number]) {
+    const px = new Uint8Array(20 * 20 * 4);
+    for (let i = 0; i < 400; i++) px.set([...rgb, 255], i * 4);
+    return toLabImage(px, 20, 20);
+  }
+
+  it('reads the colour under the tap, also at the edge of the photo', () => {
+    const want = rgbToLab(200, 180, 150);
+    for (const point of [[0.5, 0.5], [0, 0], [1, 1]] as [number, number][]) {
+      expect(deltaE(sampleColour(plain([200, 180, 150]), point), want)).toBeLessThan(0.01);
+    }
+  });
+
+  it('averages a small patch so a single dark pixel barely matters', () => {
+    const img = room();
+    const nail = sampleColour(img, [20 / 99, 20 / 79]);
+    const wall = sampleColour(img, [24 / 99, 20 / 79]);
+    expect(deltaE(nail, wall)).toBeLessThan(3);
+  });
+
+  it('undoes a dim photo the way the preview dims paint', () => {
+    const img = plain([170, 160, 140]);
+    const raw = sampleColour(img, [0.5, 0.5]);
+    const lifted = sampleColour(img, [0.5, 0.5], 80);
+    expect(lifted[0]).toBeGreaterThan(raw[0]);
+    const back = paintInPhoto(lifted, 80);
+    expect(deltaE(back, raw)).toBeLessThan(0.01);
   });
 });

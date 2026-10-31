@@ -91,7 +91,7 @@ export default function SignInScreen() {
     } catch (e) {
       if (e instanceof TooSoonError) startWait(e.seconds);
       onError?.(e);
-      setError(e instanceof Error ? e.message : t('Bir sorun oluştu.'));
+      setError(e instanceof Error ? e.message : t('Bir şeyler ters gitti.'));
     } finally {
       setBusy(false);
     }

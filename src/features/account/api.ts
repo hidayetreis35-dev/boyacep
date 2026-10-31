@@ -29,11 +29,11 @@ export function authErrorMessage(message: string): string {
   if (wait !== null) return t('Güvenlik için yeni e-postayı {seconds} saniye sonra isteyebilirsin.', { seconds: wait });
   // Project-wide hourly limit of the mail sender, not this user's fault.
   if (m.includes('email rate limit')) return t('Şu an çok fazla giriş e-postası gönderildi. Biraz sonra tekrar dene; daha önce gelen e-postayı da kullanabilirsin.');
-  if (m.includes('rate') || m.includes('too many')) return t('Çok fazla deneme yapıldı. Birkaç dakika sonra tekrar deneyin.');
+  if (m.includes('rate') || m.includes('too many')) return t('Çok fazla deneme oldu. Birkaç dakika sonra tekrar dener misin?');
   if (m.includes('email address') || m.includes('invalid format')) return t('Geçerli bir e-posta adresi yazın.');
-  if (m.includes('expired') || m.includes('invalid')) return t('Kod hatalı veya süresi dolmuş. Yeni kod isteyin.');
+  if (m.includes('expired') || m.includes('invalid')) return t('Bu kod çalışmadı ya da süresi geçti. Yeni bir kod ister misin?');
   if (m.includes('network') || m.includes('fetch')) return t('İnternet bağlantısı yok gibi görünüyor.');
-  return t('Bir sorun oluştu. Lütfen tekrar deneyin.');
+  return t('Bir şeyler ters gitti. Bir daha dener misin?');
 }
 
 /** A sign-in email that was refused because one was sent moments ago. */

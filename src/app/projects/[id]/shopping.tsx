@@ -86,7 +86,7 @@ export default function ShoppingScreen() {
                 <Pressable
                   key={item.id}
                   accessibilityRole="checkbox"
-                  accessibilityState={{ checked }}
+                  aria-checked={checked}
                   accessibilityLabel={`${t(item.name)}, ${quantityText(Number(item.quantity), item.unit)}`}
                   onPress={() => toggle(item.id)}
                   style={[styles.row, { borderColor: p.border }]}>

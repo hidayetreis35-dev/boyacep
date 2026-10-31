@@ -26,7 +26,7 @@ export function rowPatch(
   if (!Number.isFinite(quantity) || quantity > 100000) return { ok: false, error: t('Miktarı sayı olarak yazın.') };
   const price = form.price.trim() === '' ? null : parseDecimal(form.price);
   if (price !== null && !Number.isFinite(price)) return { ok: false, error: t('Fiyatı sayı olarak yazın.') };
-  if (form.source === 'store' && price === null) return { ok: false, error: t('Mağaza fiyatı için tutar girin.') };
+  if (form.source === 'store' && price === null) return { ok: false, error: t('Mağaza fiyatı için tutarı yazar mısın?') };
   return {
     ok: true,
     patch: {

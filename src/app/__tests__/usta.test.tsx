@@ -132,6 +132,25 @@ describe('Usta tab', () => {
   });
 });
 
+describe('Home for painters', () => {
+  it('starts painters with what is waiting in Usta Paneli', async () => {
+    asRoles(['pro', 'homeowner']);
+    sharing.listSharedProjects.mockResolvedValue([{ id: 's1' }, { id: 's2' }] as never);
+    quotes.listMyQuotes.mockResolvedValue([quote({ status: 'sent' }), quote({ id: 'q2', status: 'draft' })]);
+    await renderRouter('./src/app', { initialUrl: '/' });
+    expect(await screen.findByText('2 paylaşılan proje · 1 teklif yanıt bekliyor')).toBeTruthy();
+    await fireEvent.press(screen.getByText('Usta Paneli’ni aç'));
+    expect(screen).toHavePathname('/usta');
+  });
+
+  it('shows homeowners no painter card', async () => {
+    asRoles(['homeowner', 'pro']);
+    await renderRouter('./src/app', { initialUrl: '/' });
+    expect(await screen.findByText('Merhaba Mehmet')).toBeTruthy();
+    expect(screen.queryByText('Usta Paneli’ni aç')).toBeNull();
+  });
+});
+
 describe('Quote screen', () => {
   it('validates and saves a draft, then marks it sent', async () => {
     asRoles(['pro']);

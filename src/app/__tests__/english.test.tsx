@@ -39,7 +39,7 @@ beforeEach(async () => {
 
 describe('the app in English', () => {
   it.each([
-    ['/', 'What would you like to do for your home today?'],
+    ['/', 'Good ideas for your home start here.'],
     ['/calculate', 'Wall area'],
     ['/colour', 'Colour catalogue'],
     ['/inspect', 'Continue without a photo'],

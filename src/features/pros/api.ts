@@ -18,7 +18,7 @@ export async function saveProProfile(db: DbClient, userId: string, record: ProRe
     .single();
   if (error) {
     if (error.message.includes('row-level security')) throw new Error(t('Usta profili için önce Profil sekmesinden usta rolünü aç.'));
-    throw new Error(t('Profil kaydedilemedi. İnternet bağlantını kontrol et.'));
+    throw new Error(t('Profilini kaydedemedik. İnternet bağlantını kontrol eder misin?'));
   }
   return data;
 }
@@ -38,5 +38,5 @@ export async function listProProfiles(db: DbClient): Promise<ProProfileRow[]> {
 
 export async function setVerification(db: DbClient, userId: string, status: VerificationStatus): Promise<void> {
   const { error } = await db.from('pro_profiles').update({ verification_status: status }).eq('user_id', userId);
-  if (error) throw new Error(t('Kaydedilemedi.'));
+  if (error) throw new Error(t('Kaydedemedik. Bir daha dener misin?'));
 }

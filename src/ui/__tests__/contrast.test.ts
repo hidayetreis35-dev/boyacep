@@ -1,4 +1,6 @@
+import { METER_ON_TRACK, METER_OVER } from '@/features/budget/charts';
 import { luminance } from '@/features/colour/palette';
+import { VERDICT_SHADES } from '@/features/inspect/inspect-result';
 import { featurePalettes, palettes, type FeatureKey } from '@/ui/theme';
 
 /** WCAG contrast ratio between two colours. */
@@ -24,6 +26,14 @@ const PAIRS: [keyof (typeof palettes)['light'], keyof (typeof palettes)['light']
   ['success', 'successSoft'],
   ['onCta', 'cta'],
   ['teal', 'tealSoft'],
+  ['sage', 'sageSoft'],
+  ['sageInk', 'sageSoft'],
+  ['sage', 'surface'],
+  ['rose', 'roseSoft'],
+  ['roseInk', 'roseSoft'],
+  ['rose', 'surface'],
+  ['accent', 'background'],
+  ['warning', 'warningSoft'],
   ['onHero', 'heroFrom'],
   ['onHero', 'heroTo'],
   ['onHeroMuted', 'heroFrom'],
@@ -43,5 +53,20 @@ describe.each(['light', 'dark'] as const)('%s feature colour contrast', (scheme)
   it.each(FEATURES)('%s ink on its soft tint meets WCAG AA', (key) => {
     const { ink, soft } = featurePalettes[scheme][key];
     expect(contrast(ink, soft)).toBeGreaterThanOrEqual(4.5);
+  });
+});
+
+describe('verdict banner shades', () => {
+  it.each(Object.entries(VERDICT_SHADES))('white text on %s meets WCAG AA', (_, shade) => {
+    expect(contrast('#FFFFFF', shade)).toBeGreaterThanOrEqual(4.5);
+  });
+});
+
+describe('budget meter on the navy panel', () => {
+  // A meter is a graphic, so it needs 3:1 against what it sits on (WCAG 1.4.11).
+  it.each(['light', 'dark'] as const)('%s mode', (mode) => {
+    for (const fill of [METER_ON_TRACK, METER_OVER]) {
+      for (const bg of [palettes[mode].heroFrom, palettes[mode].heroTo]) expect(contrast(fill, bg)).toBeGreaterThanOrEqual(3);
+    }
   });
 });

@@ -74,7 +74,7 @@ export function validateProForm(form: ProForm): { record: ProRecord } | { errors
   const years = form.yearsExperience.trim();
 
   if (fullName.length < 2 || fullName.length > 80) errors.fullName = t('Adını ve soyadını yaz.');
-  if (phone && !/^\+?[0-9 ()-]{7,20}$/.test(phone)) errors.phone = t('Telefon numarası geçersiz. Örnek: 0555 123 45 67');
+  if (phone && !/^\+?[0-9 ()-]{7,20}$/.test(phone)) errors.phone = t('Bu numara eksik ya da hatalı görünüyor. Örnek: 0555 123 45 67');
   if (!phone && form.showPhone) errors.phone = t('Telefonunu göstermek için numaranı yaz.');
   if (city.length < 2 || city.length > 60) errors.city = t('Çalıştığın ili yaz.');
   if (form.specialties.length === 0) errors.specialties = t('En az bir uzmanlık seç.');

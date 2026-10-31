@@ -1,8 +1,10 @@
 import { router } from 'expo-router';
 import { useState } from 'react';
-import { StyleSheet, View } from 'react-native';
+import { Image, StyleSheet, View } from 'react-native';
 
 import { useSession } from '@/features/account/session';
+import { useProjectColours } from '@/features/colour/project-colours';
+import { useProjectPhotos } from '@/features/photos/queries';
 import { SignInGate } from '@/features/account/sign-in-gate';
 import { useMyPlan } from '@/features/plans/queries';
 import { FREE_PROJECT_LIMIT } from '@/features/projects/limits';
@@ -28,6 +30,7 @@ import {
 } from '@/ui/components';
 import { IconBubble, Segmented } from '@/ui/brand';
 import { PressableScale } from '@/ui/motion';
+import { Photo } from '@/ui/photos';
 import { fonts, radius, shadowOf, space, useFeatureColour, usePalette } from '@/ui/theme';
 
 type Filter = 'all' | 'active' | 'done';
@@ -72,6 +75,26 @@ function CardProgress({ project }: { project: ProjectRow }) {
   return <LiveProgress project={project} rooms={detail.data.rooms.length} />;
 }
 
+/** The project's own newest photo, else its saved colours as paint chips, else an icon. Never a stock photo. */
+function ProjectCover({ project }: { project: ProjectRow }) {
+  const p = usePalette();
+  const photos = useProjectPhotos(project.id);
+  const colours = useProjectColours(project.id);
+  const url = photos.data?.find((photo) => photo.url)?.url;
+  if (url) return <Image source={{ uri: url }} style={[styles.cover, { backgroundColor: p.surfaceMuted }]} accessible={false} testID="project-cover-photo" />;
+  const hexes = (colours.data ?? []).slice(0, 3).map((c) => c.hex);
+  if (hexes.length > 0) {
+    return (
+      <View style={[styles.cover, styles.chips, { borderColor: p.border }]} testID="project-cover-colours">
+        {hexes.map((hex, i) => (
+          <View key={`${hex}-${i}`} style={{ flex: 1, backgroundColor: hex }} />
+        ))}
+      </View>
+    );
+  }
+  return <IconBubble icon={project.status === 'completed' ? 'checkmark-done' : 'home'} feature="projects" size={56} />;
+}
+
 function ProjectCard({ project }: { project: ProjectRow }) {
   const p = usePalette();
   const done = project.status === 'completed';
@@ -82,9 +105,9 @@ function ProjectCard({ project }: { project: ProjectRow }) {
       onPress={() => router.push({ pathname: '/projects/[id]', params: { id: project.id } })}
       style={[styles.card, { backgroundColor: p.surface, borderColor: p.border }, shadowOf(p)]}>
       <View style={{ flexDirection: 'row', alignItems: 'center', gap: space.md }}>
-        <IconBubble icon={done ? 'checkmark-done' : 'home'} feature="projects" />
+        <ProjectCover project={project} />
         <View style={{ flex: 1, gap: 2 }}>
-          <AppText variant="bodyStrong" numberOfLines={1}>
+          <AppText variant="cardTitle" numberOfLines={1}>
             {project.title}
           </AppText>
           <AppText variant="caption" tone="muted">
@@ -100,6 +123,23 @@ function ProjectCard({ project }: { project: ProjectRow }) {
         <Badge label={t(STATUS_LABEL[project.status])} tone={done ? 'success' : 'primary'} />
       </View>
     </PressableScale>
+  );
+}
+
+/** What a saved project looks like, for guests. Shown only inside an "Örnek" preview. */
+function SampleProject() {
+  const p = usePalette();
+  return (
+    <View style={[styles.sample, { backgroundColor: p.surface, borderColor: p.border }]}>
+      <Photo name="colourRoom" style={styles.samplePhoto} />
+      <View style={{ flex: 1, gap: space.sm, padding: space.md }}>
+        <AppText variant="cardTitle">{t('Salon, 18 m²')}</AppText>
+        <ProgressBar share={0.6} label="%60" />
+        <AppText variant="caption" tone="muted">
+          {t('Astar bitti · 2 kat boya kaldı')}
+        </AppText>
+      </View>
+    </View>
   );
 }
 
@@ -155,7 +195,7 @@ function NewProject({ count }: { count: number }) {
       />
       {create.isError ? (
         <Notice tone="danger" icon="alert-circle">
-          {t('Proje oluşturulamadı: {message}', { message: create.error.message })}
+          {t('Projeyi oluşturamadık: {message}', { message: create.error.message })}
         </Notice>
       ) : null}
       <View style={{ flexDirection: 'row', gap: space.sm }}>
@@ -174,7 +214,7 @@ function ProjectList() {
   const projects = useProjects();
   const [filter, setFilter] = useState<Filter>('all');
   if (projects.isPending) return <LoadingState label={t('Projeler yükleniyor…')} />;
-  if (projects.isError) return <ErrorState message={t('Projeler yüklenemedi. İnternet bağlantını kontrol et.')} onRetry={() => projects.refetch()} />;
+  if (projects.isError) return <ErrorState message={t('Projelerini yükleyemedik. İnternet bağlantını kontrol eder misin?')} onRetry={() => projects.refetch()} />;
 
   return (
     <View style={{ gap: space.md }}>
@@ -221,6 +261,7 @@ export default function ProjectsScreen() {
             icon="albums"
             title={t('Projelerini kaydet')}
             message={t('Evinin boya işini tek yerde topla.')}
+            preview={{ caption: t('Projelerin burada böyle görünecek.'), content: <SampleProject /> }}
             benefits={[
               t('Odalarını ve ölçülerini bir kez gir, hesap hep hazır olsun.'),
               t('Seçtiğin renkleri, fotoğrafları ve bütçeni sakla.'),
@@ -241,7 +282,11 @@ export default function ProjectsScreen() {
 }
 
 const styles = StyleSheet.create({
+  cover: { width: 56, height: 56, borderRadius: 14 },
+  chips: { flexDirection: 'row', overflow: 'hidden', borderWidth: StyleSheet.hairlineWidth },
   card: { gap: space.md, padding: space.lg, borderRadius: radius.lg, borderWidth: StyleSheet.hairlineWidth },
   track: { flex: 1, height: 8, borderRadius: radius.pill, overflow: 'hidden' },
   fill: { height: '100%', borderRadius: radius.pill },
+  sample: { flexDirection: 'row', borderRadius: radius.lg, borderWidth: StyleSheet.hairlineWidth, overflow: 'hidden' },
+  samplePhoto: { width: 104, minHeight: 104 },
 });

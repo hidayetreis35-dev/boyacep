@@ -40,7 +40,7 @@ describe('validateGuideForm', () => {
     expect(result).toEqual({
       errors: {
         slug: expect.any(String),
-        title: 'Başlık gerekli.',
+        title: 'Yazıya bir başlık ver.',
         body: 'Boş bir yazı yayınlanamaz.',
         readingMinutes: '1 ile 60 arasında bir sayı gir.',
       },

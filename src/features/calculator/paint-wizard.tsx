@@ -1,26 +1,26 @@
-import { useState } from 'react';
+import { useEffect, useRef, useState, type ReactNode } from 'react';
 import { View } from 'react-native';
 
 import { calculateProject, HOUSE_TYPES, quickEstimate, type HouseType, type ProjectCalculation, type QuickEstimate } from '@/engine';
 import { msg, t } from '@/i18n';
 import { parseDecimal } from '@/lib/number';
 import { Disclosure, OptionCard, OptionGrid, StepProgress, WizardNav } from '@/ui/brand';
-import { AppText, ChoiceChips, FieldRow, Notice, NumberField, Stepper, useScrollToTop } from '@/ui/components';
-import { FadeIn } from '@/ui/motion';
+import { AppText, ChoiceChips, FieldRow, Notice, NumberField, useScrollToTop } from '@/ui/components';
+import { SlideIn } from '@/ui/motion';
 import { space } from '@/ui/theme';
 
 import { EMPTY_ROOM_FORM, toRoomInput, type FormErrors, type RoomForm } from './form';
 import { PAINT_REASONS, type PaintReason } from './move';
+import { RoomSceneCard } from './room-scene';
 import { HomeResult, RoomResult } from './wizard-result';
+import { CoatsDial, HeightPresets, HomeLiveCard, OpeningCounter, SizePresets, SpacePicker, SurfacePicker, WallStatePicker } from './wizard-steps';
 import {
   applySurfaces,
   applyWallState,
   ROOM_STEPS,
-  SPACES,
   stepErrors,
   surfacesOf,
   wallStateOf,
-  WALL_STATES,
   type RoomStep,
   type SpaceKind,
 } from './wizard';
@@ -47,31 +47,54 @@ function Question({ title, hint }: { title: string; hint?: string }) {
   );
 }
 
-function SurfacePicker({ value, onChange }: { value: 'walls' | 'ceiling' | 'both'; onChange: (v: 'walls' | 'ceiling' | 'both') => void }) {
-  return (
-    <OptionGrid columns={1}>
-      <OptionCard title={t('Duvarlar ve tavan')} subtitle={t('En sık yapılan seçim')} icon="cube" selected={value === 'both'} onPress={() => onChange('both')} />
-      <OptionCard title={t('Sadece duvarlar')} icon="square" selected={value === 'walls'} onPress={() => onChange('walls')} />
-      <OptionCard title={t('Sadece tavan')} icon="arrow-up-circle" selected={value === 'ceiling'} onPress={() => onChange('ceiling')} />
-    </OptionGrid>
-  );
-}
-
-function CoatsPicker({ value, onChange }: { value: number; onChange: (v: number) => void }) {
-  return (
-    <OptionGrid>
-      <OptionCard title={t('1 kat')} subtitle={t('Aynı rengi tazelemek')} icon="remove" selected={value === 1} onPress={() => onChange(1)} />
-      <OptionCard title={t('2 kat')} subtitle={t('Önerilen, çoğu iş için')} icon="layers" selected={value === 2} onPress={() => onChange(2)} />
-      <OptionCard title={t('3 kat')} subtitle={t('Koyu renk ya da renk değişimi')} icon="layers" selected={value === 3} onPress={() => onChange(3)} />
-      <OptionCard title={t('4 kat')} subtitle={t('Çok koyu renkten açığa')} icon="layers" selected={value === 4} onPress={() => onChange(4)} />
-    </OptionGrid>
-  );
-}
-
-/** "Ne Kadar Boya?": one question per screen, then a result screen. The maths is the unchanged engine. */
-export function PaintWizard() {
+/** Scrolls the page back up when a new question comes in. Rendered inside the page, where the scroll lives. */
+function ScrollUpOn({ step }: { step: string }) {
   const scrollToTop = useScrollToTop();
-  const [space_, setSpace] = useState<SpaceKind | null>(null);
+  const first = useRef(true);
+  useEffect(() => {
+    if (first.current) {
+      first.current = false;
+      return;
+    }
+    scrollToTop();
+  }, [step, scrollToTop]);
+  return null;
+}
+
+function homeTotals(home: HomeForm): { litres: number | null; wallArea: number | null } {
+  const r = quickEstimate({ houseType: home.houseType, floorArea: parseDecimal(home.area), includeCeilings: home.ceilings, coats: home.coats });
+  return r.ok ? { litres: r.value.totalLitres, wallArea: r.value.wallArea } : { litres: null, wallArea: null };
+}
+
+/** Puts the step and its buttons on the page; a screen can pin the buttons under its scrolling content instead. */
+export type WizardFrame = (body: ReactNode, footer: ReactNode | null) => ReactNode;
+
+const inline: WizardFrame = (body, footer) => (
+  <View style={{ gap: space.xl }}>
+    {body}
+    {footer}
+  </View>
+);
+
+/**
+ * "Ne Kadar Boya?": one question per screen, then a result screen. For a
+ * room, a live drawing above the questions shows what the answers mean. The
+ * maths is the unchanged engine.
+ */
+export function PaintWizard({
+  initialSpace,
+  frame = inline,
+  backRef,
+  onExterior,
+}: {
+  initialSpace?: SpaceKind;
+  frame?: WizardFrame;
+  /** Filled with "go back one question", for the phone's back button; null on the first question. */
+  backRef?: { current: (() => boolean) | null };
+  /** Exterior walls are worked out from their area; without this the tile says "Yakında". */
+  onExterior?: () => void;
+} = {}) {
+  const [space_, setSpace] = useState<SpaceKind | null>(initialSpace ?? null);
   const [step, setStep] = useState<Step>('space');
   const [form, setForm] = useState<RoomForm>(EMPTY_ROOM_FORM);
   const [home, setHome] = useState<HomeForm>(EMPTY_HOME);
@@ -79,23 +102,36 @@ export function PaintWizard() {
   const [homeError, setHomeError] = useState<string | undefined>();
   const [roomResult, setRoomResult] = useState<ProjectCalculation | null>(null);
   const [homeResult, setHomeResult] = useState<QuickEstimate | null>(null);
+  // Which way the last move went, so the next question slides in from that side.
+  const [direction, setDirection] = useState<1 | -1>(1);
 
   const isHome = space_ === 'home';
   const steps: { key: Step; label: string }[] = isHome ? HOME_STEPS : ROOM_STEPS;
   const index = steps.findIndex((s) => s.key === step);
 
-  const set = <K extends keyof RoomForm>(key: K, value: RoomForm[K]) => setForm((f) => ({ ...f, [key]: value }));
-  const patch = (p: Partial<RoomForm>) => setForm((f) => ({ ...f, ...p }));
+  // Editing a field clears its red message; the rest stay until the next "Devam".
+  const set = <K extends keyof RoomForm>(key: K, value: RoomForm[K]) => {
+    setForm((f) => ({ ...f, [key]: value }));
+    setErrors((e) => {
+      if (!(key in e)) return e;
+      const { [key]: _, ...rest } = e;
+      return rest;
+    });
+  };
+  const patch = (p: Partial<RoomForm>) => {
+    setForm((f) => ({ ...f, ...p }));
+    setErrors((e) => (Object.keys(p).some((key) => key in e) ? Object.fromEntries(Object.entries(e).filter(([key]) => !(key in p))) : e));
+  };
 
-  const go = (next: Step) => {
+  const go = (next: Step, way: 1 | -1 = 1) => {
     setErrors({});
+    setDirection(way);
     setStep(next);
-    scrollToTop();
   };
 
   const back = () => {
-    if (step === 'result') return go(steps[steps.length - 1].key);
-    if (index > 0) go(steps[index - 1].key);
+    if (step === 'result') return go(steps[steps.length - 1].key, -1);
+    if (index > 0) go(steps[index - 1].key, -1);
   };
 
   const next = () => {
@@ -116,7 +152,7 @@ export function PaintWizard() {
         const r = quickEstimate({ houseType: home.houseType, floorArea: parseDecimal(home.area), includeCeilings: home.ceilings, coats: home.coats });
         if (!r.ok) {
           setHomeError(r.issues[0] ? t(r.issues[0].message) : undefined);
-          return go('home');
+          return go('home', -1);
         }
         setHomeResult(r.value);
         return go('result');
@@ -146,6 +182,17 @@ export function PaintWizard() {
     go(steps[index + 1].key);
   };
 
+  useEffect(() => {
+    if (!backRef) return;
+    backRef.current =
+      index > 0 || step === 'result'
+        ? () => {
+            back();
+            return true;
+          }
+        : null;
+  });
+
   const restart = () => {
     setSpace(null);
     setForm(EMPTY_ROOM_FORM);
@@ -156,43 +203,37 @@ export function PaintWizard() {
   };
 
   if (step === 'result') {
-    return (
-      <FadeIn key="result" style={{ gap: space.lg }}>
+    // No fade on the way in: the result shows at once, and its number and cans bring their own motion.
+    return frame(
+      <View key="result" style={{ gap: space.lg }}>
+        <ScrollUpOn step={step} />
         {isHome && homeResult ? (
           <HomeResult result={homeResult} home={home} onEdit={back} onRestart={restart} />
         ) : roomResult && space_ ? (
           <RoomResult result={roomResult} space={space_} form={form} onEdit={back} onRestart={restart} />
         ) : null}
-      </FadeIn>
+      </View>,
+      null,
     );
   }
 
   const label = t(steps[index]?.label ?? '');
   const hasErrors = Object.keys(errors).length > 0;
 
-  return (
-    <View style={{ gap: space.xl }}>
+  const roomStage = !isHome && step !== 'space' ? (step as Exclude<RoomStep, 'space'>) : null;
+  const homeLive = isHome && step !== 'space' ? homeTotals(home) : null;
+
+  const body = (
+    <View style={{ gap: space.lg }}>
+      <ScrollUpOn step={step} />
       <StepProgress step={index + 1} total={steps.length} label={label} />
-      <FadeIn key={step} style={{ gap: space.lg }}>
+      {roomStage ? <RoomSceneCard form={form} stage={roomStage} /> : null}
+      {homeLive ? <HomeLiveCard litres={homeLive.litres} wallArea={homeLive.wallArea} estimate /> : null}
+      <SlideIn key={step} direction={direction} style={{ gap: space.lg }}>
         {step === 'space' && (
           <>
             <Question title={t('Hangi alanı boyayacaksın?')} hint={t('Seç, sana sadece gereken soruları soralım.')} />
-            <OptionGrid>
-              {SPACES.map((s) => (
-                <OptionCard
-                  key={s.value}
-                  testID={`space-${s.value}`}
-                  title={t(s.label)}
-                  subtitle={t(s.hint)}
-                  icon={s.icon}
-                  photo={s.photo}
-                  badge={s.ready ? undefined : t('Yakında')}
-                  disabled={!s.ready}
-                  selected={space_ === s.value}
-                  onPress={() => setSpace(s.value)}
-                />
-              ))}
-            </OptionGrid>
+            <SpacePicker value={space_} onChange={setSpace} onExterior={onExterior} />
           </>
         )}
 
@@ -203,6 +244,7 @@ export function PaintWizard() {
               <NumberField label={t('En')} unit="m" value={form.width} onChangeText={(value) => set('width', value)} error={errors.width} testID="width" />
               <NumberField label={t('Boy')} unit="m" value={form.length} onChangeText={(value) => set('length', value)} error={errors.length} testID="length" />
             </FieldRow>
+            <SizePresets form={form} onSize={patch} />
             <NumberField
               label={t('Tavan yüksekliği')}
               unit="m"
@@ -212,12 +254,13 @@ export function PaintWizard() {
               hint={t('Çoğu evde 2,5 ile 2,8 m arasıdır.')}
               testID="height"
             />
+            <HeightPresets form={form} onHeight={(value) => set('height', value)} />
           </>
         )}
 
         {step === 'surfaces' && (
           <>
-            <Question title={t('Neresi boyanacak?')} />
+            <Question title={t('Neresi boyanacak?')} hint={t('Seçtiğin yüzeyler çizimde yeşile boyanır.')} />
             <SurfacePicker value={surfacesOf(form)} onChange={(s) => patch(applySurfaces(s))} />
           </>
         )}
@@ -225,9 +268,9 @@ export function PaintWizard() {
         {step === 'openings' && (
           <>
             <Question title={t('Kapı ve pencereler')} hint={t('Bu alanlar boyanmaz, hesaptan düşeriz. Standart ölçüleri hazır girdik.')} />
-            <View style={{ gap: space.md }}>
-              <Stepper label={t('Kapı')} value={form.doorCount} min={0} max={10} onChange={(v) => set('doorCount', v)} />
-              <Stepper label={t('Pencere')} value={form.windowCount} min={0} max={20} onChange={(v) => set('windowCount', v)} />
+            <View style={{ flexDirection: 'row', gap: space.sm }}>
+              <OpeningCounter kind="door" label={t('Kapı')} value={form.doorCount} max={10} onChange={(v) => set('doorCount', v)} />
+              <OpeningCounter kind="window" label={t('Pencere')} value={form.windowCount} max={20} onChange={(v) => set('windowCount', v)} />
             </View>
             <Disclosure title={t('Ölçüleri değiştir')} initiallyOpen={!!(errors.doorHeight || errors.windowHeight)}>
               {form.doorCount > 0 && (
@@ -250,25 +293,14 @@ export function PaintWizard() {
         {step === 'condition' && (
           <>
             <Question title={t('Duvarın şu anki durumu')} hint={t('Astar ve macun ihtiyacını buna göre çıkarıyoruz.')} />
-            <OptionGrid>
-              {WALL_STATES.map((w) => (
-                <OptionCard
-                  key={w.value}
-                  title={t(w.label)}
-                  subtitle={t(w.hint)}
-                  icon={w.icon}
-                  selected={wallStateOf(form) === w.value}
-                  onPress={() => patch(applyWallState(w.value))}
-                />
-              ))}
-            </OptionGrid>
+            <WallStatePicker value={wallStateOf(form)} onChange={(w) => patch(applyWallState(w))} />
           </>
         )}
 
         {step === 'coats' && (
           <>
             <Question title={t('Kaç kat boya uygulanacak?')} hint={t('Boyanın kutusunda öneri yazar. Emin değilsen 2 kat seç.')} />
-            <CoatsPicker value={form.coats} onChange={(v) => set('coats', v)} />
+            <CoatsDial value={form.coats} onChange={(v) => set('coats', v)} />
             <Disclosure title={t('Boyamın sarfiyatını biliyorum')} initiallyOpen={!!errors.coverage}>
               <NumberField
                 label={t('1 litre kaç m² boyar? (tek kat)')}
@@ -302,7 +334,10 @@ export function PaintWizard() {
               label={t('Net kullanım alanı')}
               unit="m²"
               value={home.area}
-              onChangeText={(value) => setHome((h) => ({ ...h, area: value }))}
+              onChangeText={(value) => {
+                setHome((h) => ({ ...h, area: value }));
+                setHomeError(undefined);
+              }}
               error={homeError}
               testID="floor-area"
             />
@@ -326,17 +361,19 @@ export function PaintWizard() {
         {step === 'homeSurfaces' && (
           <>
             <Question title={t('Neresi boyanacak?')} />
-            <OptionGrid columns={1}>
-              <OptionCard title={t('Duvarlar ve tavanlar')} icon="cube" selected={home.ceilings} onPress={() => setHome((h) => ({ ...h, ceilings: true }))} />
-              <OptionCard title={t('Sadece duvarlar')} icon="square" selected={!home.ceilings} onPress={() => setHome((h) => ({ ...h, ceilings: false }))} />
-            </OptionGrid>
+            <SurfacePicker
+              value={home.ceilings ? 'both' : 'walls'}
+              only={['both', 'walls']}
+              home
+              onChange={(s) => setHome((h) => ({ ...h, ceilings: s === 'both' }))}
+            />
           </>
         )}
 
         {step === 'homeCoats' && (
           <>
             <Question title={t('Kaç kat boya uygulanacak?')} hint={t('Emin değilsen 2 kat seç.')} />
-            <CoatsPicker value={home.coats} onChange={(v) => setHome((h) => ({ ...h, coats: v }))} />
+            <CoatsDial value={home.coats} onChange={(v) => setHome((h) => ({ ...h, coats: v }))} />
           </>
         )}
 
@@ -346,18 +383,22 @@ export function PaintWizard() {
           </Notice>
         ) : hasErrors ? (
           <Notice tone="danger" icon="alert-circle">
-            {t('Lütfen kırmızı işaretli alanları düzeltin.')}
+            {t('Kırmızı alanlara bir göz atalım, sonra devam edelim.')}
           </Notice>
         ) : null}
-      </FadeIn>
-
-      <WizardNav
-        onBack={index > 0 ? back : undefined}
-        onNext={next}
-        nextDisabled={step === 'space' && !space_}
-        nextLabel={step === 'coats' || step === 'homeCoats' ? t('Sonucu göster') : t('Devam')}
-        nextIcon={step === 'coats' || step === 'homeCoats' ? 'sparkles' : 'arrow-forward'}
-      />
+      </SlideIn>
     </View>
   );
+
+  const footer = (
+    <WizardNav
+      onBack={index > 0 ? back : undefined}
+      onNext={next}
+      nextDisabled={step === 'space' && !space_}
+      nextLabel={step === 'coats' || step === 'homeCoats' ? t('Sonucu göster') : t('Devam')}
+      nextIcon={step === 'coats' || step === 'homeCoats' ? 'sparkles' : 'arrow-forward'}
+    />
+  );
+
+  return frame(body, footer);
 }

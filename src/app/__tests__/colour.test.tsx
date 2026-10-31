@@ -1,4 +1,4 @@
-import { fireEvent, screen, waitFor } from '@testing-library/react-native';
+import { fireEvent, screen, waitFor, within } from '@testing-library/react-native';
 import { renderRouter } from 'expo-router/testing-library';
 
 async function openStudio() {
@@ -48,6 +48,8 @@ describe('Renk Stüdyosu', () => {
   it('offers matching colour schemes', async () => {
     await openStudio();
     expect(screen.getByTestId('room-preview')).toBeTruthy();
+    // The stock room is labelled, so nobody takes it for their own.
+    expect(within(screen.getByTestId('room-preview')).getByText('Örnek oda')).toBeTruthy();
     expect(screen.getAllByLabelText(/^Ton sür ton: /).length).toBeGreaterThan(0);
     await fireEvent.press(screen.getByLabelText('Kombinasyonlar'));
     for (const name of ['Ton sür ton', 'Komşu renkler', 'Zıt vurgu', 'Nötr eşlik']) {

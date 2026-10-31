@@ -1,6 +1,7 @@
 import { WithSkiaWeb } from '@shopify/react-native-skia/lib/module/web';
 import { ActivityIndicator, Image, View } from 'react-native';
 
+import { t } from '@/i18n';
 import { radius } from '@/ui/theme';
 
 import type { PhotoStageProps } from './photo-stage-types';
@@ -16,7 +17,7 @@ export function PhotoStage(props: PhotoStageProps) {
         <View style={{ width: '100%', aspectRatio: props.aspect, borderRadius: radius.lg, overflow: 'hidden' }}>
           <Image source={{ uri: props.uri }} style={{ width: '100%', height: '100%' }} resizeMode="cover" />
           <View style={{ position: 'absolute', inset: 0, alignItems: 'center', justifyContent: 'center' }}>
-            <ActivityIndicator color="#FFFFFF" />
+            <ActivityIndicator color="#FFFFFF" accessibilityLabel={t('Yükleniyor')} />
           </View>
         </View>
       }

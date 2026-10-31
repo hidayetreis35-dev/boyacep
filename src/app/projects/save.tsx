@@ -32,7 +32,7 @@ function SaveForm({ pending }: { pending: PendingRoom }) {
   const [error, setError] = useState<string | null>(null);
 
   if (projects.isPending) return <LoadingState label={t('Projeler yükleniyor…')} />;
-  if (projects.isError) return <ErrorState message={t('Projeler yüklenemedi. İnternet bağlantını kontrol et.')} onRetry={() => projects.refetch()} />;
+  if (projects.isError) return <ErrorState message={t('Projelerini yükleyemedik. İnternet bağlantını kontrol eder misin?')} onRetry={() => projects.refetch()} />;
 
   const limit = plan.data?.project_limit ?? FREE_PROJECT_LIMIT;
   const canCreate = projects.data.length < limit;

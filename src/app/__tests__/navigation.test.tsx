@@ -24,7 +24,7 @@ describe('first launch', () => {
     await fireEvent.press(screen.getByLabelText('Usta / Profesyonel'));
     expect(await screen.findByText('Konum Seçimi')).toBeTruthy();
     await fireEvent.press(screen.getByText('Şehir seçmeden devam et'));
-    expect(await screen.findByText('Evin için bugün neler yapmak istersin?')).toBeTruthy();
+    expect(await screen.findByText('Evin için güzel fikirler burada başlıyor.')).toBeTruthy();
     expect(JSON.parse((await AsyncStorage.getItem('boyacep.roles.v1')) ?? '[]')).toEqual(['pro']);
     // Skipping the city is remembered, so nobody asks again.
     expect(JSON.parse((await AsyncStorage.getItem('boyacep.city.v1')) ?? '{}')).toMatchObject({ province: null, answered: true });
@@ -41,9 +41,9 @@ describe('first launch', () => {
     await fireEvent.press(screen.getAllByLabelText('İzmir')[0]);
     await fireEvent.press(screen.getByTestId('select-district'));
     await fireEvent.press(screen.getByLabelText('Bornova'));
-    expect(screen.getByLabelText('İlçe seçin: Bornova')).toBeTruthy();
+    expect(screen.getByLabelText('İlçe seç: Bornova')).toBeTruthy();
     await fireEvent.press(screen.getByText('Devam Et'));
-    await screen.findByText('Evin için bugün neler yapmak istersin?');
+    await screen.findByText('Evin için güzel fikirler burada başlıyor.');
     expect(JSON.parse((await AsyncStorage.getItem('boyacep.city.v1')) ?? '{}')).toEqual({ province: '35', district: 'Bornova', answered: true });
     expect(JSON.parse((await AsyncStorage.getItem('boyacep.roles.v1')) ?? '[]')).toEqual(['homeowner']);
   });
@@ -91,32 +91,94 @@ describe('app navigation', () => {
     await AsyncStorage.setItem('boyacep.roles.v1', JSON.stringify(['homeowner']));
   });
 
-  it('shows the six home actions and opens the calculator', async () => {
+  it('shows the main actions, the rooms and the other services, and opens the calculator', async () => {
     await renderRouter('./src/app', { initialUrl: '/' });
-    await screen.findByText('Evin için bugün neler yapmak istersin?');
-    for (const title of ['Boya Hesapla', 'Renk Stüdyosu', 'Usta Bul', 'Tadilat & Yenileme', 'Ev Bütçesi', 'AI Tasarım']) {
-      expect(screen.getAllByText(title).length).toBeGreaterThan(0);
-    }
-    // The other tools stay one tap away.
-    for (const title of ['Maliyet Hesapla', 'Duvarını İncele', 'Boya Fiyatları', 'Ustaya Sor']) {
+    await screen.findByText('Evin için güzel fikirler burada başlıyor.');
+    for (const title of ['Boya Hesapla', 'Renkleri Dene', 'Duvarını İncele', 'Maliyetini Hesapla']) {
       expect(screen.getByLabelText(title)).toBeTruthy();
+    }
+    for (const room of ['Salon', 'Yatak odası', 'Çocuk odası', 'Çalışma odası', 'Mutfak', 'Banyo', 'Koridor', 'Tüm ev', 'Tadilat', 'Dekorasyon']) {
+      expect(screen.getByLabelText(room)).toBeTruthy();
+    }
+    // Everything else stays one tap away.
+    for (const title of ['Usta Bul', 'Ev Bütçesi', 'Projelerim', 'Boya Fiyatları', 'Ustaya Sor', 'Boya Rehberi', 'Ev Hafızası']) {
+      expect(screen.getAllByLabelText(title).length).toBeGreaterThan(0);
     }
     await fireEvent.press(screen.getByLabelText('Boya Hesapla'));
     expect(screen).toHavePathname('/calculate');
   });
 
-  it('marks AI design as coming soon instead of pretending it works', async () => {
+  it('starts with one clear action that opens the calculator', async () => {
     await renderRouter('./src/app', { initialUrl: '/' });
-    await fireEvent.press(await screen.findByLabelText('AI Tasarım, yakında'));
-    expect(screen).toHavePathname('/soon/ai-design');
+    await fireEvent.press(await screen.findByLabelText('Hemen başla'));
+    expect(screen).toHavePathname('/calculate');
   });
 
-  it('shows the five tabs', async () => {
+  it('opens the calculator with the tapped room already chosen', async () => {
     await renderRouter('./src/app', { initialUrl: '/' });
-    await screen.findByText('Evin için bugün neler yapmak istersin?');
-    for (const tab of ['Ana Sayfa', 'Projelerim', 'Hizmetler', 'Bütçe', 'Profil']) {
+    await fireEvent.press(await screen.findByLabelText('Mutfak'));
+    expect(screen).toHavePathname('/calculate');
+    expect(screen).toHaveSearchParams({ space: 'kitchen' });
+    expect(screen.getByRole('radio', { name: 'Mutfak' })).toBeChecked();
+  });
+
+  it('opens the hallway as a custom space', async () => {
+    await renderRouter('./src/app', { initialUrl: '/' });
+    await fireEvent.press(await screen.findByLabelText('Koridor'));
+    expect(screen).toHaveSearchParams({ space: 'custom' });
+    expect(screen.getByRole('radio', { name: 'Özel alan' })).toBeChecked();
+  });
+
+  it('marks AI design as coming soon instead of pretending it works', async () => {
+    await renderRouter('./src/app', { initialUrl: '/' });
+    await fireEvent.press(await screen.findByLabelText('AI Ev Tasarımı, yakında'));
+    expect(screen).toHavePathname('/ai-design');
+    expect(await screen.findByText('Hayalindeki odayı önceden gör')).toBeTruthy();
+    expect(screen.getByText(/henüz açılmadı/)).toBeTruthy();
+    // The hero leads to what works today: the colour studio's photo tab.
+    await fireEvent.press(screen.getByText('Bugün: odanda renk dene'));
+    expect(screen).toHavePathname('/colour');
+    expect(screen.getByRole('tab', { name: 'Odayı Dene' })).toBeSelected();
+  });
+
+  it('shows the five tabs, with Keşfet instead of Hizmetler', async () => {
+    await renderRouter('./src/app', { initialUrl: '/' });
+    await screen.findByText('Evin için güzel fikirler burada başlıyor.');
+    for (const tab of ['Ana Sayfa', 'Projelerim', 'Keşfet', 'Bütçe', 'Profil']) {
       expect(screen.getAllByText(tab).length).toBeGreaterThan(0);
     }
+    expect(screen.queryByText('Hizmetler')).toBeNull();
+  });
+
+  it('searches the app from the home screen', async () => {
+    await renderRouter('./src/app', { initialUrl: '/' });
+    await fireEvent.changeText(await screen.findByLabelText('Uygulamada ara'), 'nem');
+    // The page steps aside for the results.
+    expect(screen.queryByTestId('home-hero')).toBeNull();
+    await fireEvent.press(screen.getByLabelText('Duvarını İncele, Araç'));
+    expect(screen).toHavePathname('/inspect');
+  });
+
+  it('opens a searched colour in the studio', async () => {
+    await renderRouter('./src/app', { initialUrl: '/' });
+    await fireEvent.changeText(await screen.findByLabelText('Uygulamada ara'), 'terakota');
+    await fireEvent.press(screen.getByLabelText('Terakota, Renk'));
+    expect(screen).toHavePathname('/colour');
+    expect(screen.getByTestId('selected-colour')).toHaveTextContent(/Terakota/);
+  });
+
+  it('says so when the search finds nothing', async () => {
+    await renderRouter('./src/app', { initialUrl: '/' });
+    await fireEvent.changeText(await screen.findByLabelText('Uygulamada ara'), 'zzqx');
+    expect(screen.getByText('“zzqx” için bir şey bulamadık.')).toBeTruthy();
+    await fireEvent.press(screen.getByLabelText('Aramayı temizle'));
+    expect(screen.getByTestId('home-hero')).toBeTruthy();
+  });
+
+  it('explains how BoyaCep works to someone without projects', async () => {
+    await renderRouter('./src/app', { initialUrl: '/' });
+    expect(await screen.findByText('BoyaCep nasıl çalışır?')).toBeTruthy();
+    expect(screen.getByText('Rengini odanda dene')).toBeTruthy();
   });
 
   it('opens Ustaya Sor and explains it needs the server', async () => {
@@ -146,6 +208,8 @@ describe('app navigation', () => {
     await fireEvent.press(screen.getByText('Sonucu göster'));
 
     expect(screen.getByTestId('inspect-result')).toBeTruthy();
+    // The result names what it is built from: the user's own answers, not the photo.
+    expect(screen.getByTestId('inspect-basis')).toHaveTextContent('Senin seçimlerine göre değerlendirildiBanyo ya da mutfakGeniş çatlakKüf');
     expect(screen.getByTestId('inspect-verdict')).toHaveTextContent('Önce bir uzmana göster');
     expect(screen.getByText(/inşaat mühendisine/)).toBeTruthy();
     expect(screen.getByText(/küfe dayanıklı/)).toBeTruthy();
@@ -174,7 +238,7 @@ describe('app navigation', () => {
 
   it('opens the colour preview without an account', async () => {
     await renderRouter('./src/app', { initialUrl: '/' });
-    await fireEvent.press(await screen.findByLabelText('Renk Stüdyosu'));
+    await fireEvent.press(await screen.findByLabelText('Renkleri Dene'));
     expect(screen).toHavePathname('/colour');
     expect(screen.getByText('Renk kataloğu')).toBeTruthy();
     await fireEvent.press(screen.getByLabelText('Odayı Dene'));

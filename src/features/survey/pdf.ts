@@ -70,7 +70,7 @@ export function surveyHtml(model: SurveyModel): string {
             <b>${escapeHtml(t(c.name))}</b><br><span class="muted">${escapeHtml(c.surface ? t(c.surface) : c.hex)}</span></div>`,
         )
         .join('')}</div>
-      <p class="muted small">${t('Renk adları genel tonlardır, marka ürün kodu değildir. Boyayı almadan önce mağazada renk kartından kontrol edin.')}</p>`
+      <p class="muted small">${t('Renk adları genel tonlardır, marka ürün kodu değildir. Boyayı almadan önce mağazada renk kartına bir bak.')}</p>`
     : '';
 
   const findings = model.findings.length

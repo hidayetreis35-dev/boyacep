@@ -37,6 +37,14 @@ export async function listReceivedQuotes(db: DbClient, projectId: string): Promi
   return data;
 }
 
+/** The lines of several quotes at once, for comparing their totals. */
+export async function listQuoteItems(db: DbClient, quoteIds: string[]): Promise<QuoteItemRow[]> {
+  if (quoteIds.length === 0) return [];
+  const { data, error } = await db.from('quote_items').select('*').in('quote_id', quoteIds);
+  if (error) throw new Error(error.message);
+  return data;
+}
+
 export async function getQuote(db: DbClient, id: string): Promise<QuoteWithItems> {
   const { data: quote, error } = await db.from('quotes').select('*').eq('id', id).single();
   if (error) throw new Error(error.message);
@@ -95,6 +103,7 @@ export async function respondToQuote(db: DbClient, id: string, accept: boolean):
 export const quoteKeys = {
   mine: (userId?: string) => ['quotes', 'mine', userId] as const,
   received: (projectId: string) => ['quotes', 'received', projectId] as const,
+  items: (quoteIds: string[]) => ['quotes', 'items', ...quoteIds] as const,
   one: (id: string) => ['quotes', 'one', id] as const,
 };
 

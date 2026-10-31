@@ -12,7 +12,7 @@ export function isNotEnabled(message: string): boolean {
 function writeError(message: string): Error {
   if (isNotEnabled(message)) return new Error(t('Ev Hafızası sunucuda henüz açılmadı.'));
   if (message.includes('home log limit reached')) return new Error(t('Ev Hafızası’nda en fazla 500 kayıt olabilir.'));
-  return new Error(t('Kaydedilemedi. İnternet bağlantını kontrol et.'));
+  return new Error(t('Kaydedemedik. İnternet bağlantını kontrol eder misin?'));
 }
 
 export async function listHomeLog(db: DbClient): Promise<HomeLogRow[]> {
@@ -29,5 +29,5 @@ export async function addHomeLog(db: DbClient, drafts: HomeLogDraft[]): Promise<
 
 export async function deleteHomeLog(db: DbClient, id: string): Promise<void> {
   const { error } = await db.from('home_log').delete().eq('id', id);
-  if (error) throw new Error(t('Kayıt silinemedi. İnternet bağlantını kontrol et.'));
+  if (error) throw new Error(t('Kaydı silemedik. İnternet bağlantını kontrol eder misin?'));
 }

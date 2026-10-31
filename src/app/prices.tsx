@@ -19,9 +19,10 @@ import { MATERIAL_PRICES, NATIONAL_QUOTE_BANDS, OFFICIAL_UNIT_PRICE, sourceName 
 import type { MarketScope } from '@/features/market/types';
 import { msg, t } from '@/i18n';
 import { formatNumber } from '@/lib/number';
-import { Disclosure, FeatureHeader, Segmented, SectionTitle } from '@/ui/brand';
+import { Disclosure, Segmented, SectionTitle } from '@/ui/brand';
 import { AppText, Badge, Button, Card, ChoiceChips, LoadingState, Notice, Row, Screen } from '@/ui/components';
-import { space } from '@/ui/theme';
+import { HeroPanel } from '@/ui/showcase';
+import { space, usePalette } from '@/ui/theme';
 
 type Service = 'interior' | 'ceiling' | 'primer' | 'repair' | 'exterior' | 'door' | 'decorative';
 
@@ -245,6 +246,46 @@ function MaterialPrices() {
   );
 }
 
+/**
+ * The answer first: what interior wall painting labour costs per m² in the
+ * user's city (or Türkiye-wide), with its data quality. Details follow below.
+ */
+function PriceHeadline({ province }: { province: ProvinceCode | null }) {
+  const p = usePalette();
+  const reference = marketReference(province, 'labour', 'perM2');
+  const range = shownRange(reference);
+  return (
+    <HeroPanel testID="price-headline">
+      <AppText variant="title" accessibilityRole="header" style={{ color: p.onHero }}>
+        {t('Türkiye Boya Fiyatları')}
+      </AppText>
+      <AppText style={{ color: p.onHeroMuted }}>
+        {t('{place} · iç duvar işçiliği', { place: placeName(reference.code) })}
+      </AppText>
+      {range ? (
+        <View style={{ flexDirection: 'row', alignItems: 'baseline', gap: 6, flexWrap: 'wrap' }}>
+          <AppText variant="display" style={{ color: p.onHero, fontSize: 34, lineHeight: 40 }}>
+            {formatLiraRange(range)}
+          </AppText>
+          <AppText variant="bodyStrong" style={{ color: p.onHeroMuted }}>
+            {t('/ m² ev alanı')}
+          </AppText>
+        </View>
+      ) : (
+        <AppText variant="bodyStrong" style={{ color: p.onHero }}>
+          {t('Bu iş için yeterli güncel veri bulunamadı.')}
+        </AppText>
+      )}
+      <View style={{ flexDirection: 'row', alignItems: 'center', gap: space.sm, flexWrap: 'wrap' }}>
+        <QualityBadge reference={reference} />
+        <AppText variant="caption" style={{ color: p.onHeroMuted, flexShrink: 1 }}>
+          {t('Yön gösterir, teklif değildir.')}
+        </AppText>
+      </View>
+    </HeroPanel>
+  );
+}
+
 export default function PricesScreen() {
   const params = useLocalSearchParams<{ pick?: string }>();
   const city = useCity();
@@ -267,15 +308,11 @@ export default function PricesScreen() {
 
   return (
     <Screen edges={['bottom']}>
-      <FeatureHeader
-        feature="cost"
-        icon="stats-chart"
-        title={t('Türkiye Boya Fiyatları')}
-        subtitle={t('Usta fiyatları şehre göre: kaynağı, tarihi ve güvenilirliğiyle.')}
-      />
+      <PriceHeadline province={city.province} />
 
       <CityCard province={city.province} district={city.district} openInitially={params.pick === '1'} />
 
+      <SectionTitle title={t('Ayrıntılı fiyatlar')} />
       <ChoiceChips label={t('Hangi iş?')} options={SERVICES} value={service} onChange={setService} />
 
       {service === 'interior' ? (

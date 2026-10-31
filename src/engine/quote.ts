@@ -37,3 +37,34 @@ export function quoteTotals(lines: QuoteLine[], vatRate: number, discount: numbe
   const vat = round((taxable * Math.max(vatRate, 0)) / 100, 2);
   return { byKind, subtotal, discount: appliedDiscount, taxable, vat, total: round(taxable + vat, 2) };
 }
+
+export interface QuoteForComparison {
+  id: string;
+  totals: QuoteTotals;
+}
+
+export interface ComparedQuote extends QuoteForComparison {
+  cheapest: boolean;
+  /** How much more than the cheapest quote; 0 for the cheapest. */
+  aboveCheapest: number;
+  /** total / highest total, 0..1, for bars drawn from one baseline. */
+  share: number;
+}
+
+/**
+ * Quotes side by side, cheapest first. Only price is compared: scope,
+ * materials and dates are for the homeowner to read, so nothing here says
+ * which quote is "best".
+ */
+export function compareQuotes(quotes: QuoteForComparison[]): ComparedQuote[] {
+  if (quotes.length === 0) return [];
+  const sorted = [...quotes].sort((a, b) => a.totals.total - b.totals.total);
+  const low = sorted[0].totals.total;
+  const high = sorted[sorted.length - 1].totals.total;
+  return sorted.map((q) => ({
+    ...q,
+    cheapest: q.totals.total === low,
+    aboveCheapest: round(q.totals.total - low, 2),
+    share: high > 0 ? q.totals.total / high : 0,
+  }));
+}

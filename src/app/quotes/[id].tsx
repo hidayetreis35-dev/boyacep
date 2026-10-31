@@ -49,7 +49,7 @@ function QuoteScreenBody({ id, data }: { id: string; data: QuoteWithItems }) {
     try {
       await sharePdf(data, draft);
     } catch {
-      setPdfError(t('PDF oluşturulamadı.'));
+      setPdfError(t('PDF’i hazırlayamadık. Bir daha dener misin?'));
     }
   };
 

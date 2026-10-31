@@ -8,6 +8,7 @@ import {
   deleteQuote,
   getQuote,
   listMyQuotes,
+  listQuoteItems,
   listReceivedQuotes,
   quoteKeys,
   respondToQuote,
@@ -31,6 +32,16 @@ export function useReceivedQuotes(projectId: string) {
     queryKey: quoteKeys.received(projectId),
     enabled: !!db && !!session && !!projectId,
     queryFn: () => listReceivedQuotes(db!, projectId),
+  });
+}
+
+/** The lines of the given quotes, to compare their totals. */
+export function useQuoteItems(quoteIds: string[]) {
+  const { db, session } = useSession();
+  return useQuery({
+    queryKey: quoteKeys.items(quoteIds),
+    enabled: !!db && !!session && quoteIds.length > 0,
+    queryFn: () => listQuoteItems(db!, quoteIds),
   });
 }
 

@@ -1,5 +1,6 @@
 import { COLOURS, CLASSICS, searchColours, TRENDS } from '@/features/colour/catalogue';
-import { distance, harmonies, hexToHsl, hslToHex, lrv, nearest } from '@/features/colour/harmony';
+import { closestColours, distance, harmonies, hexToHsl, hslToHex, lrv, matchLabel, nearest } from '@/features/colour/harmony';
+import { hexToLab } from '@/features/colour/recolour';
 
 describe('catalogue', () => {
   it('has more than a hundred unique, valid colours', () => {
@@ -44,5 +45,29 @@ describe('colour maths', () => {
       expect(h.colours.map((c) => c.name)).toContain('Adaçayı');
       expect(new Set(h.colours.map((c) => c.hex)).size).toBe(h.colours.length);
     }
+  });
+});
+
+describe('colour matching', () => {
+  it('finds a catalogue colour itself first, then its neighbours in order', () => {
+    const matches = closestColours(hexToLab('#A3B49A'));
+    expect(matches).toHaveLength(5);
+    expect(matches[0].colour.name).toBe('Adaçayı');
+    expect(matches[0].distance).toBe(0);
+    for (let i = 1; i < matches.length; i++) expect(matches[i].distance).toBeGreaterThanOrEqual(matches[i - 1].distance);
+  });
+
+  it('finds the nearest paint for a colour that is not in the catalogue', () => {
+    const [first, second] = closestColours([72, -8, 11], 2);
+    expect(first.colour.name).toBe('Adaçayı');
+    expect(first.distance).toBeGreaterThan(0);
+    expect(second.colour.name).toBe('Yeşil gri');
+  });
+
+  it('labels how close a match looks', () => {
+    expect(matchLabel(1)).toBe('Neredeyse aynı');
+    expect(matchLabel(5)).toBe('Çok yakın');
+    expect(matchLabel(10)).toBe('Yakın');
+    expect(matchLabel(30)).toBe('Benzer ton');
   });
 });

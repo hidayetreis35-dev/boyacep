@@ -24,7 +24,7 @@ describe('parseAuthInput', () => {
   it('turns an expired link into a plain message', () => {
     expect(parseAuthInput('boyacep://#error=access_denied&error_code=otp_expired&error_description=Email+link+is+invalid+or+has+expired')).toEqual({
       kind: 'error',
-      message: 'Kod hatalı veya süresi dolmuş. Yeni kod isteyin.',
+      message: 'Bu kod çalışmadı ya da süresi geçti. Yeni bir kod ister misin?',
     });
   });
 
@@ -59,6 +59,6 @@ describe('completeSignIn', () => {
 
   it('maps Supabase errors', async () => {
     auth.verifyOtp.mockResolvedValueOnce({ error: { message: 'Token has expired or is invalid' } });
-    await expect(completeSignIn(db, 'ayse@mail.com', '123456')).rejects.toThrow('Kod hatalı veya süresi dolmuş.');
+    await expect(completeSignIn(db, 'ayse@mail.com', '123456')).rejects.toThrow('Bu kod çalışmadı ya da süresi geçti.');
   });
 });

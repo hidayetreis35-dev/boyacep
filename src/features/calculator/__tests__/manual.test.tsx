@@ -41,7 +41,7 @@ describe('Boya Hesapla, Manuel Giriş', () => {
     expect(screen.getByText(/neme ve küfe dayanıklı/)).toBeTruthy();
   });
 
-  it('shows errors and hides an old result when the input changes', async () => {
+  it('shows errors, then keeps the result in step with the input', async () => {
     await renderManual();
     await fireEvent.press(screen.getByText('Hesapla'));
     expect(screen.getByText('Duvar alanı 1 ile 5000 m² arasında olmalı.')).toBeTruthy();
@@ -49,7 +49,17 @@ describe('Boya Hesapla, Manuel Giriş', () => {
     await fireEvent.press(screen.getByText('Hesapla'));
     expect(screen.getByTestId('manual-result')).toBeTruthy();
     await fireEvent.changeText(screen.getByTestId('manual-wall'), '60');
+    // 60 m² × 2 coats / 10 m²/L + 10% = 13,2 L, without pressing again
+    expect(screen.getByText('13,2')).toBeTruthy();
+    await fireEvent.changeText(screen.getByTestId('manual-wall'), '');
     expect(screen.queryByTestId('manual-result')).toBeNull();
+    expect(screen.queryByText('Duvar alanı 1 ile 5000 m² arasında olmalı.')).toBeNull();
+  });
+
+  it('offers to measure the room when the area is unknown', async () => {
+    const onMeasure = await renderManual();
+    await fireEvent.press(screen.getByText('Alanı bilmiyorum, odayı ölçelim'));
+    expect(onMeasure).toHaveBeenCalled();
   });
 
   it('prices exterior paint separately and has no ceiling', async () => {

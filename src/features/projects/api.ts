@@ -8,7 +8,7 @@ import type { OpeningRecord, RoomRecord, RoomWithOpenings } from './mapping';
 
 function check<T>(result: { data: T; error: { message: string } | null }): NonNullable<T> {
   if (result.error) throw new Error(result.error.message);
-  if (result.data == null) throw new Error(t('Kayıt bulunamadı.'));
+  if (result.data == null) throw new Error(t('Bunu bulamadık; silinmiş olabilir.'));
   return result.data;
 }
 

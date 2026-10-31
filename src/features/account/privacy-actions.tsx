@@ -40,7 +40,7 @@ export function PrivacyActions({ db, userId }: { db: DbClient; userId: string })
       queryClient.clear();
       router.replace('/welcome');
     } catch (e) {
-      setDeleteError(e instanceof Error ? e.message : t('Hesap silinemedi.'));
+      setDeleteError(e instanceof Error ? e.message : t('Hesabını silemedik.'));
       setDeleting(false);
     }
   };

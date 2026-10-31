@@ -3,8 +3,8 @@ import { StyleSheet, View } from 'react-native';
 
 import { addRanges, type RangeEstimate } from '@/engine';
 import { t } from '@/i18n';
-import { AppText, Button, Icon, Row } from '@/ui/components';
-import { radius, space, usePalette } from '@/ui/theme';
+import { AppText, Button, Icon, Row, type IconName } from '@/ui/components';
+import { fonts, radius, space, usePalette } from '@/ui/theme';
 
 import { useCity } from './city';
 import { FallbackNotice, placeName, QualityBadge, StaleNotice } from './components';
@@ -12,10 +12,30 @@ import { formatLiraRange, formatResearchDate } from './format';
 import { homeTotal, marketReference, paintCost, shownRange } from './regional';
 import { MATERIAL_PRICES, sourceName } from './sources';
 
+/** One side of the comparison: who paints, roughly what it costs, and what that covers. */
+function Side({ icon, title, amount, note, tint, ink, testID }: { icon: IconName; title: string; amount: RangeEstimate | null; note: string; tint: string; ink: string; testID: string }) {
+  return (
+    <View style={[styles.side, { backgroundColor: tint }]} testID={testID}>
+      <View style={{ flexDirection: 'row', alignItems: 'center', gap: space.xs }}>
+        <Icon name={icon} size={16} color={ink} />
+        <AppText variant="caption" style={{ color: ink, fontFamily: fonts.bold }}>
+          {title}
+        </AppText>
+      </View>
+      <AppText variant="cardTitle" style={{ fontFamily: fonts.extrabold, fontSize: 18, lineHeight: 24 }}>
+        {amount ? formatLiraRange(amount) : t('Yeterli veri yok')}
+      </AppText>
+      <AppText variant="caption" tone="muted">
+        {note}
+      </AppText>
+    </View>
+  );
+}
+
 /**
- * Calculator results: what painting this home or room roughly costs in the
- * user's city. Labour comes from the market reference, paint from shop
- * prices; both are labelled as references, never as a quote.
+ * Calculator results: painting it yourself (paint at shop prices) next to
+ * hiring a painter (labour from the city's market reference plus paint).
+ * Both are references, never a quote; the difference is the labour.
  */
 export function RegionalCostCard({ floorArea, litres, kind }: { floorArea: number; litres: number; kind: 'home' | 'room' }) {
   const p = usePalette();
@@ -37,12 +57,33 @@ export function RegionalCostCard({ floorArea, litres, kind }: { floorArea: numbe
         </AppText>
         <QualityBadge reference={reference} />
       </View>
-      <AppText variant="heading">{t('Ustayla yaklaşık maliyet · {place}', { place: placeName(reference.code) })}</AppText>
+      <AppText variant="heading">{t('Kendin yap mı, usta mı?')}</AppText>
+      <AppText variant="small" tone="muted">
+        {t('{place} fiyatlarıyla', { place: placeName(reference.code) })}
+      </AppText>
       <FallbackNotice reference={reference} chosen={city.province} />
       <StaleNotice asOf={reference.asOf} />
-      <Row label={t('Usta işçiliği')} value={labour ? formatLiraRange(labour) : t('Yeterli veri yok')} />
-      <Row label={t('Boya (mağaza fiyatıyla)')} value={paint ? formatLiraRange(paint) : t('Yeterli veri yok')} />
-      {total ? <Row label={t('Toplam (yaklaşık)')} value={formatLiraRange(total)} strong /> : null}
+      <View style={styles.sides}>
+        <Side
+          icon="brush"
+          title={t('Kendin yaparsan')}
+          amount={paint}
+          note={t('Boya, mağaza fiyatıyla. Emek senden.')}
+          tint={p.sageSoft}
+          ink={p.sageInk}
+          testID="diy-cost"
+        />
+        <Side
+          icon="person"
+          title={t('Ustayla')}
+          amount={total}
+          note={t('İşçilik ve boya birlikte.')}
+          tint={p.primarySoft}
+          ink={p.primary}
+          testID="pro-cost"
+        />
+      </View>
+      <Row label={t('Aradaki fark: usta işçiliği')} value={labour ? formatLiraRange(labour) : t('Yeterli veri yok')} />
       <AppText variant="caption" tone="muted">
         {t('Astar, macun ve yardımcı malzemeler dahil değil. Kaynak: {sources}. Araştırma tarihi: {date}.', {
           sources: sources.join(', '),
@@ -56,4 +97,6 @@ export function RegionalCostCard({ floorArea, litres, kind }: { floorArea: numbe
 
 const styles = StyleSheet.create({
   card: { borderRadius: radius.lg, borderWidth: 1.5, borderStyle: 'dashed', padding: space.lg, gap: space.sm },
+  sides: { flexDirection: 'row', flexWrap: 'wrap', gap: space.sm },
+  side: { flexGrow: 1, flexBasis: 140, borderRadius: radius.md, padding: space.md, gap: 4 },
 });

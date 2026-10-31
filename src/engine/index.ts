@@ -25,17 +25,20 @@ export {
   type PricedMaterial,
 } from './cost';
 export * from './quote';
+export { renovationPlan, type PlanRoom, type PlanStep, type PlanStepKind } from './plan';
 export * from './market';
 export {
   EXPENSE_CATEGORY_LABEL,
   EXPENSE_CATEGORY_OF_GROUP,
   EXPENSE_CATEGORY_ORDER,
+  monthlySpending,
   NEAR_LIMIT_SHARE,
   summarizeBudget,
   summarizeHomeBudget,
   type BudgetLine,
   type BudgetStatus,
   type BudgetSummary,
+  type DatedExpense,
   type Expense,
   type ExpenseCategory,
   type HomeBudgetExpense,

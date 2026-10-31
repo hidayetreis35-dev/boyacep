@@ -29,7 +29,7 @@ import {
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 
-import { PressableScale } from './motion';
+import { PressableScale, tick, useReducedMotion } from './motion';
 import { MAX_CONTENT_WIDTH, MAX_WIDE_WIDTH, MIN_TOUCH, WIDE_BREAKPOINT, fonts, radius, shadowOf, space, type, usePalette, type Palette, type TypeVariant } from './theme';
 
 import { t, toUpper } from '@/i18n';
@@ -125,17 +125,35 @@ export function Grid({ children }: { children: ReactNode }) {
 }
 
 /** `wide` lets a screen with Columns or Grid use the desktop width. */
-export function Screen({ children, edges = ['top'], wide = false }: { children: ReactNode; edges?: ('top' | 'bottom')[]; wide?: boolean }) {
+/** Landmarks for the web build, so browsers' screen readers can jump between page and menu. */
+const WEB_MAIN = Platform.OS === 'web' ? 'main' : undefined;
+
+/** `footer` stays fixed under the scrolling page, e.g. a wizard's next button. */
+export function Screen({
+  children,
+  edges = ['top'],
+  wide = false,
+  footer,
+}: {
+  children: ReactNode;
+  edges?: ('top' | 'bottom')[];
+  wide?: boolean;
+  footer?: ReactNode;
+}) {
   const p = usePalette();
   const isWide = useWide() && wide;
+  const reduced = useReducedMotion();
   const scrollRef = useRef<ScrollViewInstance>(null);
   const innerRef = useRef<HostInstance>(null);
-  const scrollToView = useCallback<ScrollToView>((view) => {
-    const inner = innerRef.current;
-    if (!view || !inner) return;
-    view.measureLayout(inner, (_x, y) => scrollRef.current?.scrollTo({ y: Math.max(0, y), animated: true }));
-  }, []);
-  const scrollToTop = useCallback(() => scrollRef.current?.scrollTo({ y: 0, animated: true }), []);
+  const scrollToView = useCallback<ScrollToView>(
+    (view) => {
+      const inner = innerRef.current;
+      if (!view || !inner) return;
+      view.measureLayout(inner, (_x, y) => scrollRef.current?.scrollTo({ y: Math.max(0, y), animated: !reduced }));
+    },
+    [reduced],
+  );
+  const scrollToTop = useCallback(() => scrollRef.current?.scrollTo({ y: 0, animated: !reduced }), [reduced]);
 
   return (
     <SafeAreaView edges={edges} style={{ flex: 1, backgroundColor: p.background }}>
@@ -144,12 +162,17 @@ export function Screen({ children, edges = ['top'], wide = false }: { children: 
         contentContainerStyle={styles.screenContent}
         keyboardShouldPersistTaps="handled"
         style={{ backgroundColor: p.background }}>
-        <View ref={innerRef} style={[styles.screenInner, isWide && { maxWidth: MAX_WIDE_WIDTH, paddingHorizontal: space.xl }]}>
+        <View ref={innerRef} role={WEB_MAIN} style={[styles.screenInner, isWide && { maxWidth: MAX_WIDE_WIDTH, paddingHorizontal: space.xl }]}>
           <ScrollTopContext.Provider value={scrollToTop}>
             <ScrollContext.Provider value={scrollToView}>{children}</ScrollContext.Provider>
           </ScrollTopContext.Provider>
         </View>
       </ScrollView>
+      {footer ? (
+        <View style={[styles.screenFooter, { backgroundColor: p.background, borderTopColor: p.border }]}>
+          <View style={styles.screenFooterInner}>{footer}</View>
+        </View>
+      ) : null}
     </SafeAreaView>
   );
 }
@@ -194,7 +217,8 @@ export function Button({
     <PressableScale
       accessibilityRole="button"
       accessibilityLabel={label}
-      accessibilityState={{ disabled: !!disabled, busy: !!loading }}
+      aria-disabled={!!disabled}
+      aria-busy={!!loading}
       disabled={disabled || loading}
       onPress={onPress}
       style={({ pressed }) => [
@@ -206,7 +230,7 @@ export function Button({
         variant === 'ghost' && { backgroundColor: pressed ? p.surfaceMuted : 'transparent' },
         (disabled || loading) && { opacity: 0.45 },
       ]}>
-      {loading ? <ActivityIndicator color={fg} /> : icon ? <Icon name={icon} size={20} color={fg} /> : null}
+      {loading ? <ActivityIndicator color={fg} aria-hidden /> : icon ? <Icon name={icon} size={20} color={fg} /> : null}
       <AppText variant="bodyStrong" style={{ color: fg, fontFamily: fonts.bold }}>
         {label}
       </AppText>
@@ -326,8 +350,11 @@ export function ChoiceChips<T extends string>({
             <Pressable
               key={o.value}
               accessibilityRole="radio"
-              accessibilityState={{ selected }}
-              onPress={() => onChange(o.value)}
+              aria-checked={selected}
+              onPress={() => {
+                if (!selected) tick();
+                onChange(o.value);
+              }}
               style={[
                 styles.chip,
                 {
@@ -351,8 +378,11 @@ export function Toggle({ label, value, onChange }: { label: string; value: boole
   return (
     <Pressable
       accessibilityRole="checkbox"
-      accessibilityState={{ checked: value }}
-      onPress={() => onChange(!value)}
+      aria-checked={value}
+      onPress={() => {
+        tick();
+        onChange(!value);
+      }}
       style={[styles.toggle, { borderColor: value ? p.primary : 'transparent', backgroundColor: value ? p.primarySoft : p.surfaceMuted }]}>
       <Icon name={value ? 'checkmark-circle' : 'ellipse-outline'} color={value ? p.primary : p.textMuted} />
       <AppText variant="bodyStrong">{label}</AppText>
@@ -384,7 +414,7 @@ export function SelectField<T extends string>({
       </AppText>
       <Pressable
         accessibilityRole="button"
-        accessibilityState={{ expanded: open }}
+        aria-expanded={open}
         accessibilityLabel={`${label}: ${current ? t(current.label) : ''}`}
         onPress={() => setOpen((o) => !o)}
         testID={testID}
@@ -402,9 +432,10 @@ export function SelectField<T extends string>({
               <Pressable
                 key={o.value}
                 accessibilityRole="radio"
-                accessibilityState={{ selected }}
+                aria-checked={selected}
                 accessibilityLabel={t(o.label)}
                 onPress={() => {
+                  if (!selected) tick();
                   onChange(o.value);
                   setOpen(false);
                 }}
@@ -426,9 +457,12 @@ export function Checkbox({ label, value, onChange }: { label: string; value: boo
   return (
     <Pressable
       accessibilityRole="checkbox"
-      accessibilityState={{ checked: value }}
+      aria-checked={value}
       accessibilityLabel={label}
-      onPress={() => onChange(!value)}
+      onPress={() => {
+        tick();
+        onChange(!value);
+      }}
       style={styles.checkboxRow}>
       <View style={[styles.checkbox, { backgroundColor: value ? p.primary : p.surface, borderColor: value ? p.primary : p.border }]}>
         {value ? <Icon name="checkmark" size={16} color={p.onPrimary} /> : null}
@@ -533,7 +567,7 @@ export function LoadingState({ label = t('Yükleniyor…') }: { label?: string }
   const p = usePalette();
   return (
     <View style={styles.empty} accessibilityRole="progressbar" accessibilityLabel={label}>
-      <ActivityIndicator color={p.primary} size="large" />
+      <ActivityIndicator color={p.primary} size="large" aria-hidden />
       <AppText tone="muted">{label}</AppText>
     </View>
   );
@@ -543,7 +577,7 @@ export function ErrorState({ message, onRetry }: { message: string; onRetry?: ()
   return (
     <EmptyState
       icon="cloud-offline"
-      title={t('Bir sorun oluştu')}
+      title={t('Bir şeyler ters gitti')}
       message={message}
       action={onRetry ? <Button label={t('Tekrar dene')} icon="refresh" variant="secondary" onPress={onRetry} /> : undefined}
     />
@@ -567,6 +601,8 @@ const webNoOutline = Platform.OS === 'web' ? ({ outlineStyle: 'none' } as unknow
 const styles = StyleSheet.create({
   screenContent: { flexGrow: 1, alignItems: 'center', paddingBottom: space.xxl },
   screenInner: { width: '100%', maxWidth: MAX_CONTENT_WIDTH, padding: space.lg, gap: space.lg },
+  screenFooter: { borderTopWidth: StyleSheet.hairlineWidth, alignItems: 'center' },
+  screenFooterInner: { width: '100%', maxWidth: MAX_CONTENT_WIDTH, paddingHorizontal: space.lg, paddingVertical: space.md },
   columns: { flexDirection: 'row', alignItems: 'flex-start', gap: space.xl },
   mainColumn: { flex: 3, minWidth: 0, gap: space.lg },
   sideColumn: { flex: 2, minWidth: 0, gap: space.lg },

@@ -24,7 +24,7 @@ describe('PaintWizard, one room', () => {
     await next();
     expect(screen.getByText('ADIM 2 / 6')).toBeTruthy();
     await next();
-    expect(screen.getByText('Lütfen kırmızı işaretli alanları düzeltin.')).toBeTruthy();
+    expect(screen.getByText('Kırmızı alanlara bir göz atalım, sonra devam edelim.')).toBeTruthy();
     expect(screen.getByText('Oda uzunluğu 0 ile 50 m arasında olmalı.')).toBeTruthy();
     expect(screen.getByText('ADIM 2 / 6')).toBeTruthy();
   });
@@ -69,6 +69,41 @@ describe('PaintWizard, one room', () => {
     expect(screen.queryByText('Gerekmiyor')).toBeNull();
     await fireEvent.press(screen.getByRole('button', { name: 'Düzenle' }));
     expect(screen.getByText('ADIM 6 / 6')).toBeTruthy();
+  });
+
+  it('draws the room and keeps a running total while the user answers', async () => {
+    await renderWizard();
+    await fireEvent.press(screen.getByTestId('space-room'));
+    await next();
+    expect(screen.getByLabelText('Örnek oda çizimi')).toBeTruthy();
+    expect(screen.getByText('Ölçüleri yazınca hesaplanır')).toBeTruthy();
+    await fireEvent.changeText(screen.getByTestId('width'), '3');
+    await fireEvent.changeText(screen.getByTestId('length'), '4');
+    expect(screen.getByLabelText('Oda çizimi: 3 × 4 m, tavan 2,6 m')).toBeTruthy();
+    // 36,4 m² of wall − door 1,89 − window 1,68 + 12 m² of ceiling, with the default answers.
+    expect(screen.getByText('44,8')).toBeTruthy();
+    expect(screen.getByText('Şu ana kadarki cevaplarla')).toBeTruthy();
+    // A common size fills both fields at once.
+    await fireEvent.press(screen.getByLabelText('3,5 m en, 4 m boy'));
+    expect(screen.getByTestId('width').props.value).toBe('3,5');
+    expect(screen.getByLabelText('Oda çizimi: 3,5 × 4 m, tavan 2,6 m')).toBeTruthy();
+    await fireEvent.press(screen.getByLabelText('Tavan 2,8 m'));
+    expect(screen.getByTestId('height').props.value).toBe('2,8');
+  });
+
+  it('counts doors and windows with big buttons', async () => {
+    await renderWizard();
+    await fireEvent.press(screen.getByTestId('space-room'));
+    await next();
+    await fireEvent.changeText(screen.getByTestId('width'), '3');
+    await fireEvent.changeText(screen.getByTestId('length'), '4');
+    await next();
+    await next();
+    await fireEvent.press(screen.getByLabelText('Pencere artır'));
+    await fireEvent.press(screen.getByLabelText('Kapı azalt'));
+    expect(screen.getByLabelText('Kapı azalt')).toBeDisabled();
+    // No door, two windows: 36,4 − 2 × 1,68 + 12 m² of ceiling.
+    expect(screen.getByText('45')).toBeTruthy();
   });
 
   it('marks exterior walls as coming soon instead of guessing', async () => {
@@ -123,5 +158,19 @@ describe('PaintWizard, whole home', () => {
     await fireEvent.changeText(screen.getByTestId('floor-area'), '3');
     await next();
     expect(screen.getByText('Net alan 10 ile 1000 m² arasında olmalı.')).toBeTruthy();
+    // Fixing the number takes the warning away before the next "Devam".
+    await fireEvent.changeText(screen.getByTestId('floor-area'), '110');
+    expect(screen.queryByText('Net alan 10 ile 1000 m² arasında olmalı.')).toBeNull();
+  });
+
+  it('clears a measurement warning once that field is filled in', async () => {
+    await renderWizard();
+    await fireEvent.press(screen.getByTestId('space-room'));
+    await next();
+    await next();
+    expect(screen.getByText('Oda uzunluğu 0 ile 50 m arasında olmalı.')).toBeTruthy();
+    await fireEvent.press(screen.getByLabelText('3,5 m en, 4 m boy'));
+    expect(screen.queryByText('Oda uzunluğu 0 ile 50 m arasında olmalı.')).toBeNull();
+    expect(screen.queryByText('Kırmızı alanlara bir göz atalım, sonra devam edelim.')).toBeNull();
   });
 });

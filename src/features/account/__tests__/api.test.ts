@@ -8,13 +8,13 @@ describe('isValidEmail', () => {
 
 describe('authErrorMessage', () => {
   it.each([
-    ['Token has expired or is invalid', 'Kod hatalı veya süresi dolmuş. Yeni kod isteyin.'],
+    ['Token has expired or is invalid', 'Bu kod çalışmadı ya da süresi geçti. Yeni bir kod ister misin?'],
     ['Email rate limit exceeded', 'Şu an çok fazla giriş e-postası gönderildi. Biraz sonra tekrar dene; daha önce gelen e-postayı da kullanabilirsin.'],
-    ['Request rate limit reached', 'Çok fazla deneme yapıldı. Birkaç dakika sonra tekrar deneyin.'],
+    ['Request rate limit reached', 'Çok fazla deneme oldu. Birkaç dakika sonra tekrar dener misin?'],
     ['For security purposes, you can only request this after 37 seconds.', 'Güvenlik için yeni e-postayı 37 saniye sonra isteyebilirsin.'],
     ['Unable to validate email address: invalid format', 'Geçerli bir e-posta adresi yazın.'],
     ['Failed to fetch', 'İnternet bağlantısı yok gibi görünüyor.'],
-    ['something else', 'Bir sorun oluştu. Lütfen tekrar deneyin.'],
+    ['something else', 'Bir şeyler ters gitti. Bir daha dener misin?'],
   ])('maps "%s"', (input, expected) => expect(authErrorMessage(input)).toBe(expected));
 });
 

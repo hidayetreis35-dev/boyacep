@@ -1,5 +1,5 @@
 import AsyncStorage from '@react-native-async-storage/async-storage';
-import { fireEvent, screen, waitFor } from '@testing-library/react-native';
+import { fireEvent, screen, waitFor, within } from '@testing-library/react-native';
 import { Linking } from 'react-native';
 import { renderRouter } from 'expo-router/testing-library';
 
@@ -8,7 +8,7 @@ import * as budgetApi from '@/features/budget/api';
 import { EMPTY_ROOM_FORM } from '@/features/calculator/form';
 import * as projectsApi from '@/features/projects/api';
 import { clearPendingRoom, getPendingRoom, setPendingRoom } from '@/features/projects/pending-room';
-import type { ProjectRow } from '@/lib/database.types';
+import type { ProjectRow, QuoteItemRow, QuoteRow } from '@/lib/database.types';
 
 // A signed-in session against a fake backend; the data layer is mocked below.
 jest.mock('@/lib/supabase', () => ({
@@ -31,6 +31,8 @@ jest.mock('@/features/account/api', () => ({
 }));
 
 jest.mock('@/features/projects/api');
+jest.mock('@/features/photos/api', () => ({ listProjectPhotos: jest.fn(async () => []) }));
+const photosMock = jest.mocked(jest.requireMock('@/features/photos/api') as { listProjectPhotos: jest.Mock });
 const api = jest.mocked(projectsApi);
 jest.mock('@/features/materials/api');
 const mapi = jest.mocked(materialsApi);
@@ -42,6 +44,46 @@ jest.mock('@/features/budget/api', () => ({
   deleteReceipts: jest.fn(async () => {}),
 }));
 const bapi = jest.mocked(budgetApi);
+jest.mock('@/features/quotes/api', () => ({
+  ...jest.requireActual('@/features/quotes/api'),
+  listReceivedQuotes: jest.fn(async () => []),
+  listQuoteItems: jest.fn(async () => []),
+}));
+const qapi = jest.mocked(jest.requireMock('@/features/quotes/api') as { listReceivedQuotes: jest.Mock; listQuoteItems: jest.Mock });
+
+function quote(id: string, title: string, status: QuoteRow['status'], vat_rate = 20): QuoteRow {
+  return {
+    id,
+    pro_id: `pro-${id}`,
+    project_id: 'p1',
+    number: 1,
+    title,
+    customer_name: '',
+    customer_contact: '',
+    notes: '',
+    vat_rate,
+    discount: 0,
+    currency: 'TRY',
+    valid_until: null,
+    status,
+    sent_at: '2026-10-20T10:00:00Z',
+    responded_at: null,
+    created_at: '',
+    updated_at: '',
+  };
+}
+
+const item = (quote_id: string, kind: QuoteItemRow['kind'], unit_price: number): QuoteItemRow => ({
+  id: `${quote_id}-${kind}`,
+  quote_id,
+  kind,
+  description: kind,
+  quantity: 1,
+  unit: 'iş',
+  unit_price,
+  sort_order: 0,
+  created_at: '',
+});
 
 function project(overrides: Partial<ProjectRow> = {}): ProjectRow {
   return {
@@ -58,6 +100,9 @@ function project(overrides: Partial<ProjectRow> = {}): ProjectRow {
   };
 }
 
+// The first test renders the whole router cold, which can take over 5 s on CI.
+jest.setTimeout(20_000);
+
 beforeEach(async () => {
   jest.clearAllMocks();
   await AsyncStorage.setItem('boyacep.roles.v1', JSON.stringify(['homeowner']));
@@ -73,7 +118,7 @@ describe('Projelerim (signed in)', () => {
   it('shows an error with retry when loading fails', async () => {
     api.listProjects.mockRejectedValue(new Error('offline'));
     await renderRouter('./src/app', { initialUrl: '/projects' });
-    expect(await screen.findByText('Bir sorun oluştu', {}, { timeout: 3000 })).toBeTruthy();
+    expect(await screen.findByText('Bir şeyler ters gitti', {}, { timeout: 3000 })).toBeTruthy();
     api.listProjects.mockResolvedValue([project()]);
     await fireEvent.press(screen.getByText('Tekrar dene'));
     expect(await screen.findByText('Salon boyası')).toBeTruthy();
@@ -90,6 +135,17 @@ describe('Projelerim (signed in)', () => {
     expect(api.createProject).toHaveBeenCalledWith(expect.anything(), 'Mutfak');
     expect(await screen.findByText('Henüz oda yok')).toBeTruthy();
     expect(screen).toHavePathname('/projects/p9');
+  });
+
+  it('uses the project\'s own photo as its cover', async () => {
+    api.listProjects.mockResolvedValue([project({ id: 'p1' }), project({ id: 'p2', title: 'Mutfak' })]);
+    photosMock.listProjectPhotos.mockImplementation(async (_db: unknown, id: string) =>
+      id === 'p1' ? [{ id: 'ph1', project_id: 'p1', url: 'https://example.invalid/salon.jpg', surfaces: [] }] : [],
+    );
+    await renderRouter('./src/app', { initialUrl: '/projects' });
+    expect(await screen.findByText('Mutfak')).toBeTruthy();
+    // Only the project with a photo gets one; nobody else's room is borrowed.
+    expect(await screen.findAllByTestId('project-cover-photo')).toHaveLength(1);
   });
 
   it('blocks a fourth project on the free plan', async () => {
@@ -159,6 +215,34 @@ describe('Project detail', () => {
     expect(await screen.findByText('Proje toplamı')).toBeTruthy();
     // 35 m² walls + 12 m² ceiling, 2 coats, 10 m²/L, +10 %: 7.7 + 2.6 = 10.3 L
     expect(screen.getAllByText('10,3 L').length).toBeGreaterThan(0);
+
+    // A painted wall in good shape: sand, ceiling first, two coats; no primer.
+    await fireEvent.press(screen.getByText('Oda oda yenileme planı'));
+    expect(screen.getByTestId('plan-sand')).toHaveTextContent(/Hafif zımpara/);
+    expect(screen.getByTestId('plan-ceiling')).toHaveTextContent(/Önce tavan/);
+    expect(screen.getByTestId('plan-walls2')).toHaveTextContent(/Duvarlar: 2 kat/);
+    expect(screen.queryByTestId('plan-prime')).toBeNull();
+  });
+
+  it('compares the quotes painters sent, cheapest first, leaving out withdrawn ones', async () => {
+    api.getProject.mockResolvedValue({ project: project(), rooms: [] });
+    qapi.listReceivedQuotes.mockResolvedValue([
+      quote('q1', 'Ahmet Usta teklifi', 'sent'),
+      quote('q2', 'Renk Boya teklifi', 'sent', 0),
+      quote('q3', 'Eski teklif', 'withdrawn'),
+    ]);
+    qapi.listQuoteItems.mockResolvedValue([item('q1', 'labor', 10000), item('q1', 'material', 4000), item('q2', 'labor', 12000), item('q2', 'material', 2000)]);
+    await renderRouter('./src/app', { initialUrl: '/projects/p1' });
+    const card = within(await screen.findByTestId('quote-comparison'));
+    expect(qapi.listQuoteItems).toHaveBeenCalledWith(expect.anything(), ['q1', 'q2']);
+    // q2 has no VAT: 14.000 ₺; q1 is 14.000 ₺ + 20 % = 16.800 ₺.
+    const cheapest = within(screen.getByTestId('compare-q2'));
+    expect(cheapest.getByText('14.000,00 ₺')).toBeTruthy();
+    expect(cheapest.getByText('En düşük fiyat')).toBeTruthy();
+    expect(within(screen.getByTestId('compare-q1')).getByText('+2.800,00 ₺')).toBeTruthy();
+    expect(card.queryByText('Eski teklif')).toBeNull();
+    // Every quote is still listed below, withdrawn too.
+    expect(screen.getByText('Eski teklif')).toBeTruthy();
   });
 
   it('saves a new room through the room editor', async () => {
@@ -263,7 +347,7 @@ describe('Ana sayfa: devam eden proje', () => {
   it('shows nothing when every project is finished', async () => {
     api.listProjects.mockResolvedValue([project({ status: 'completed' })]);
     await renderRouter('./src/app', { initialUrl: '/' });
-    await screen.findByText('Evin için bugün neler yapmak istersin?');
+    await screen.findByText('Evin için güzel fikirler burada başlıyor.');
     await waitFor(() => expect(api.listProjects).toHaveBeenCalled());
     expect(screen.queryByText('DEVAM EDEN PROJEN')).toBeNull();
   });
@@ -443,6 +527,17 @@ describe('Maliyet Hesapla (no account needed)', () => {
     expect(await screen.findByText('Hesaplanan: 13,9 L boya')).toBeTruthy();
     await fireEvent.changeText(screen.getByTestId('cost-paint'), '200');
     expect(screen.getByTestId('cost-total')).toHaveTextContent('2.780,00 ₺');
+  });
+
+  it('starts with no total and offers a labelled shop price instead of inventing one', async () => {
+    await renderRouter('./src/app', { initialUrl: '/cost?paint=10&primer=0' });
+    expect(await screen.findByText('Kalemlere fiyat ekledikçe toplam burada oluşur.')).toBeTruthy();
+    expect(screen.getByTestId('cost-total')).toHaveTextContent('–');
+    await fireEvent.press(screen.getByText('Yaklaşık mağaza fiyatını yaz: 250 ₺/L'));
+    // 10 L × 250 ₺/L, marked as an estimate, not a checked price
+    expect(screen.getByTestId('cost-total')).toHaveTextContent('2.500,00 ₺');
+    expect(screen.getByText('Tahmini: 2.500,00 ₺')).toBeTruthy();
+    expect(screen.queryByText('Yaklaşık mağaza fiyatını yaz: 250 ₺/L')).toBeNull();
   });
 });
 

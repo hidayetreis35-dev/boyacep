@@ -1,13 +1,22 @@
-import { router } from 'expo-router';
-import { useState } from 'react';
-import { StyleSheet, View } from 'react-native';
+import { router, type Href } from 'expo-router';
+import { useRef, useState } from 'react';
+import { StyleSheet, View, type HostInstance } from 'react-native';
 
 import { SERVICE_CATEGORIES, type ServiceCategory } from '@/features/home/actions';
-import { t, toLower } from '@/i18n';
+import { msg, t, toLower } from '@/i18n';
 import { SectionTitle } from '@/ui/brand';
-import { AppText, Badge, Button, Card, Icon, Screen, TextField } from '@/ui/components';
+import { AppText, Badge, Button, Card, Icon, Screen, TextField, useScrollToView, type IconName } from '@/ui/components';
 import { PressableScale } from '@/ui/motion';
-import { fonts, radius, shadowOf, space, useFeatureColour, usePalette } from '@/ui/theme';
+import { QuickAction } from '@/ui/showcase';
+import { fonts, radius, shadowOf, space, useFeatureColour, usePalette, type FeatureKey } from '@/ui/theme';
+
+/** Keşfet gathers the places to look things up: colours, guides, prices and questions. */
+const EXPLORE: { title: string; hint: string; icon: IconName; feature: FeatureKey; href: Href }[] = [
+  { title: msg('Renk Stüdyosu'), hint: msg('Renkleri keşfet, odanda dene'), icon: 'color-palette', feature: 'color', href: '/colour' },
+  { title: msg('Boya Rehberi'), hint: msg('Ustadan adım adım'), icon: 'book', feature: 'guide', href: '/guide' },
+  { title: msg('Boya Fiyatları'), hint: msg('Şehrinde ne kadar tutar?'), icon: 'stats-chart', feature: 'cost', href: '/prices' },
+  { title: msg('Ustaya Sor'), hint: msg('Aklına takılanı sor'), icon: 'chatbubbles', feature: 'ask', href: '/ask' },
+];
 
 function CategoryTile({ category, onPress }: { category: ServiceCategory | null; onPress: () => void }) {
   const p = usePalette();
@@ -62,18 +71,34 @@ function PainterSteps() {
   );
 }
 
-export default function ServicesScreen() {
+function Services() {
   const p = usePalette();
   const [query, setQuery] = useState('');
   const q = toLower(query.trim());
   const shown = q ? SERVICE_CATEGORIES.filter((c) => toLower(t(c.title)).includes(q)) : SERVICE_CATEGORIES;
+  const scrollTo = useScrollToView();
+  const steps = useRef<HostInstance>(null);
 
+  // Painters are the open trade: their tile leads to the steps that work today.
   const open = (c: ServiceCategory) =>
-    c.open ? undefined : router.push({ pathname: '/soon/[feature]', params: { feature: c.key } });
+    c.open ? scrollTo(steps.current) : router.push({ pathname: '/soon/[feature]', params: { feature: c.key } });
 
   return (
-    <Screen>
-      <AppText variant="title">{t('Usta Bul')}</AppText>
+    <>
+      <View style={{ gap: 4 }}>
+        <AppText variant="title" accessibilityRole="header">
+          {t('Keşfet')}
+        </AppText>
+        <AppText tone="muted">{t('Renk, rehber, fiyat ve usta: hepsi burada.')}</AppText>
+      </View>
+      <View style={styles.exploreGrid}>
+        {EXPLORE.map((e) => (
+          <View key={e.title} style={styles.exploreCell}>
+            <QuickAction title={t(e.title)} hint={t(e.hint)} icon={e.icon} feature={e.feature} onPress={() => router.push(e.href)} />
+          </View>
+        ))}
+      </View>
+      <SectionTitle title={t('Usta Bul')} />
       <TextField label={t('Ara')} placeholder={t('Hangi hizmeti arıyorsun?')} value={query} onChangeText={setQuery} testID="service-search" />
       <View style={styles.grid}>
         {shown.map((c) => (
@@ -87,9 +112,11 @@ export default function ServicesScreen() {
           </View>
         ) : null}
       </View>
-      {shown.length === 0 ? <AppText tone="muted">{t('Bu adla bir hizmet bulunamadı.')}</AppText> : null}
+      {shown.length === 0 ? <AppText tone="muted">{t('Bu adla bir hizmet bulamadık.')}</AppText> : null}
 
-      <PainterSteps />
+      <View ref={steps} testID="painter-steps">
+        <PainterSteps />
+      </View>
 
       <SectionTitle title={t('Yakındaki Ustalar')} />
       <Card>
@@ -107,11 +134,21 @@ export default function ServicesScreen() {
         <AppText tone="muted">{t('Profilini oluştur, ev sahiplerinin paylaştığı projeleri gör ve PDF teklif hazırla.')}</AppText>
         <Button label={t('Usta Paneli')} icon="construct" variant="secondary" onPress={() => router.push('/usta')} />
       </Card>
+    </>
+  );
+}
+
+export default function ServicesScreen() {
+  return (
+    <Screen>
+      <Services />
     </Screen>
   );
 }
 
 const styles = StyleSheet.create({
+  exploreGrid: { flexDirection: 'row', flexWrap: 'wrap', margin: -space.xs - 1 },
+  exploreCell: { width: '50%', padding: space.xs + 1 },
   grid: { flexDirection: 'row', flexWrap: 'wrap', margin: -space.xs },
   cell: { width: '25%', padding: space.xs },
   tile: { alignItems: 'center', gap: 4, paddingVertical: space.md, paddingHorizontal: 2, borderRadius: radius.lg, borderWidth: StyleSheet.hairlineWidth, minHeight: 96 },

@@ -16,7 +16,7 @@ import {
   type QuickCostForm,
 } from '@/features/cost/quick-cost';
 import { useCity } from '@/features/market/city';
-import { formatLiraRange } from '@/features/market/format';
+import { formatLira, formatLiraRange } from '@/features/market/format';
 import { provinceByCode } from '@/features/market/provinces';
 import { MATERIAL_PRICES } from '@/features/market/sources';
 import type { CostSummary } from '@/engine';
@@ -57,7 +57,7 @@ function PriceField({
       />
       <Pressable
         accessibilityRole="switch"
-        accessibilityState={{ checked: sure }}
+        aria-checked={sure}
         accessibilityLabel={t('{label}: kesin fiyat', { label })}
         onPress={() => onChange({ ...price, source: sure ? 'estimate' : 'store' })}
         style={{ flexDirection: 'row', alignItems: 'center', gap: 6, alignSelf: 'flex-start', minHeight: 32 }}>
@@ -91,13 +91,13 @@ function CostItem({
   const p = usePalette();
   return (
     <View style={!first && { borderTopWidth: StyleSheet.hairlineWidth, borderColor: p.border }}>
-      <Pressable accessibilityRole="button" accessibilityLabel={label} accessibilityState={{ expanded: open }} onPress={onToggle} style={styles.item}>
+      <Pressable accessibilityRole="button" accessibilityLabel={label} aria-expanded={open} onPress={onToggle} style={styles.item}>
         <Icon name={icon} size={20} color={p.primary} />
         <AppText style={{ flex: 1 }}>{label}</AppText>
         {amount !== null ? (
           <AppText variant="bodyStrong">{formatMoney(amount)}</AppText>
         ) : (
-          <AppText variant="small" style={{ color: p.cta, fontFamily: fonts.semibold }}>
+          <AppText variant="small" style={{ color: p.accent, fontFamily: fonts.semibold }}>
             {t('Fiyat ekle')}
           </AppText>
         )}
@@ -109,7 +109,7 @@ function CostItem({
 }
 
 /** The total in one plain card, with how much of it is checked and how much is guessed. */
-function TotalCard({ summary }: { summary: CostSummary }) {
+function TotalCard({ summary, empty }: { summary: CostSummary; empty: boolean }) {
   return (
     <Card>
       <View style={{ flexDirection: 'row', alignItems: 'center', gap: space.md }} accessibilityLiveRegion="polite">
@@ -117,9 +117,14 @@ function TotalCard({ summary }: { summary: CostSummary }) {
           {t('Toplam Tahmini Maliyet')}
         </AppText>
         <AppText variant="title" style={{ fontFamily: fonts.extrabold }} testID="cost-total">
-          {formatMoney(summary.total)}
+          {empty ? '–' : formatMoney(summary.total)}
         </AppText>
       </View>
+      {empty ? (
+        <AppText variant="small" tone="muted">
+          {t('Kalemlere fiyat ekledikçe toplam burada oluşur.')}
+        </AppText>
+      ) : null}
       {summary.total > 0 ? (
         <View style={{ flexDirection: 'row', flexWrap: 'wrap', gap: space.sm }}>
           <Badge label={t('Kesin fiyat: {amount}', { amount: formatMoney(summary.store) })} tone="success" />
@@ -151,6 +156,9 @@ function RegionNote() {
     </View>
   );
 }
+
+/** Middle of the shop range for interior paint, offered as a one-tap estimate, never filled in silently. */
+const SHOP_PAINT_MID = Math.round((MATERIAL_PRICES.interior_paint.low + MATERIAL_PRICES.interior_paint.high) / 2 / 5) * 5;
 
 const EXTRA_ICON: Record<ExtraKind, IconName> = { transport: 'car-outline', protection: 'shield-checkmark-outline', cleaning: 'sparkles-outline' };
 
@@ -229,6 +237,14 @@ export default function QuickCostScreen() {
               }
               testID="cost-paint"
             />
+            {hasLitres && !form.paintPrice.amount ? (
+              <Button
+                label={t('Yaklaşık mağaza fiyatını yaz: {price}/L', { price: formatLira(SHOP_PAINT_MID) })}
+                icon="pricetag"
+                variant="ghost"
+                onPress={() => set('paintPrice', { amount: String(SHOP_PAINT_MID), source: 'estimate' })}
+              />
+            ) : null}
             {!fromWizard ? (
               <Button label={t('Litreyi bilmiyorum, hesapla')} icon="color-fill" variant="ghost" onPress={() => router.push('/calculate')} />
             ) : null}
@@ -274,7 +290,7 @@ export default function QuickCostScreen() {
         </View>
       </Card>
 
-      <TotalCard summary={summary} />
+      <TotalCard summary={summary} empty={[lines.paint, lines.primer, lines.filler, lines.supplies, lines.labour, ...Object.values(lines.extras)].every((v) => v === null)} />
 
       <Disclosure title={t('Ek masraflar ve bütçe')}>
         <View style={{ gap: space.sm }}>

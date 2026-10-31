@@ -35,7 +35,7 @@ describe('validateQuoteForm', () => {
     expect('errors' in result && result.errors).toEqual({
       title: 'Teklife bir başlık ver.',
       items: 'Kırmızı işaretli kalemleri düzelt.',
-      item: { [form.items[0].key]: { description: 'Kalemi açıkla.', quantity: 'Miktar geçersiz.', unitPrice: 'Fiyat geçersiz.' } },
+      item: { [form.items[0].key]: { description: 'Kalemi açıkla.', quantity: 'Bu miktarı anlayamadım. Sadece rakam yazar mısın?', unitPrice: 'Bu fiyatı anlayamadım. Sadece rakam yazar mısın?' } },
     });
   });
 

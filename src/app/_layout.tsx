@@ -1,3 +1,5 @@
+import { BricolageGrotesque_700Bold } from '@expo-google-fonts/bricolage-grotesque/700Bold';
+import { BricolageGrotesque_800ExtraBold } from '@expo-google-fonts/bricolage-grotesque/800ExtraBold';
 import { PlusJakartaSans_400Regular } from '@expo-google-fonts/plus-jakarta-sans/400Regular';
 import { PlusJakartaSans_500Medium } from '@expo-google-fonts/plus-jakarta-sans/500Medium';
 import { PlusJakartaSans_600SemiBold } from '@expo-google-fonts/plus-jakarta-sans/600SemiBold';
@@ -13,6 +15,7 @@ import { useEffect, useState } from 'react';
 import { useColorScheme, View } from 'react-native';
 
 import { SessionProvider } from '@/features/account/session';
+import { useCareReminderLinks } from '@/features/home-log/reminders';
 import { t } from '@/i18n';
 import { LocaleProvider, useLocale } from '@/i18n/provider';
 import { reportError } from '@/lib/report-error';
@@ -49,6 +52,12 @@ export default function RootLayout() {
   );
 }
 
+/** Opens the right screen when a reminder notification is tapped. */
+function NotificationLinks() {
+  useCareReminderLinks();
+  return null;
+}
+
 /** Rendered inside LocaleProvider, so a language switch re-renders every title. */
 function App() {
   const scheme = useColorScheme() === 'dark' ? 'dark' : 'light';
@@ -63,6 +72,8 @@ function App() {
     PlusJakartaSans_600SemiBold,
     PlusJakartaSans_700Bold,
     PlusJakartaSans_800ExtraBold,
+    BricolageGrotesque_700Bold,
+    BricolageGrotesque_800ExtraBold,
   });
   const ready = (fontsLoaded || !!fontError) && localeReady;
   useEffect(() => {
@@ -79,11 +90,13 @@ function App() {
             colors: { ...base.colors, primary: p.primary, background: p.background, card: p.surface, text: p.text, border: p.border },
           }}>
           <StatusBar style={scheme === 'dark' ? 'light' : 'dark'} />
+          <NotificationLinks />
           <Stack
             screenOptions={{
               headerBackTitle: t('Geri'),
               headerTintColor: p.text,
               headerTitleStyle: { color: p.text, fontFamily: fonts.bold, fontSize: 17 },
+              headerTitleAlign: 'center',
               headerShadowVisible: false,
               headerStyle: { backgroundColor: p.background },
               contentStyle: { backgroundColor: p.background },
@@ -124,6 +137,7 @@ function App() {
             <Stack.Screen name="ask/[id]" options={{ title: t('Soru') }} />
             <Stack.Screen name="admin/questions" options={{ title: t('Bekleyen sorular') }} />
             <Stack.Screen name="soon/[feature]" options={{ title: t('Yakında') }} />
+            <Stack.Screen name="ai-design" options={{ title: t('AI Ev Tasarımı') }} />
           </Stack>
         </ThemeProvider>
       </SessionProvider>

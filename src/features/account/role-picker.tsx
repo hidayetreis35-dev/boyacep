@@ -37,7 +37,7 @@ export function RolePicker({
           <Pressable
             key={o.role}
             accessibilityRole="checkbox"
-            accessibilityState={{ checked: on }}
+            aria-checked={on}
             accessibilityLabel={t(o.title)}
             onPress={() => onToggle(o.role)}
             style={[

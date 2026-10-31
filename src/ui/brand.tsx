@@ -3,7 +3,7 @@ import { StyleSheet, View, type StyleProp, type ViewStyle } from 'react-native';
 import Svg, { Circle, Defs, LinearGradient, Path, Rect, Stop } from 'react-native-svg';
 
 import { AppText, Icon, type IconName } from './components';
-import { PressableScale } from './motion';
+import { PressableScale, tick } from './motion';
 import { Photo, type PhotoName } from './photos';
 import { fonts, radius, shadowOf, space, useFeatureColour, usePalette, type FeatureKey } from './theme';
 
@@ -120,8 +120,8 @@ export function FeatureHeader({
   return (
     <View style={[styles.featureHeader, { backgroundColor: f.soft }]}>
       <View style={styles.featureHeaderRow}>
-        <View style={[styles.featureIcon, { backgroundColor: f.base }]}>
-          <Icon name={icon} size={24} color="#FFFFFF" />
+        <View style={[styles.featureIcon, { backgroundColor: f.ink }]}>
+          <Icon name={icon} size={24} color={f.soft} />
         </View>
         <View style={{ flex: 1, gap: 2 }}>
           <AppText variant="title" style={{ color: f.ink }}>
@@ -190,8 +190,8 @@ export function OptionCard({
   ) : swatch ? (
     <View style={[styles.optionSwatch, { backgroundColor: swatch, borderColor: p.border }]} />
   ) : icon ? (
-    <View style={[styles.optionIcon, { backgroundColor: selected ? f.base : f.soft }]}>
-      <Icon name={icon} size={22} color={selected ? '#FFFFFF' : f.ink} />
+    <View style={[styles.optionIcon, { backgroundColor: selected ? f.ink : f.soft }]}>
+      <Icon name={icon} size={22} color={selected ? f.soft : f.ink} />
     </View>
   ) : null;
   return (
@@ -199,9 +199,13 @@ export function OptionCard({
       testID={testID}
       accessibilityRole={multiple ? 'checkbox' : 'radio'}
       accessibilityLabel={badge ? `${title}, ${badge}` : title}
-      accessibilityState={multiple ? { checked: selected, disabled: !!disabled } : { selected, disabled: !!disabled }}
+      aria-checked={selected}
+      aria-disabled={!!disabled}
       disabled={disabled}
-      onPress={onPress}
+      onPress={() => {
+        tick();
+        onPress();
+      }}
       style={[
         tile ? styles.optionTile : styles.option,
         {
@@ -271,7 +275,13 @@ export function StepProgress({ step, total, label, feature = 'calculate' }: { st
   const p = usePalette();
   const f = useFeatureColour(feature);
   return (
-    <View style={{ gap: space.sm }} accessibilityRole="progressbar" accessibilityValue={{ min: 1, max: total, now: step }}>
+    <View
+      style={{ gap: space.sm }}
+      accessibilityRole="progressbar"
+      accessibilityLabel={`${t('Adım {step} / {total}', { step, total })}, ${label}`}
+      aria-valuemin={1}
+      aria-valuemax={total}
+      aria-valuenow={step}>
       <View style={{ flexDirection: 'row', alignItems: 'center', gap: space.sm }}>
         <AppText variant="overline" style={{ color: f.ink }}>
           {t('Adım {step} / {total}', { step, total })}
@@ -351,7 +361,7 @@ export function Disclosure({ title, children, initiallyOpen = false }: { title: 
     <View style={[styles.disclosure, { backgroundColor: p.surface, borderColor: p.border }]}>
       <PressableScale
         accessibilityRole="button"
-        accessibilityState={{ expanded: open }}
+        aria-expanded={open}
         onPress={() => setOpen((o) => !o)}
         style={styles.disclosureHead}>
         <AppText variant="bodyStrong" style={{ flex: 1 }}>
@@ -383,9 +393,12 @@ export function Segmented<T extends string>({
           <PressableScale
             key={o.value}
             accessibilityRole="tab"
-            accessibilityState={{ selected: active }}
+            aria-selected={active}
             accessibilityLabel={t(o.label)}
-            onPress={() => onChange(o.value)}
+            onPress={() => {
+              if (!active) tick();
+              onChange(o.value);
+            }}
             style={[styles.segment, { backgroundColor: active ? p.primary : p.surfaceMuted }]}>
             {o.icon ? <Icon name={o.icon} size={16} color={active ? p.onPrimary : p.textMuted} /> : null}
             <AppText variant="small" numberOfLines={1} style={{ color: active ? p.onPrimary : p.textMuted, fontFamily: active ? fonts.bold : fonts.medium }}>
@@ -427,7 +440,7 @@ export function WizardNav({
       <PressableScale
         accessibilityRole="button"
         accessibilityLabel={nextLabel}
-        accessibilityState={{ disabled: !!nextDisabled }}
+        aria-disabled={!!nextDisabled}
         disabled={nextDisabled}
         onPress={onNext}
         style={({ pressed }) => [

@@ -113,7 +113,7 @@ export function validateQuoteForm(
   if (!title) errors.title = t('Teklife bir başlık ver.');
   else if (title.length > 120) errors.title = t('Başlık en fazla 120 karakter olabilir.');
   if (!Number.isFinite(vat) || vat < 0 || vat > 50) errors.vatRate = t('KDV oranı 0 ile 50 arasında olmalı.');
-  if (!Number.isFinite(discount) || discount < 0) errors.discount = t('İndirim tutarı geçersiz.');
+  if (!Number.isFinite(discount) || discount < 0) errors.discount = t('İndirim tutarını anlayamadım. Sadece rakam yazar mısın?');
 
   const items: ItemRecord[] = [];
   const itemErrors: NonNullable<QuoteFormErrors['item']> = {};
@@ -125,9 +125,9 @@ export function validateQuoteForm(
     const price = parseMoney(item.unitPrice);
     if (!description) e.description = t('Kalemi açıkla.');
     else if (description.length > 200) e.description = t('En fazla 200 karakter.');
-    if (!Number.isFinite(quantity) || quantity <= 0 || quantity > 100000) e.quantity = t('Miktar geçersiz.');
+    if (!Number.isFinite(quantity) || quantity <= 0 || quantity > 100000) e.quantity = t('Bu miktarı anlayamadım. Sadece rakam yazar mısın?');
     if (!unit || unit.length > 20) e.unit = t('Birim yaz.');
-    if (!Number.isFinite(price) || price < 0 || price > 10000000) e.unitPrice = t('Fiyat geçersiz.');
+    if (!Number.isFinite(price) || price < 0 || price > 10000000) e.unitPrice = t('Bu fiyatı anlayamadım. Sadece rakam yazar mısın?');
     if (Object.keys(e).length > 0) itemErrors[item.key] = e;
     else items.push({ kind: item.kind, description, quantity, unit, unit_price: price, sort_order: i });
   });
